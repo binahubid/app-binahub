@@ -4,10 +4,13 @@ Frontend memakai `output: "export"`, sehingga hasil production berupa situs stat
 
 ## Urutan deployment
 
-1. Terapkan migration API `supabase/migrations/0020_participant_reentry_codes.sql`, lalu jalankan `supabase/production_readiness.sql`. Jangan deploy UI login baru sebelum kedua flag kode peserta dan RPC registrasi bernilai `true`.
+1. Terapkan migration API sampai `supabase/migrations/0022_binainsight_program_module.sql`, lalu jalankan `supabase/production_readiness.sql`. Jangan deploy modul BinaInsight/follow-up baru sebelum flag `binainsight_program_module_ready` bernilai `true`, jangan deploy UI assessment baru sebelum `assessment_idempotency_ready` bernilai `true`, dan jangan deploy UI login baru sebelum kedua flag kode peserta serta RPC registrasi bernilai `true`.
 2. Pastikan environment production menggunakan:
    - `NEXT_PUBLIC_APP_URL=https://app.binahub.id`
    - `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`
+   - `NEXT_PUBLIC_COMPANY_WEBSITE_URL=https://binahub.id`
+   - pada `website-prod`: `NEXT_PUBLIC_BINAHUB_APP_URL=https://app.binahub.id`
+   - pada API: `FOLLOW_UP_CRON_SECRET` berupa secret acak yang kuat dan dikirim cron sebagai Bearer token
 3. Jalankan `npm ci`.
 4. Jalankan `npm run typecheck`, `npm run lint`, dan `npm run test:run`.
 5. Jalankan `npm run build`.

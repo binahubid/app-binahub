@@ -12,7 +12,7 @@ import { programAccessPath } from "@/lib/program-access-link";
 interface ProgramData {
   program: ClientProgramSummary;
   participant: { id: string; name: string };
-  modules: Array<{ key: "lep" | "tbos"; enabled: boolean }>;
+  modules: Array<{ key: "lep" | "tbos" | "binainsight"; enabled: boolean }>;
 }
 
 export default function ClientLepPage() {

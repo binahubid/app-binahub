@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { safeInternalPath } from "@/lib/safe-navigation";
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -15,7 +16,7 @@ function AuthCallbackContent() {
     const handleAuthCallback = async () => {
       try {
         const code = searchParams.get("code");
-        const next = searchParams.get("next") || "/home";
+        const next = safeInternalPath(searchParams.get("next"));
 
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);

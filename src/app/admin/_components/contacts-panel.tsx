@@ -119,7 +119,7 @@ export function ContactsPanel({
                     <Mail size={15} />
                   </a>
                   {contact.whatsapp && (
-                    <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`} target="_blank" className="grid h-11 w-11 place-items-center rounded-[10px] border border-black/10 bg-white text-[#0B2C6B]">
+                    <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="grid h-11 w-11 place-items-center rounded-[10px] border border-black/10 bg-white text-[#0B2C6B]">
                       <Phone size={15} />
                     </a>
                   )}
@@ -150,7 +150,7 @@ export function ContactsPanel({
                   <Mail size={15} />
                 </a>
                 {contact.whatsapp && (
-                  <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`} target="_blank" className="grid h-11 w-11 place-items-center rounded-[10px] border border-black/10 bg-white text-[#0B2C6B]">
+                  <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="grid h-11 w-11 place-items-center rounded-[10px] border border-black/10 bg-white text-[#0B2C6B]">
                     <Phone size={15} />
                   </a>
                 )}

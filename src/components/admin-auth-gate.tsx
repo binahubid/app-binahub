@@ -24,11 +24,11 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
       try {
         const response = await fetch("/api/auth/role");
-        const result = await response.json();
+        const result = await response.json().catch(() => null);
         const role = response.ok && result.success ? result.role : null;
 
         if (role !== "admin") {
-          if (alive) router.replace("/login");
+          if (alive) router.replace(response.status === 401 ? "/login" : "/access-denied");
           return;
         }
 

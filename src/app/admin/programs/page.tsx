@@ -10,12 +10,11 @@ import { AppShell } from "@/components/app-shell";
 import { Breadcrumb, ConfirmDialog, EmptyState, FilterTabs, ModuleChip, SearchInput, StatusPill } from "@/components/ui";
 import { ProgramShareCard } from "@/components/program-share-card";
 import type { Engagement } from "@/lib/transformation-types";
-
-type ModuleKey = "tbos" | "lep";
+import type { ProgramModuleKey } from "@/lib/program-modules";
 
 interface ProgramModuleRow {
   program_id: string;
-  module_key: ModuleKey;
+  module_key: ProgramModuleKey;
   enabled: boolean;
 }
 
@@ -100,7 +99,7 @@ function AdminProgramsPageContent() {
       {loading ? <div className="py-20 text-center text-sm text-slate-500">Memuat...</div> : error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
       ) : engagements.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white"><EmptyState title="Belum ada program" description="Buat program pertama lalu pilih modul LEP dan/atau T-BOS." action={<Link href="/admin/engagements/new" className="mt-2 inline-flex items-center gap-2 rounded-xl bg-blue-900 px-5 py-2.5 text-sm font-semibold text-white"><Plus size={18} /> Buat Program</Link>} /></div>
+        <div className="rounded-2xl border border-slate-200 bg-white"><EmptyState title="Belum ada program" description="Buat program pertama lalu pilih modul BinaInsight, LEP, dan/atau T-BOS." action={<Link href="/admin/engagements/new" className="mt-2 inline-flex items-center gap-2 rounded-xl bg-blue-900 px-5 py-2.5 text-sm font-semibold text-white"><Plus size={18} /> Buat Program</Link>} /></div>
       ) : filteredPrograms.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white"><EmptyState title="Program tidak ditemukan" description="Ubah kata pencarian atau pilih status lain." /></div>
       ) : (

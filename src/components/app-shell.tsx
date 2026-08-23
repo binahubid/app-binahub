@@ -35,6 +35,7 @@ const navByRole: Record<Role, { href: string; label: string; icon: React.ReactNo
   ],
   client: [
     { href: "/client/program", label: "Program", icon: <Home size={16} /> },
+    { href: "/insight", label: "BinaInsight", icon: <BarChart3 size={16} /> },
     { href: "/client/lep", label: "Evaluasi Program", icon: <ClipboardPenLine size={16} /> },
     { href: "/help", label: "Bantuan", icon: <HelpCircle size={16} /> },
   ],
@@ -67,6 +68,7 @@ const mobileNavByRole: Partial<Record<Role, { href: string; label: string; icon:
   ],
   client: [
     { href: "/client/program", label: "Program", icon: <Home size={20} /> },
+    { href: "/insight", label: "BinaInsight", icon: <BarChart3 size={20} /> },
     { href: "/client/lep", label: "Evaluasi", icon: <ClipboardPenLine size={20} /> },
     { href: "/help", label: "Bantuan", icon: <HelpCircle size={20} /> },
   ],
@@ -77,12 +79,13 @@ function routeIsActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-type ModuleAvailability = { tbos: boolean; lep: boolean };
+type ModuleAvailability = { tbos: boolean; lep: boolean; binainsight: boolean };
 
 function filterModuleNavigation<T extends { href: string }>(items: T[], availability: ModuleAvailability | null) {
   return items.filter((item) => {
     if (item.href.includes("/tbos")) return availability?.tbos === true;
     if (item.href.includes("/lep")) return availability?.lep === true;
+    if (item.href.includes("/insight")) return availability?.binainsight === true;
     return true;
   });
 }
@@ -131,14 +134,14 @@ export function AppShell({
       return () => { active = false; };
     }
 
-    void Promise.all(["tbos", "lep"].map(async (moduleKey) => {
+    void Promise.all(["tbos", "lep", "binainsight"].map(async (moduleKey) => {
       const response = await fetch(`/api/programs/available?moduleKey=${moduleKey}`);
       const body = await response.json().catch(() => ({}));
       return response.ok && body.success && Array.isArray(body.programs) && body.programs.length > 0;
-    })).then(([tbos, lep]) => {
-      if (active) setModuleAvailability({ tbos, lep });
+    })).then(([tbos, lep, binainsight]) => {
+      if (active) setModuleAvailability({ tbos, lep, binainsight });
     }).catch(() => {
-      if (active) setModuleAvailability({ tbos: false, lep: false });
+      if (active) setModuleAvailability({ tbos: false, lep: false, binainsight: false });
     });
 
     return () => { active = false; };

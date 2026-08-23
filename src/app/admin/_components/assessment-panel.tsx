@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Download, Eye, FileText, Search, X } from "lucide-react";
+import { ChevronDown, Download, Eye, FileText, PauseCircle, PlayCircle, Search, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   AdminNotice,
@@ -169,6 +169,27 @@ export function AssessmentPanel({
       await onRefresh();
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Gagal memperbarui status assessment.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const toggleAssessmentFollowUp = async (record: AssessmentRecord) => {
+    setActionError("");
+    setActionId(`${record.id}:follow-up-pause`);
+    try {
+      await onAction("/api/admin/assessments", {
+        method: "PATCH",
+        body: JSON.stringify({
+          id: record.id,
+          assessmentStatus: record.assessmentStatus,
+          proposalStatus: record.proposalStatus,
+          followUpPaused: !record.followUpPaused,
+        }),
+      });
+      await onRefresh();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Gagal mengubah jeda follow up assessment.");
     } finally {
       setActionId(null);
     }
@@ -403,14 +424,25 @@ export function AssessmentPanel({
                           </button>
                         </div>
                       </div>
-                      <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void toggleAssessmentFollowUp(record)}
+                          disabled={actionId === `${record.id}:follow-up-pause`}
+                          className="inline-flex min-h-9 items-center gap-2 rounded-[9px] border border-black/10 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#0B2C6B] disabled:opacity-50"
+                        >
+                          {record.followUpPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                          {record.followUpPaused ? "Lanjutkan semua follow up" : "Jeda semua follow up"}
+                        </button>
+                      </div>
+                      <div className="mt-3 grid gap-3 xl:grid-cols-2">
                         <AssessmentFollowUpBox
                           title="Follow Up Result"
                           description="H+2 memastikan result masuk dan terbaca, H+7 soft push diskusi, H+14 hard push keputusan."
                           record={record}
                           channel="result"
                           actionId={actionId}
-                          disabled={!record.resultEmailSentAt && record.assessmentStatus !== "Result Otomatis Terkirim"}
+                          disabled={record.followUpPaused || (!record.resultEmailSentAt && record.assessmentStatus !== "Result Otomatis Terkirim")}
                           onSend={(target, channel, level) =>
                             setConfirmAction({
                               title: `Kirim follow up result level ${level}?`,
@@ -428,7 +460,7 @@ export function AssessmentPanel({
                           record={record}
                           channel="proposal"
                           actionId={actionId}
-                          disabled={!record.proposalSentAt}
+                          disabled={record.followUpPaused || !record.proposalSentAt}
                           onSend={(target, channel, level) =>
                             setConfirmAction({
                               title: `Kirim follow up proposal level ${level}?`,
@@ -594,15 +626,18 @@ function AssessmentFollowUpBox({
       <div className="mt-4 flex flex-wrap gap-2">
         {FOLLOW_UP_LEVELS.map((item) => {
           const id = `${record.id}:${channel}:follow_up_${item.level}`;
+          const currentLevel = channel === "result" ? record.resultFollowUpLevel || 0 : record.proposalFollowUpLevel || 0;
+          const sent = item.level <= currentLevel;
+          const isNext = item.level === currentLevel + 1;
           return (
             <button
               key={item.level}
               type="button"
               onClick={() => onSend(record, channel, item.level)}
-              disabled={disabled || actionId === id}
+              disabled={disabled || sent || !isNext || actionId === id}
               className="h-9 rounded-[9px] border border-black/10 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#0B2C6B] transition hover:border-[#D9A441]/45 hover:bg-[#FFF8EA] disabled:opacity-50"
             >
-              {actionId === id ? "Kirim..." : item.label}
+              {actionId === id ? "Kirim..." : sent ? "Terkirim" : !isNext ? "Terkunci" : item.label}
             </button>
           );
         })}

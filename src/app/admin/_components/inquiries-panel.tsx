@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Mail, Phone, Save } from "lucide-react";
+import { Mail, PauseCircle, Phone, PlayCircle, Save } from "lucide-react";
 import { FOLLOW_UP_LEVELS, INQUIRY_STATUS_OPTIONS, NOTE_PRESETS } from "../_lib/constants";
 import type { ConfirmAction, InquiryRecord } from "../_lib/types";
 import { daysSince, formatDate, uniqueOptions } from "../_lib/utils";
@@ -75,6 +75,27 @@ export function InquiriesPanel({
     }
   };
 
+  const toggleFollowUpPause = async (inquiry: InquiryRecord) => {
+    setSavingId(inquiry.id);
+    setActionError("");
+    try {
+      await onAction("/api/admin/inquiries", {
+        method: "PATCH",
+        body: JSON.stringify({
+          id: inquiry.id,
+          status: getDraft(inquiry).status,
+          notes: getDraft(inquiry).notes,
+          followUpPaused: !inquiry.followUpPaused,
+        }),
+      });
+      await onRefresh();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Gagal mengubah jeda follow up.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <Panel title="Inquiry Masuk" action={`${filteredInquiries.length}/${inquiries.length} records`}>
       {confirmAction && (
@@ -117,12 +138,21 @@ export function InquiriesPanel({
             </div>
             <p className="mt-4 text-sm font-light leading-relaxed text-black/58">{inquiry.message}</p>
             <div className="mt-4 grid gap-2 rounded-[12px] border border-black/[0.05] bg-white p-3 md:grid-cols-[1fr_auto] md:items-center">
-              <p className="text-xs leading-relaxed text-black/50">
-                Auto follow-up: H+2, H+7, H+14 dari inquiry masuk. Tombol manual di kanan akan generate dan kirim email AI, lalu status inquiry ikut berubah.
-              </p>
+              <div>
+                <p className="text-xs leading-relaxed text-black/50">
+                  Auto follow-up: H+2, H+7, H+14 dari inquiry masuk. Level harus dikirim berurutan agar kontak tidak menerima email ganda.
+                </p>
+                <button type="button" onClick={() => void toggleFollowUpPause(inquiry)} disabled={savingId === inquiry.id} className="mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-black/10 px-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#0B2C6B] disabled:opacity-50">
+                  {inquiry.followUpPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                  {inquiry.followUpPaused ? "Lanjutkan follow up" : "Jeda follow up"}
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {FOLLOW_UP_LEVELS.map((item) => {
                   const due = daysSince(inquiry.createdAt) >= item.days;
+                  const currentLevel = inquiry.followUpLevel || 0;
+                  const sent = item.level <= currentLevel;
+                  const isNext = item.level === currentLevel + 1;
                   return (
                     <button
                       key={item.level}
@@ -137,14 +167,14 @@ export function InquiriesPanel({
                           onConfirm: () => sendFollowUp(inquiry, item.level),
                         })
                       }
-                      disabled={followUpSending === `${inquiry.id}:${item.level}`}
+                      disabled={inquiry.followUpPaused || sent || !isNext || followUpSending === `${inquiry.id}:${item.level}`}
                       className={`h-9 rounded-[9px] px-3 text-[10px] font-bold uppercase tracking-[0.12em] transition disabled:opacity-50 ${
-                        due
+                        due && isNext && !inquiry.followUpPaused
                           ? "bg-[#0B2C6B] text-white"
                           : "border border-black/10 bg-[#F5F7FA] text-[#0B2C6B]"
                       }`}
                     >
-                      {followUpSending === `${inquiry.id}:${item.level}` ? "Kirim..." : item.label}
+                      {followUpSending === `${inquiry.id}:${item.level}` ? "Kirim..." : sent ? "Terkirim" : !isNext ? "Terkunci" : item.label}
                     </button>
                   );
                 })}
@@ -177,7 +207,7 @@ export function InquiriesPanel({
                   <Mail size={15} />
                 </a>
                 {inquiry.whatsapp && (
-                  <a href={`https://wa.me/${inquiry.whatsapp.replace(/\D/g, "")}`} target="_blank" className="grid h-11 w-11 place-items-center rounded-[10px] border border-black/10 bg-white text-[#0B2C6B]">
+                  <a href={`https://wa.me/${inquiry.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="grid h-11 w-11 place-items-center rounded-[10px] border border-black/10 bg-white text-[#0B2C6B]">
                     <Phone size={15} />
                   </a>
                 )}

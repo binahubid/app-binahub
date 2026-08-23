@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, AlertTriangle, X } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,7 +8,6 @@ import Image from "next/image";
 import { PixelIcon, type IconType } from "@/components/pixel-icon";
 import { FormData } from "./_types";
 import { DIMENSIONS, QUESTIONS } from "./questions";
-import { LandingStep } from "./_steps/landing-step";
 import { LeadCaptureStep } from "./_steps/lead-capture-step";
 import { InstructionStep } from "./_steps/instruction-step";
 import { QuestionsStep } from "./_steps/questions-step";
@@ -16,8 +15,8 @@ import { OpenQuestionsStep } from "./_steps/open-questions-step";
 import { ContactStep } from "./_steps/contact-step";
 import { SuccessStep } from "./_steps/success-step";
 
-import { localizePath } from "@/i18n/config";
 import { useLocale } from "@/i18n/use-locale";
+import { useRouter } from "next/navigation";
 
 const TOTAL_STEPS = 11;
 const SPEED_LINES = [
@@ -49,6 +48,7 @@ const STEP_CONTEXT_EN = [
 
 export default function InsightPage() {
   const locale = useLocale();
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     email: "", company: "", employees: "", name: "",
@@ -57,6 +57,7 @@ export default function InsightPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const submissionKeyRef = useRef<string>(crypto.randomUUID());
 
   // ── Safety Measures ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -93,14 +94,32 @@ export default function InsightPage() {
   const nextStep = () => {
     setStep((s) => s + 1);
   };
+  const exitAssessment = () => {
+    const fromProgram = new URLSearchParams(window.location.search).get("source") === "program";
+    if (fromProgram) {
+      router.push("/client/program");
+      return;
+    }
+    const websiteOrigin = (process.env.NEXT_PUBLIC_COMPANY_WEBSITE_URL || "https://binahub.id").replace(/\/$/, "");
+    const destination = new URL(`${websiteOrigin}${locale === "en" ? "/en/insight" : "/insight"}`);
+    if (destination.origin === window.location.origin) {
+      router.push(`${destination.pathname}${destination.search}${destination.hash}`);
+      return;
+    }
+    window.open(destination.toString(), "_self");
+  };
   const prevStep = () => {
+    if (step <= 0) {
+      exitAssessment();
+      return;
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
-    setStep((s) => Math.max(-1, s - 1));
+    setStep((s) => Math.max(0, s - 1));
   };
 
   const confirmBack = () => {
     setShowExitConfirm(false);
-    window.location.href = localizePath("/", locale);
+    exitAssessment();
   };
 
   // ── Handlers ────────────────────────────────────────────────────────────────
@@ -117,12 +136,16 @@ export default function InsightPage() {
 
   const handleSubmitFinal = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setIsSubmitting(true);
     
     try {
       const response = await fetch("/api/assessment", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": submissionKeyRef.current,
+        },
         body: JSON.stringify({
           ...formData,
           answers: answers,
@@ -130,18 +153,17 @@ export default function InsightPage() {
         }),
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setIsSubmitting(false);
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.success) {
         nextStep();
       } else {
-        const fullError = data.details ? `${data.error} (${data.details})` : data.error;
-        alert(copy.submitError + (fullError || copy.genericError));
-        setIsSubmitting(false);
+        const details = typeof data?.details === "string" ? ` (${data.details})` : "";
+        alert(copy.submitError + (data?.error ? `${data.error}${details}` : copy.genericError));
       }
     } catch (error) {
       console.error("Submission error:", error);
       alert(copy.connectionError);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -242,7 +264,7 @@ export default function InsightPage() {
 
       {/* Globally hide navbar/footer during assessment form steps (step >= 0) */}
       {step >= 0 && (
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style>{`
           #global-navbar, 
           .global-navbar,
           header:not(.insight-header), 
@@ -251,7 +273,7 @@ export default function InsightPage() {
           #chatbot-window { 
             display: none !important; 
           }
-        ` }} />
+        `}</style>
       )}
 
       {/* Assessment header */}
@@ -262,7 +284,7 @@ export default function InsightPage() {
               if (step > 0 && step < 11) {
                 setShowExitConfirm(true);
               } else {
-                window.location.href = localizePath("/", locale);
+                exitAssessment();
               }
             }}
             className="flex items-center hover:opacity-70 transition-opacity"
@@ -296,9 +318,8 @@ export default function InsightPage() {
       )}
 
       {/* Main content */}
-      <main className={`flex-1 flex flex-col items-center w-full ${step === -1 ? "" : "justify-center mt-16 pb-24"}`}>
+      <main className="mt-16 flex w-full flex-1 flex-col items-center justify-center pb-24">
         <AnimatePresence mode="wait">
-          {step === -1 && !isSubmitting && <LandingStep onStart={nextStep} />}
           {step === 0  && !isSubmitting && <LeadCaptureStep formData={formData} onChange={handleFormChange} onNext={handleSubmitLead} onPrev={prevStep} />}
           {step === 1  && !isSubmitting && <InstructionStep onNext={nextStep} onPrev={prevStep} />}
           {step >= 2 && step <= 8 && !isSubmitting && <QuestionsStep step={step} answers={answers} onAnswer={handleAnswer} />}

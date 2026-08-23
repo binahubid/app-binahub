@@ -5,13 +5,10 @@ import Link from "next/link";
 import { AlertCircle, ArrowLeft, CheckCircle2, MapPin } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { ProgramShareCard } from "@/components/program-share-card";
+import { PROGRAM_MODULE_KEYS, PROGRAM_MODULE_META, type ProgramModuleKey } from "@/lib/program-modules";
 
 const ENGAGEMENT_TYPES = ["assessment", "coaching", "training", "transformation"] as const;
-const MODULE_OPTIONS = [
-  { key: "tbos", label: "T-BOS", description: "Observasi perilaku tim berbasis misi" },
-  { key: "lep", label: "LEP", description: "Evaluasi program oleh peserta" },
-] as const;
-type ModuleKey = typeof MODULE_OPTIONS[number]["key"];
+const MODULE_OPTIONS = PROGRAM_MODULE_KEYS.map((key) => ({ key, ...PROGRAM_MODULE_META[key] }));
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "Draf" },
@@ -29,7 +26,7 @@ function CreateEngagementContent() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [participantLimit, setParticipantLimit] = useState(100);
-  const [enabledModules, setEnabledModules] = useState<ModuleKey[]>(["tbos"]);
+  const [enabledModules, setEnabledModules] = useState<ProgramModuleKey[]>(["tbos"]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [createdProgramId, setCreatedProgramId] = useState("");
@@ -151,7 +148,7 @@ function CreateEngagementContent() {
 
           <fieldset className="mt-5">
             <legend className="text-xs font-semibold text-[#0B2C6B]/70">Modul Program *</legend>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <div className="mt-2 grid gap-3 sm:grid-cols-3">
               {MODULE_OPTIONS.map((module) => {
                 const checked = enabledModules.includes(module.key);
                 return (

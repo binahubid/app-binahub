@@ -37,6 +37,7 @@ export type AssessmentRecord = {
   resultFollowUpSentAt?: string | null;
   proposalFollowUpLevel?: number;
   proposalFollowUpSentAt?: string | null;
+  followUpPaused?: boolean;
   createdAt: string;
 };
 
@@ -78,6 +79,9 @@ export type InquiryRecord = {
   source: string;
   status: string;
   notes: string;
+  followUpLevel?: number;
+  followUpLastSentAt?: string | null;
+  followUpPaused?: boolean;
   createdAt: string | null;
 };
 

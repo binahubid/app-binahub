@@ -20,4 +20,9 @@ describe("ClientProgramModules", () => {
     expect(screen.queryByText("LEP")).not.toBeInTheDocument();
     expect(screen.getByText("Belum ada modul yang tersedia untuk program ini.")).toBeInTheDocument();
   });
+
+  it("links an enabled BinaInsight module to the public assessment", () => {
+    render(<ClientProgramModules modules={[{ key: "binainsight", enabled: true, clientAvailable: true }]} />);
+    expect(screen.getByRole("link", { name: /BinaInsight/i })).toHaveAttribute("href", "/insight?source=program");
+  });
 });

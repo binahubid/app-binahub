@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { AlertCircle, ArrowRight, Building2, CalendarDays, CheckCircle2, ClipboardCheck, Copy, Download, Gamepad2, KeyRound, Loader2, MapPin, ShieldCheck, UserRound } from "lucide-react";
+import { AlertCircle, ArrowRight, BarChart3, Building2, CalendarDays, CheckCircle2, ClipboardCheck, Copy, Download, Gamepad2, KeyRound, Loader2, MapPin, ShieldCheck, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -15,7 +15,7 @@ interface ProgramPreview {
   status: string;
   startDate: string | null;
   endDate: string | null;
-  modules: Array<"tbos" | "lep">;
+  modules: Array<"tbos" | "lep" | "binainsight">;
   available: boolean;
 }
 
@@ -196,6 +196,7 @@ export default function ClientAccessPage() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {program.modules.includes("lep") && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold"><ClipboardCheck className="h-3.5 w-3.5 text-amber-400" /> LEP · Evaluasi Program</span>}
                       {program.modules.includes("tbos") && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold"><Gamepad2 className="h-3.5 w-3.5 text-amber-400" /> T-BOS · Observasi Perilaku</span>}
+                      {program.modules.includes("binainsight") && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold"><BarChart3 className="h-3.5 w-3.5 text-amber-400" /> BinaInsight · Diagnostik Performa</span>}
                     </div>
                   </div>
                 )}

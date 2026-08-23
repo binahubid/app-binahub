@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { AppShell } from "@/components/app-shell";
 import { ProgramShareCard } from "@/components/program-share-card";
 import { programAccessPath } from "@/lib/program-access-link";
+import { PROGRAM_MODULE_KEYS, PROGRAM_MODULE_META, type ProgramModuleKey } from "@/lib/program-modules";
 
 const STATUS_ORDER = ["draft", "active", "in_progress", "review", "completed", "archived"] as const;
 const STATUS_LABELS: Record<typeof STATUS_ORDER[number], string> = {
@@ -47,7 +48,7 @@ function ManageEngagementContent() {
   const [archiving, setArchiving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletingProgram, setDeletingProgram] = useState(false);
-  const [enabledModules, setEnabledModules] = useState<Array<"tbos" | "lep">>([]);
+  const [enabledModules, setEnabledModules] = useState<ProgramModuleKey[]>([]);
   const [savingModules, setSavingModules] = useState(false);
 
   const currentIndex = engagement ? STATUS_ORDER.indexOf(engagement.status as typeof STATUS_ORDER[number]) : -1;
@@ -83,13 +84,13 @@ function ManageEngagementContent() {
       .then((response) => response.json())
       .then((body) => {
         if (!active || !body.success) return;
-        setEnabledModules((body.modules || []).filter((row: { enabled: boolean }) => row.enabled).map((row: { module_key: "tbos" | "lep" }) => row.module_key));
+        setEnabledModules((body.modules || []).filter((row: { enabled: boolean }) => row.enabled).map((row: { module_key: ProgramModuleKey }) => row.module_key));
       })
       .catch(() => {});
     return () => { active = false; };
   }, [id]);
 
-  const handleModuleToggle = async (moduleKey: "tbos" | "lep") => {
+  const handleModuleToggle = async (moduleKey: ProgramModuleKey) => {
     if (!engagement) return;
     const next = enabledModules.includes(moduleKey)
       ? enabledModules.filter((key) => key !== moduleKey)
@@ -104,7 +105,7 @@ function ManageEngagementContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         programId: engagement.id,
-        modules: ["tbos", "lep"].map((key) => ({ moduleKey: key, enabled: next.includes(key as "tbos" | "lep") })),
+        modules: PROGRAM_MODULE_KEYS.map((key) => ({ moduleKey: key, enabled: next.includes(key) })),
       }),
     });
     const body = await response.json().catch(() => ({}));
@@ -290,10 +291,10 @@ function ManageEngagementContent() {
             <fieldset className="mt-5 border-t border-slate-100 pt-5" disabled={savingModules}>
               <legend className="text-xs font-semibold uppercase tracking-[0.12em] text-[#D9A441]">Modul Program</legend>
               <div className="mt-3 flex flex-wrap gap-3">
-                {(["tbos", "lep"] as const).map((moduleKey) => (
+                {PROGRAM_MODULE_KEYS.map((moduleKey) => (
                   <label key={moduleKey} className={`inline-flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border-2 px-4 text-sm font-bold transition ${enabledModules.includes(moduleKey) ? "border-blue-900 bg-blue-50 text-blue-900" : "border-slate-200 bg-white text-slate-400"}`}>
                     <input className="sr-only" type="checkbox" checked={enabledModules.includes(moduleKey)} onChange={() => { void handleModuleToggle(moduleKey); }} />
-                    {moduleKey === "tbos" ? "T-BOS" : "LEP"}
+                    {PROGRAM_MODULE_META[moduleKey].label}
                     {enabledModules.includes(moduleKey) && <Check className="h-4 w-4" />}
                   </label>
                 ))}

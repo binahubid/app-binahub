@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight, LogOut, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AssessmentPanel } from "./_components/assessment-panel";
 import { ContactsPanel } from "./_components/contacts-panel";
 import { InquiriesPanel } from "./_components/inquiries-panel";
@@ -16,6 +17,14 @@ import { TAB_META, tabs } from "./_lib/constants";
 import type { DashboardData } from "./_lib/types";
 
 export default function AdminDashboardPage() {
+  return (
+    <AdminAuthGate>
+      <AdminDashboardContent />
+    </AdminAuthGate>
+  );
+}
+
+function AdminDashboardContent() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,30 +50,33 @@ export default function AdminDashboardPage() {
     setLoading(true);
     setError("");
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
 
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
-
-    const response = await fetch("/api/admin/dashboard", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const json = await response.json();
-    if (!response.ok || !json.success) {
-      setError(json.error || "Gagal memuat dashboard admin.");
-      setLoading(false);
-      if (response.status === 401 || response.status === 403) {
+      if (!token) {
         router.replace("/login");
+        return;
       }
-      return;
-    }
 
-    setData(json as DashboardData);
-    setLoading(false);
+      const response = await fetch("/api/admin/dashboard", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await response.json().catch(() => null);
+
+      if (!response.ok || !json?.success) {
+        if (response.status === 401 || response.status === 403) {
+          router.replace(response.status === 401 ? "/login" : "/access-denied");
+        }
+        throw new Error(json?.error || "Gagal memuat dashboard admin.");
+      }
+
+      setData(json as DashboardData);
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : "Gagal memuat dashboard admin.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

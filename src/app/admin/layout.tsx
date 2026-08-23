@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { AdminMobileNav } from "@/components/admin-mobile-nav";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

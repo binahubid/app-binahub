@@ -8,8 +8,10 @@ import { ArrowRight, LogOut, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AssessmentPanel } from "./_components/assessment-panel";
+import { BusinessRulesPanel } from "./_components/business-rules-panel";
 import { ContactsPanel } from "./_components/contacts-panel";
 import { InquiriesPanel } from "./_components/inquiries-panel";
+import { MeetingsPanel } from "./_components/meetings-panel";
 import { Overview } from "./_components/overview";
 import { SmartCenterPanel } from "./_components/smart-center-panel";
 import { DashboardSkeleton, NotificationBadge } from "./_components/shared";
@@ -396,6 +398,8 @@ function AdminDashboardContent() {
                     onRefresh={fetchDashboard}
                   />
                 )}
+                {activeTab === "Katalog & Rules" && <BusinessRulesPanel onAction={adminRequest} />}
+                {activeTab === "Meeting" && <MeetingsPanel bookings={data.calendarBookings || []} />}
                 {activeTab === "Kontak & Leads" && (
                   <ContactsPanel contacts={data.contacts} onAction={adminRequest} onRefresh={fetchDashboard} />
                 )}

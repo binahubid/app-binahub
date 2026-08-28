@@ -17,6 +17,7 @@ import { SuccessStep } from "./_steps/success-step";
 
 import { useLocale } from "@/i18n/use-locale";
 import { useRouter } from "next/navigation";
+import { readAssessmentAttribution } from "@/lib/attribution";
 
 const TOTAL_STEPS = 11;
 const SPEED_LINES = [
@@ -149,6 +150,7 @@ export default function InsightPage() {
         body: JSON.stringify({
           ...formData,
           answers: answers,
+          attribution: readAssessmentAttribution(window.location.search, window.location.href, document.referrer),
           locale,
         }),
       });

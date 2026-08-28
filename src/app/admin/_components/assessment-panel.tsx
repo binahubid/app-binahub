@@ -14,7 +14,45 @@ import {
 } from "./shared";
 import { FOLLOW_UP_LEVELS } from "../_lib/constants";
 import { daysSince, exportCsv, formatDate, uniqueOptions } from "../_lib/utils";
-import type { AssessmentDocumentType, AssessmentRecord, ConfirmAction, DashboardData, EmailPreview } from "../_lib/types";
+import type { AssessmentDocumentType, AssessmentRecord, CatalogModule, CatalogProduct, ConfirmAction, DashboardData, EmailPreview } from "../_lib/types";
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+}
+
+function proposalGateLabel(status?: string) {
+  const labels: Record<string, string> = {
+    not_evaluated: "Belum dievaluasi",
+    clear: "Lolos otomatis",
+    pending_approval: "Menunggu persetujuan manusia",
+    approved: "Disetujui manusia",
+    rejected: "Ditolak",
+    revision_required: "Perlu revisi",
+  };
+  return labels[status || "not_evaluated"] || status || labels.not_evaluated;
+}
+
+const proposalContextFields = [
+  ["organizationName", "Nama organisasi"],
+  ["problemOrNeed", "Masalah / kebutuhan"],
+  ["objective", "Tujuan"],
+  ["participantEstimate", "Estimasi peserta"],
+  ["targetAudience", "Target peserta / pengguna"],
+  ["scope", "Scope"],
+  ["timeline", "Timeline"],
+  ["decisionMakerOrSponsor", "Decision maker / sponsor"],
+  ["budgetIndication", "Indikasi / rentang budget"],
+  ["deliveryLocationOrMode", "Lokasi / mode delivery"],
+  ["expectedOutcome", "Expected outcome"],
+  ["nextStep", "Next step"],
+] as const;
+
+type ProposalContextKey = typeof proposalContextFields[number][0];
+type ProposalContext = Record<ProposalContextKey, string>;
+
+const emptyProposalContext = Object.fromEntries(
+  proposalContextFields.map(([key]) => [key, ""]),
+) as ProposalContext;
 
 export function AssessmentPanel({
   data,
@@ -54,6 +92,16 @@ export function AssessmentPanel({
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [emailPreview, setEmailPreview] = useState<EmailPreview | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [builderId, setBuilderId] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<{ products: CatalogProduct[]; modules: CatalogModule[]; selectedRuleSet?: { version?: string; is_mock?: boolean } } | null>(null);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [selectedModules, setSelectedModules] = useState<Record<string, number>>({});
+  const [scopeType, setScopeType] = useState<"standard" | "custom">("standard");
+  const [discountPercent, setDiscountPercent] = useState("0");
+  const [proposalRisk, setProposalRisk] = useState("");
+  const [proposalNotes, setProposalNotes] = useState("");
+  const [proposalContext, setProposalContext] = useState<ProposalContext>(emptyProposalContext);
+  const [approvalNotes, setApprovalNotes] = useState<Record<string, string>>({});
 
   const requestAssessmentDocument = async (record: AssessmentRecord, type: AssessmentDocumentType) => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -135,6 +183,104 @@ export function AssessmentPanel({
       setActionError(error instanceof Error ? error.message : "Gagal menjalankan tindakan assessment.");
     } finally {
       setActionId(null);
+    }
+  };
+
+  const openProposalBuilder = async (record: AssessmentRecord) => {
+    setActionError("");
+    if (builderId !== record.id) {
+      setProposalContext({
+        ...emptyProposalContext,
+        organizationName: record.company || "",
+        problemOrNeed: record.challenge || "",
+        objective: record.target || "",
+      });
+    }
+    setBuilderId((current) => current === record.id ? null : record.id);
+    if (catalog) return;
+    setCatalogLoading(true);
+    try {
+      const result = await onAction("/api/admin/business-rules") as { products?: CatalogProduct[]; modules?: CatalogModule[]; selectedRuleSet?: { version?: string; is_mock?: boolean } };
+      setCatalog({ products: result.products || [], modules: result.modules || [], selectedRuleSet: result.selectedRuleSet });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Gagal memuat katalog modul.");
+    } finally {
+      setCatalogLoading(false);
+    }
+  };
+
+  const generateProposalDraft = async (record: AssessmentRecord) => {
+    const moduleItems = Object.entries(selectedModules)
+      .filter(([, quantity]) => quantity > 0)
+      .map(([catalogModuleId, quantity]) => ({ catalogModuleId, quantity }));
+    if (moduleItems.length === 0) {
+      setActionError("Pilih minimal satu modul untuk membuat draft proposal.");
+      return;
+    }
+    setActionError("");
+    setActionId(`${record.id}:proposal-draft`);
+    try {
+      await onAction("/api/admin/proposals/draft", {
+        method: "POST",
+        body: JSON.stringify({
+          assessmentId: record.id,
+          moduleItems,
+          scopeType,
+          discountPercent: Number(discountPercent || 0),
+          riskFlags: proposalRisk.trim() ? [proposalRisk.trim()] : [],
+          notes: proposalNotes,
+          proposalContext,
+        }),
+      });
+      setBuilderId(null);
+      await onRefresh();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Gagal membuat draft proposal.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const decideProposal = async (record: AssessmentRecord, decision: "approve" | "reject" | "request_revision") => {
+    setActionError("");
+    setActionId(`${record.id}:proposal-${decision}`);
+    try {
+      await onAction("/api/admin/proposals/approval", {
+        method: "POST",
+        body: JSON.stringify({ assessmentId: record.id, decision, note: approvalNotes[record.id] || "" }),
+      });
+      await onRefresh();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Gagal menyimpan keputusan proposal.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const downloadDraftProposal = async (record: AssessmentRecord) => {
+    setActionError("");
+    setDocumentId(`${record.id}:proposal-draft-pdf`);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sesi admin tidak ditemukan.");
+      const response = await fetch(`/api/admin/proposals/preview?assessmentId=${encodeURIComponent(record.id)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const json = await response.json().catch(() => ({}));
+        throw new Error(json.error || "Preview proposal tidak tersedia.");
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Draft_Proposal_${record.company.replace(/[^\w.-]+/g, "_")}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Gagal mengunduh draft proposal.");
+    } finally {
+      setDocumentId(null);
     }
   };
 
@@ -306,6 +452,7 @@ export function AssessmentPanel({
         </div>
         {records.map((record) => {
           const isOpen = expandedId === record.id;
+          const proposalCanSend = ["approved", "clear"].includes(record.proposalGateStatus || "") && !record.proposalDraft?.isSimulation;
           return (
             <div key={record.id} className="border-b border-black/[0.05] last:border-0">
               <button
@@ -339,6 +486,34 @@ export function AssessmentPanel({
                   <div className="space-y-5">
                     <div className="rounded-[12px] border border-black/[0.05] bg-white p-5">
                       <h4 className="mb-3 text-sm font-semibold">Tindakan Assessment</h4>
+                      <div className="mb-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.12em]">
+                        <span className="rounded-full bg-[#0B2C6B]/8 px-3 py-1.5 text-[#0B2C6B]">
+                          {record.lifecycleStage || "prospect"}
+                        </span>
+                        <span className="rounded-full bg-[#D9A441]/14 px-3 py-1.5 text-[#7A5A16]">
+                          {record.leadTemperature || record.leadStatus || "belum dinilai"}
+                          {typeof record.leadScore === "number" ? ` · ${record.leadScore}` : ""}
+                        </span>
+                        <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700">
+                          {record.opportunityStage || "identified"}
+                        </span>
+                      </div>
+                      {(record.leadScoreReason || record.leadScoreRuleVersion) && (
+                        <div className="mb-4 rounded-[10px] border border-slate-200 bg-slate-50 px-3 py-3 text-xs leading-5 text-slate-600">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1">
+                            <span>Confidence: <strong>{typeof record.leadScoreConfidence === "number" ? `${Math.round(record.leadScoreConfidence * 100)}%` : "-"}</strong></span>
+                            <span>Buying signals: <strong>{record.leadScoreEvidence?.buyingSignalCount ?? "-"}</strong></span>
+                            <span>Rules: <strong>{record.leadScoreRuleVersion || "-"}</strong></span>
+                          </div>
+                          {record.leadScoreReason && <p className="mt-1">{record.leadScoreReason}</p>}
+                          {(record.leadScoreEvidence?.missingData || []).length > 0 && (
+                            <p className="mt-1 text-amber-700">Data belum lengkap: {record.leadScoreEvidence?.missingData?.join(", ")}</p>
+                          )}
+                          {(record.leadScoreEvidence?.exclusionReasons || []).length > 0 && (
+                            <p className="mt-1 font-semibold text-red-700">Gate ICP: {record.leadScoreEvidence?.exclusionReasons?.join(" ")}</p>
+                          )}
+                        </div>
+                      )}
                       <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
                         <AdminSelect
                           value={record.assessmentStatus}
@@ -363,6 +538,9 @@ export function AssessmentPanel({
                             "Belum Diminta",
                             "Diminta",
                             "Sedang Disusun",
+                            "Draft Simulasi",
+                            "Menunggu Approval",
+                            "Disetujui",
                             "Terkirim",
                             "Proposal Follow Up 1 Terkirim",
                             "Proposal Follow Up 2 Terkirim",
@@ -407,23 +585,167 @@ export function AssessmentPanel({
                             Minta Proposal
                           </button>
                           <button
+                            type="button"
+                            onClick={() => void openProposalBuilder(record)}
+                            disabled={catalogLoading}
+                            className="h-12 rounded-[10px] border border-[#0B2C6B]/20 bg-[#EAF0F7] px-3 text-xs font-bold uppercase tracking-[0.12em] text-[#0B2C6B] disabled:opacity-50"
+                          >
+                            {builderId === record.id ? "Tutup Draft" : "Siapkan Draft"}
+                          </button>
+                          <button
                             onClick={() =>
                               setConfirmAction({
                                 title: "Kirim proposal ke klien?",
-                                description: "Proposal akan dibuat/dikirim ke email klien. Review kembali nama perusahaan, email, dan status proposal.",
+                                description: "Proposal dari snapshot katalog yang sudah lolos Human Gate akan dikirim ke email klien.",
                                 confirmLabel: "Kirim Proposal",
                                 tone: "gold",
-                                details: [`Klien: ${record.name}`, `Email: ${record.email}`, `Status proposal: ${record.proposalStatus}`],
+                                details: [`Klien: ${record.name}`, `Email: ${record.email}`, `Gate: ${record.proposalGateStatus || "belum dievaluasi"}`, `Katalog: ${record.proposalCatalogVersion || "-"}`],
                                 onConfirm: () => runAssessmentAction(record, "send_proposal"),
                               })
                             }
-                            disabled={actionId === `${record.id}:send_proposal`}
+                            disabled={actionId === `${record.id}:send_proposal` || !proposalCanSend}
+                            title={record.proposalDraft?.isSimulation ? "Pengiriman proposal simulasi dinonaktifkan." : !proposalCanSend ? "Selesaikan draft dan Human Gate terlebih dahulu." : undefined}
                             className="h-12 rounded-[10px] bg-[#0B2C6B] px-3 text-xs font-bold uppercase tracking-[0.12em] text-white disabled:opacity-50"
                           >
                             Kirim Proposal
                           </button>
                         </div>
                       </div>
+                      <div className="mt-4 rounded-[12px] border border-black/[0.07] bg-[#F8FAFC] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#D9A441]">Human Gate</p>
+                            <p className="mt-1 text-sm font-semibold text-[#0B2C6B]">{proposalGateLabel(record.proposalGateStatus)}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {record.proposalDraft && (
+                              <button
+                                type="button"
+                                onClick={() => void downloadDraftProposal(record)}
+                                disabled={documentId === `${record.id}:proposal-draft-pdf`}
+                                className="rounded-[9px] border border-black/10 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#0B2C6B] disabled:opacity-50"
+                              >
+                                Preview PDF
+                              </button>
+                            )}
+                            {record.proposalGateStatus === "pending_approval" && (
+                              <>
+                                <button type="button" disabled={(approvalNotes[record.id] || "").trim().length < 5} onClick={() => void decideProposal(record, "approve")} className="rounded-[9px] bg-emerald-600 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-white disabled:cursor-not-allowed disabled:opacity-40">Setujui</button>
+                                <button type="button" onClick={() => void decideProposal(record, "request_revision")} className="rounded-[9px] border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">Minta Revisi</button>
+                                <button type="button" onClick={() => void decideProposal(record, "reject")} className="rounded-[9px] border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-red-700">Tolak</button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        {record.proposalDraft?.isSimulation && (
+                          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">SIMULASI — pengiriman eksternal dinonaktifkan sampai katalog dan Business Rules resmi aktif.</p>
+                        )}
+                        {(record.proposalGateReasons || []).length > 0 && (
+                          <ul className="mt-3 space-y-1 text-xs leading-5 text-slate-600">
+                            {(record.proposalGateReasons || []).map((reason) => <li key={reason.code}>• {reason.message}</li>)}
+                          </ul>
+                        )}
+                        {record.proposalGateStatus === "pending_approval" && (
+                          <label className="mt-3 block text-xs font-semibold text-slate-600">Alasan keputusan / audit override
+                            <textarea
+                              value={approvalNotes[record.id] || ""}
+                              onChange={(event) => setApprovalNotes((current) => ({ ...current, [record.id]: event.target.value }))}
+                              rows={2}
+                              placeholder="Wajib diisi sebelum menyetujui proposal."
+                              className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-3 font-normal"
+                            />
+                          </label>
+                        )}
+                        {(record.proposalDraft?.requiredDataMissing || []).length > 0 && (
+                          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                            Data wajib belum lengkap: {record.proposalDraft?.requiredDataMissing?.join(", ")}.
+                          </p>
+                        )}
+                        {record.proposalDraft?.commercials && (
+                          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-600">
+                            <span>Versi: <strong>{record.proposalDraft.rulesVersion || record.proposalCatalogVersion}</strong></span>
+                            <span>Subtotal: <strong>{formatCurrency(record.proposalDraft.commercials.subtotal || 0)}</strong></span>
+                            <span>Total sebelum pajak: <strong>{formatCurrency(record.proposalDraft.commercials.totalBeforeTax || 0)}</strong></span>
+                            <span>SLA review: <strong>{record.proposalDraft.reviewSlaBusinessDays || 1} hari kerja</strong></span>
+                          </div>
+                        )}
+                      </div>
+                      {builderId === record.id && (
+                        <div className="mt-4 rounded-[12px] border border-[#0B2C6B]/15 bg-white p-4">
+                          <div className="mb-3">
+                            <h5 className="text-sm font-semibold text-[#0B2C6B]">Konfigurasi Modul Proposal</h5>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">Harga dihitung dari modul, bukan dari nama produk. Modul mock atau belum siap otomatis masuk Human Gate.</p>
+                          </div>
+                          {catalogLoading ? <p className="text-xs text-slate-500">Memuat katalog...</p> : (
+                            <div className="space-y-2">
+                              {(catalog?.modules || []).filter((module) => module.active).map((module) => {
+                                const product = catalog?.products.find((item) => item.id === module.product_id);
+                                const selected = (selectedModules[module.id] || 0) > 0;
+                                return (
+                                  <label key={module.id} className="grid gap-2 rounded-[10px] border border-black/[0.07] p-3 md:grid-cols-[24px_1fr_110px] md:items-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={selected}
+                                      onChange={(event) => setSelectedModules((current) => ({ ...current, [module.id]: event.target.checked ? 1 : 0 }))}
+                                    />
+                                    <span>
+                                      <span className="block text-xs font-semibold text-[#0B2C6B]">{product?.name || "Produk"} · {module.name}</span>
+                                      <span className="mt-0.5 block text-[11px] text-slate-500">{module.pricing_unit} · {formatCurrency(Number(module.base_price || 0))} · {module.readiness_status}{module.is_mock ? " · MOCK" : ""}</span>
+                                    </span>
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      max={1000}
+                                      disabled={!selected}
+                                      value={selected ? selectedModules[module.id] : 1}
+                                      onChange={(event) => setSelectedModules((current) => ({ ...current, [module.id]: Math.max(1, Number(event.target.value || 1)) }))}
+                                      className="h-9 rounded-lg border border-slate-200 px-3 text-xs disabled:bg-slate-100"
+                                      aria-label={`Jumlah ${module.name}`}
+                                    />
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <div className="mt-4 grid gap-3 md:grid-cols-3">
+                            <label className="text-xs font-semibold text-slate-600">Tipe scope
+                              <select value={scopeType} onChange={(event) => setScopeType(event.target.value as "standard" | "custom")} className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 font-normal">
+                                <option value="standard">Standar</option><option value="custom">Custom</option>
+                              </select>
+                            </label>
+                            <label className="text-xs font-semibold text-slate-600">Diskon (%)
+                              <input type="number" min={0} max={100} value={discountPercent} onChange={(event) => setDiscountPercent(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 font-normal" />
+                            </label>
+                            <label className="text-xs font-semibold text-slate-600">Risiko (opsional)
+                              <input value={proposalRisk} onChange={(event) => setProposalRisk(event.target.value)} placeholder="Legal, reputasi, komersial..." className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 font-normal" />
+                            </label>
+                          </div>
+                          <div className="mt-4">
+                            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                              <h6 className="text-xs font-bold uppercase tracking-[0.12em] text-[#0B2C6B]">Data wajib proposal</h6>
+                              <span className="text-[11px] text-slate-500">Tidak boleh dikosongkan pada proposal final</span>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {proposalContextFields.map(([key, label]) => (
+                                <label key={key} className="text-xs font-semibold text-slate-600">{label}
+                                  <textarea
+                                    value={proposalContext[key]}
+                                    onChange={(event) => setProposalContext((current) => ({ ...current, [key]: event.target.value }))}
+                                    rows={2}
+                                    className="mt-1 w-full rounded-lg border border-slate-200 p-3 font-normal"
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          <label className="mt-3 block text-xs font-semibold text-slate-600">Catatan reviewer
+                            <textarea value={proposalNotes} onChange={(event) => setProposalNotes(event.target.value)} rows={2} className="mt-1 w-full rounded-lg border border-slate-200 p-3 font-normal" />
+                          </label>
+                          <div className="mt-3 flex justify-end">
+                            <button type="button" onClick={() => void generateProposalDraft(record)} disabled={actionId === `${record.id}:proposal-draft`} className="rounded-[9px] bg-[#0B2C6B] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white disabled:opacity-50">Buat Draft & Evaluasi Gate</button>
+                          </div>
+                        </div>
+                      )}
                       <div className="mt-4 flex justify-end">
                         <button
                           type="button"

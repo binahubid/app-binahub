@@ -20,6 +20,8 @@ export type AssessmentRecord = {
   role: string;
   whatsapp: string;
   employees: string;
+  challenge?: string;
+  target?: string;
   category: string;
   overallScore: number;
   scores: Record<string, number>;
@@ -33,12 +35,79 @@ export type AssessmentRecord = {
   proposalRequestedAt: string | null;
   proposalSentAt: string | null;
   proposalEmailId: string | null;
+  proposalDraft?: ProposalDraftSnapshot | null;
+  proposalGateStatus?: "not_evaluated" | "clear" | "pending_approval" | "approved" | "rejected" | "revision_required" | string;
+  proposalGateReasons?: ProposalGateReason[];
+  proposalCatalogVersion?: string | null;
+  proposalGeneratedAt?: string | null;
+  proposalApprovedAt?: string | null;
+  proposalApprovedBy?: string | null;
   resultFollowUpLevel?: number;
   resultFollowUpSentAt?: string | null;
   proposalFollowUpLevel?: number;
   proposalFollowUpSentAt?: string | null;
   followUpPaused?: boolean;
+  leadScore?: number | null;
+  leadStatus?: string | null;
+  leadTemperature?: string | null;
+  leadScoreConfidence?: number | null;
+  leadScoreReason?: string | null;
+  leadScoreRuleVersion?: string | null;
+  leadScoreEvidence?: {
+    eligible?: boolean;
+    buyingSignalCount?: number;
+    missingData?: string[];
+    exclusionReasons?: string[];
+  } | null;
+  lifecycleStage?: string;
+  opportunityStage?: string;
+  attribution?: Record<string, string>;
   createdAt: string;
+};
+
+export type ProposalGateReason = { code: string; message: string; severity: "warning" | "blocking" };
+
+export type ProposalDraftSnapshot = {
+  proposal?: { subject?: string; proposedProgram?: string; isSimulation?: boolean; rulesVersion?: string };
+  commercials?: {
+    items?: Array<{ id: string; moduleCode: string; name: string; pricingUnit: string; quantity: number; lineTotal: number; isMock: boolean; readinessStatus: string }>;
+    subtotal?: number;
+    discountPercent?: number;
+    discountAmount?: number;
+    totalBeforeTax?: number;
+  };
+  isSimulation?: boolean;
+  rulesVersion?: string;
+  requiredData?: Record<string, string>;
+  requiredDataComplete?: boolean;
+  requiredDataMissing?: string[];
+  reviewSlaBusinessDays?: number;
+  generatedAt?: string;
+};
+
+export type CatalogProduct = {
+  id: string;
+  product_key: string;
+  name: string;
+  status: string;
+  objective?: string | null;
+  notes?: string | null;
+};
+
+export type CatalogModule = {
+  id: string;
+  product_id: string;
+  module_code: string;
+  name: string;
+  description?: string | null;
+  standard_scope?: string | null;
+  pricing_unit: string;
+  base_price: number | string;
+  currency: string;
+  readiness_status: string;
+  is_mock: boolean;
+  active: boolean;
+  catalog_version: string;
 };
 
 export type AssessmentDocumentType = "result-pdf" | "proposal-pdf" | "result-email" | "proposal-email";
@@ -82,7 +151,31 @@ export type InquiryRecord = {
   followUpLevel?: number;
   followUpLastSentAt?: string | null;
   followUpPaused?: boolean;
+  moduleRequest?: {
+    requestedAt?: string;
+    modules?: Array<{ id?: string; code?: string; name?: string; basePrice?: number; currency?: string; catalogVersion?: string }>;
+  };
   createdAt: string | null;
+};
+
+export type CalendarBookingRecord = {
+  id: string;
+  providerUid: string;
+  leadId: string | null;
+  assessmentId: string | null;
+  eventTypeSlug: string | null;
+  title: string;
+  status: string;
+  attendeeName: string;
+  attendeeEmail: string;
+  organizerEmail: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  timeZone: string;
+  meetingUrl: string | null;
+  cancellationReason: string | null;
+  updatedAt: string | null;
+  isUpcoming: boolean;
 };
 
 export type CoachRecord = {
@@ -213,6 +306,7 @@ export type DashboardData = {
     totalInquiries: number;
     totalCoaches: number;
     totalEmployees?: number;
+    upcomingMeetings?: number;
   };
   dimensionStats: DimensionScore[];
   categoryBreakdown: { category: string; count: number }[];
@@ -230,6 +324,7 @@ export type DashboardData = {
   projects?: ProjectRecord[];
   projectAssignments?: ProjectAssignmentSmartRecord[];
   smartActions?: SmartActionRecord[];
+  calendarBookings?: CalendarBookingRecord[];
 };
 
 export type AdminTab = typeof import("./constants").tabs[number];

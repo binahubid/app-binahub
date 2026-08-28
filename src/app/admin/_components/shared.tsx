@@ -271,14 +271,16 @@ export function PresetButtons({ options, onPick }: { options: string[]; onPick: 
   );
 }
 
-export function Badge({ children, tone = "navy" }: { children: React.ReactNode; tone?: "navy" | "gold" }) {
+export function Badge({ children, tone = "navy" }: { children: React.ReactNode; tone?: "navy" | "gold" | "green" | "red" }) {
+  const toneClass = {
+    navy: "bg-[#0B2C6B]/7 text-[#0B2C6B]/62",
+    gold: "bg-[#D9A441]/12 text-[#9B6C17]",
+    green: "bg-emerald-50 text-emerald-700",
+    red: "bg-red-50 text-red-700",
+  }[tone];
   return (
     <span
-      className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
-        tone === "gold"
-          ? "bg-[#D9A441]/12 text-[#9B6C17]"
-          : "bg-[#0B2C6B]/7 text-[#0B2C6B]/62"
-      }`}
+      className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${toneClass}`}
     >
       {children}
     </span>

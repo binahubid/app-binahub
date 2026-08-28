@@ -137,6 +137,18 @@ export function InquiriesPanel({
               </div>
             </div>
             <p className="mt-4 text-sm font-light leading-relaxed text-black/58">{inquiry.message}</p>
+            {(inquiry.moduleRequest?.modules || []).length > 0 && (
+              <div className="mt-4 rounded-[12px] border border-[#D9A441]/25 bg-[#FFF8EA] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9B6C17]">Modul dari katalog publik</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(inquiry.moduleRequest?.modules || []).map((module) => (
+                    <span key={module.id || module.code} className="rounded-full border border-[#D9A441]/25 bg-white px-3 py-1 text-xs font-semibold text-[#0B2C6B]">
+                      {module.name || module.code} · {module.catalogVersion || "-"}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="mt-4 grid gap-2 rounded-[12px] border border-black/[0.05] bg-white p-3 md:grid-cols-[1fr_auto] md:items-center">
               <div>
                 <p className="text-xs leading-relaxed text-black/50">

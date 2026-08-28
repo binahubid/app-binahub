@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, BarChart3, Mail, Phone, Users } from "lucide-react";
+import { Activity, BarChart3, CalendarClock, Mail, Phone, Users } from "lucide-react";
 import { colors } from "../_lib/constants";
 import type { DashboardData } from "../_lib/types";
 import { MetricBar, Panel, StatCard } from "./shared";
@@ -12,11 +12,12 @@ export function Overview({ data }: { data: DashboardData }) {
     { label: "Kontak Klien", value: data.summary.totalContacts, icon: Mail },
     { label: "Inquiry Masuk", value: data.summary.totalInquiries, icon: Phone },
     { label: "Associate Terdaftar", value: data.summary.totalCoaches, icon: Users },
+    { label: "Meeting Mendatang", value: data.summary.upcomingMeetings || 0, icon: CalendarClock },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         {summaryCards.map((card) => (
           <StatCard key={card.label} label={card.label} value={card.value} icon={card.icon} />
         ))}

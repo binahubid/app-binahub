@@ -17,6 +17,40 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 - Dependensi diperbarui ke patch aman Next.js; `npm audit` frontend dan API tidak lagi melaporkan vulnerability.
 - Dokumentasi architecture, data model, permission, state machine, dan deployment database diselaraskan dengan implementasi aktual.
 
+## [0.7.0] - 2026-08-28
+
+### Added — Business Rules v1 pada Dashboard Admin
+
+- Menampilkan draft Business Rules non-mock beserta activation blockers tanpa menyamarkannya sebagai rules aktif.
+- Menampilkan confidence, buying signals, rule version, alasan qualification, data lead yang masih kurang, dan exclusion gate pada detail assessment.
+- Menambahkan form 12 data wajib proposal agar tim dapat melengkapi konteks bisnis sebelum Human Gate dievaluasi.
+- Menampilkan daftar data proposal yang belum lengkap serta SLA review pada snapshot draft.
+
+### Changed
+
+- Approval proposal sekarang meminta alasan audit terpisah; tombol setujui tetap nonaktif sampai alasan memadai diisi.
+- Dashboard tetap menandai katalog/rules mock sebagai simulasi dan tidak membuka pengiriman proposal otomatis.
+
+## [0.6.0] - 2026-08-28
+
+### Added — BinaHub AI Business Process & BinaInsight Public Funnel
+
+- Menambahkan BinaInsight publik tanpa autentikasi, penerusan attribution kampanye, dan payload assessment yang tervalidasi.
+- Menambahkan tampilan lifecycle consumer → prospect → lead → client → retained, temperature hot/warm/cold, serta stage opportunity pada dashboard admin.
+- Menambahkan panel Business Rules, katalog modul, proposal indikatif, human gate, approval/revision/reject, dan timeline meeting Cal.com pada dashboard admin.
+- Menambahkan BinaInsight sebagai modul program dan penyelarasan UI hasil assessment serta akses admin terkait.
+- Menambahkan dokumentasi implementasi proses bisnis, Business Rules mock, dan artefak presentasi untuk penggantian data mock menjadi data resmi.
+
+### Changed
+
+- Menyelaraskan dashboard assessment, inquiry, overview, serta navigasi admin dengan workflow prospecting, lead qualification, proposal, dan follow-up.
+- Memperbarui integrasi API publik untuk mendukung katalog per modul dan proses konsultasi.
+
+### Verification
+
+- `npm run test:run` lulus: 41 tes.
+- `npm run build` lulus pada Next.js 16.3.1.
+
 ## [0.5.0] - 2026-08-13
 
 ### Added — Modul LEP, Batch Fleksibel, Penugasan Fasilitator (Prompt 0–8)

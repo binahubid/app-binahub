@@ -3,9 +3,11 @@
 Tanggal pembaruan: 29 Agustus 2026
 Versi working copy: `app-binahub 0.8.0`, `binahub-api 0.8.0`
 
+Status deployment per 29 Agustus 2026: migration `0027`, API, dan app v0.8.0 sudah dideploy. Outbound tetap terkunci oleh Business Rules dan UAT end-to-end belum selesai.
+
 ## Kesimpulan
 
-Implementasi kode utama Fase 2 sudah tersedia di working copy. Sistem sekarang mempunyai Sales Pipeline yang dapat dioperasikan manusia, qualification berbasis data yang tidak menebak, template follow-up terkontrol, webhook deliverability, dan audit trail. Fitur ini belum boleh dianggap aktif di production sampai migration `0027`, environment, webhook Resend, dan deployment v0.8.0 selesai.
+Implementasi kode utama Fase 2 sudah tersedia dan dideploy. Sistem sekarang mempunyai Sales Pipeline yang dapat dioperasikan manusia, qualification berbasis data yang tidak menebak, template follow-up terkontrol, webhook deliverability, dan audit trail. Deployment tidak berarti outbound aktif; environment, webhook Resend, activation gate, dan UAT tetap harus diverifikasi.
 
 UAT bisnis sengaja ditunda sesuai keputusan saat ini. Type checking boleh dijalankan sebagai pemeriksaan integritas kode, tetapi tidak menggantikan UAT end-to-end.
 

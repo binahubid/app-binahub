@@ -3,6 +3,8 @@
 Tanggal: 29 Agustus 2026  
 Versi working copy: `0.10.0`
 
+Status deployment per 29 Agustus 2026: migration `0029`, API, dan app v0.10.0 sudah dideploy. Workflow Client Operations sudah diimpor pada Fase 6, tetapi tetap inactive dan credential belum dihubungkan.
+
 ## Ringkasan
 
 Fase 4 membangun lapisan kontrol antara sinyal otomatis dan pekerjaan manusia. Scheduler tidak mengambil keputusan komersial dan tidak menghubungi client. Ia hanya membaca data yang sudah tersedia, membentuk kandidat deterministik, dan—setelah dry-run dinonaktifkan—membuat human task idempotent untuk ditangani owner melalui dashboard.
@@ -81,4 +83,3 @@ Automation Fase 4 tidak boleh:
 - Instrumen NPS/CSAT.
 - Vendor kontrak/e-sign serta invoice/payment.
 - Data owner/backup/approver resmi dari Business Rules final.
-

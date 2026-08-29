@@ -3,11 +3,13 @@
 Tanggal: 29 Agustus 2026  
 Versi working copy: `0.9.0`
 
+Status deployment per 29 Agustus 2026: migration `0028`, API, dan app v0.9.0 sudah dideploy. UAT bisnis tetap ditunda.
+
 ## Ringkasan
 
 Implementasi kode utama Fase 3 kini tersedia pada working copy. Opportunity `won` dapat diubah menjadi client account, stakeholder utama, dan initial delivery project melalui satu transaksi idempotent. Dashboard menyediakan operasi stakeholder, delivery stage, milestone, risiko, account health, serta retention opportunity yang tetap melewati human gate.
 
-Fase 3 belum aktif di production sampai migration `0028_client_delivery_and_retention.sql`, readiness check, deployment API `0.9.0`, dan deployment app `0.9.0` selesai. UAT bisnis tetap ditunda sesuai keputusan saat ini, tetapi typecheck, lint, dan build harus lulus sebelum handoff deployment.
+Fondasi Fase 3 sudah tersedia di production, tetapi belum disebut operasional penuh sampai readiness dan UAT won-to-client, delivery, health, dan retention diselesaikan.
 
 ## Yang Sudah Dibangun
 

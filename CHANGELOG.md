@@ -3,6 +3,18 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [0.11.1] - 2026-08-29
+
+### Security — Phase 7 Integrated UAT
+
+- Menambahkan security headers pada artifact statis Hostinger: HSTS, nosniff, frame denial, referrer policy, permissions policy, dan Content Security Policy.
+- Menonaktifkan header identifikasi `X-Powered-By` pada konfigurasi Next.js.
+- Mempertahankan koneksi frontend hanya ke API BinaHub dan Supabase, serta memblokir object embedding dan framing lintas origin.
+
+### Verification
+
+- Lint, typecheck, 41 unit test, production build, dan audit dependency production lulus.
+
 ## [Unreleased] - 2026-08-15
 
 ### Fixed — Audit revisi dan production hardening
@@ -16,6 +28,12 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 - Endpoint publik mendapat persistent rate limiting, token kepemilikan sesi chat, token link proposal bertanggal kedaluwarsa, escaping HTML, dan security headers.
 - Dependensi diperbarui ke patch aman Next.js; `npm audit` frontend dan API tidak lagi melaporkan vulnerability.
 - Dokumentasi architecture, data model, permission, state machine, dan deployment database diselaraskan dengan implementasi aktual.
+
+### Changed — Phase 6 Release Reconciliation
+
+- Menyelaraskan status deployment Fase 2–5 dengan kondisi production per 29 Agustus 2026.
+- Menambahkan status Fase 6 yang memisahkan deployment, workflow inactive, credential belum terhubung, dan UAT yang belum selesai.
+- Mencatat website pricing v0.2.18 sebagai live serta API catalog reconciliation v0.11.1 sebagai deployment berikutnya.
 
 ## [0.11.0] - 2026-08-29
 

@@ -3,6 +3,8 @@
 Tanggal: 29 Agustus 2026  
 Versi working copy: `0.11.0`
 
+Status deployment per 29 Agustus 2026: migration `0030`, API, dan app v0.11.0 sudah dideploy. Workflow Acquisition sudah diimpor pada Fase 6, tetapi tetap inactive dan credential belum dihubungkan.
+
 ## Ringkasan
 
 Fase 5 menutup celah tahap Data Konsumen dan Awareness tanpa mengaktifkan pengambilan data atau outreach yang belum disetujui. Data dari Apollo, LinkedIn, Google, Ads, partner, referral, website, atau file manual harus memiliki governed source. Prospect masuk staging, diperiksa terhadap suppression dan duplikasi, direview manusia, lalu dapat dipromosikan sebagai lifecycle `consumer` pada existing leads.

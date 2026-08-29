@@ -17,6 +17,21 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 - Dependensi diperbarui ke patch aman Next.js; `npm audit` frontend dan API tidak lagi melaporkan vulnerability.
 - Dokumentasi architecture, data model, permission, state machine, dan deployment database diselaraskan dengan implementasi aktual.
 
+## [0.8.0] - 2026-08-29
+
+### Added — Sales Operations Workspace
+
+- Menambahkan Sales Pipeline tujuh tahap untuk menetapkan owner, next action, tenggat, nilai peluang, status won/lost, dan alasan tidak lanjut.
+- Menambahkan human pause untuk menghentikan outreach otomatis beserta alasan dan jejak aktivitas per lead.
+- Menampilkan indikator peluang aktif, next action terlambat, peluang tanpa owner, serta alert deliverability email.
+- Menambahkan pengelolaan template follow-up berversi dengan status draft, approved, dan archived di Katalog & Rules.
+- Memperluas assessment publik dengan industri, lokasi, timeline, status budget, sponsor, next-step intent, dan konsekuensi bisnis agar qualification tidak mengandalkan asumsi.
+
+### Changed
+
+- Dashboard memisahkan kontrol opportunity dari daftar kontak agar tindak lanjut komersial mempunyai ownership dan SLA yang jelas.
+- Template mock tidak dapat di-approve; template approved membutuhkan catatan persetujuan dan hanya mendukung placeholder aman.
+
 ## [0.7.0] - 2026-08-28
 
 ### Added — Business Rules v1 pada Dashboard Admin

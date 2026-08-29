@@ -498,6 +498,14 @@ export function AssessmentPanel({
                           {record.opportunityStage || "identified"}
                         </span>
                       </div>
+                      <div className="mb-4 grid gap-2 rounded-[10px] border border-slate-200 bg-white p-3 text-xs text-slate-600 sm:grid-cols-2 xl:grid-cols-3">
+                        <span>Industri: <strong>{record.industry || "-"}</strong></span>
+                        <span>Lokasi: <strong>{record.location || "-"}</strong></span>
+                        <span>Timeline: <strong>{record.timeline?.replaceAll("_", "-") || "unknown"}</strong></span>
+                        <span>Budget: <strong>{record.budgetStatus?.replaceAll("_", " ") || "unknown"}</strong></span>
+                        <span>Sponsor: <strong>{record.sponsorStatus?.replaceAll("_", " ") || "unknown"}</strong></span>
+                        <span>Intent: <strong>{record.nextStepIntent?.replaceAll("_", " ") || "explore"}</strong></span>
+                      </div>
                       {(record.leadScoreReason || record.leadScoreRuleVersion) && (
                         <div className="mb-4 rounded-[10px] border border-slate-200 bg-slate-50 px-3 py-3 text-xs leading-5 text-slate-600">
                           <div className="flex flex-wrap gap-x-4 gap-y-1">

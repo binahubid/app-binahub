@@ -53,7 +53,9 @@ export default function InsightPage() {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     email: "", company: "", employees: "", name: "",
-    role: "", whatsapp: "", challenge: "", target: "",
+    role: "", whatsapp: "", challenge: "", target: "", industry: "", location: "",
+    timeline: "unknown", budgetStatus: "unknown", sponsorStatus: "unknown",
+    nextStepIntent: "explore", businessConsequence: "",
   });
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -20,6 +20,13 @@ export type AssessmentRecord = {
   role: string;
   whatsapp: string;
   employees: string;
+  industry?: string;
+  location?: string;
+  timeline?: string;
+  budgetStatus?: string;
+  sponsorStatus?: string;
+  nextStepIntent?: string;
+  businessConsequence?: string;
   challenge?: string;
   target?: string;
   category: string;
@@ -110,6 +117,24 @@ export type CatalogModule = {
   catalog_version: string;
 };
 
+export type OutreachTemplate = {
+  id: string;
+  template_key: string;
+  locale: "id" | "en";
+  version: string;
+  status: "draft" | "approved" | "archived";
+  subject_template: string;
+  html_template: string;
+  owner?: string | null;
+  is_mock: boolean;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  approval_note?: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AssessmentDocumentType = "result-pdf" | "proposal-pdf" | "result-email" | "proposal-email";
 
 export type EmailPreview = {
@@ -176,6 +201,74 @@ export type CalendarBookingRecord = {
   cancellationReason: string | null;
   updatedAt: string | null;
   isUpcoming: boolean;
+};
+
+export type PipelineLeadRecord = {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  industry: string | null;
+  location: string | null;
+  qualificationProfile: Record<string, unknown>;
+  phone: string;
+  source: string;
+  leadScore: number | null;
+  leadTemperature: string;
+  leadScoreConfidence: number | null;
+  lifecycleStage: string;
+  opportunityStage: string;
+  opportunityOwner: string | null;
+  nextAction: string | null;
+  nextActionDueAt: string | null;
+  leadTimeZone: string;
+  opportunityValue: number | null;
+  lostReason: string | null;
+  wonAt: string | null;
+  lostAt: string | null;
+  outreachPaused: boolean;
+  outreachPauseReason: string | null;
+  outreachPausedAt: string | null;
+  outreachPausedBy: string | null;
+  pipelineUpdatedAt: string | null;
+  createdAt: string | null;
+};
+
+export type OpportunityActivityRecord = {
+  id: string;
+  leadId: string;
+  assessmentId: string | null;
+  inquiryId: string | null;
+  eventType: string;
+  fromStage: string | null;
+  toStage: string | null;
+  actor: string;
+  note: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type EmailDeliverySummary = {
+  total: number;
+  delivered: number;
+  bounced: number;
+  complained: number;
+  failed: number;
+  received: number;
+  processingFailed: number;
+};
+
+export type EmailDeliveryEventRecord = {
+  id: string;
+  emailId: string | null;
+  eventType: string;
+  recipientEmail: string | null;
+  senderEmail: string | null;
+  subject: string | null;
+  processingStatus: string;
+  errorMessage: string | null;
+  providerCreatedAt: string | null;
+  receivedAt: string;
 };
 
 export type CoachRecord = {
@@ -307,6 +400,10 @@ export type DashboardData = {
     totalCoaches: number;
     totalEmployees?: number;
     upcomingMeetings?: number;
+    openOpportunities?: number;
+    overdueNextActions?: number;
+    unassignedOpportunities?: number;
+    deliverabilityAlerts?: number;
   };
   dimensionStats: DimensionScore[];
   categoryBreakdown: { category: string; count: number }[];
@@ -325,6 +422,10 @@ export type DashboardData = {
   projectAssignments?: ProjectAssignmentSmartRecord[];
   smartActions?: SmartActionRecord[];
   calendarBookings?: CalendarBookingRecord[];
+  pipelineLeads?: PipelineLeadRecord[];
+  opportunityActivities?: OpportunityActivityRecord[];
+  emailDeliverySummary?: EmailDeliverySummary;
+  emailDeliveryEvents?: EmailDeliveryEventRecord[];
 };
 
 export type AdminTab = typeof import("./constants").tabs[number];

@@ -2,11 +2,18 @@ export type FormData = {
   email: string;
   company: string;
   employees: string;
+  industry: string;
+  location: string;
   name: string;
   role: string;
   whatsapp: string;
   challenge: string;
   target: string;
+  timeline: string;
+  budgetStatus: string;
+  sponsorStatus: string;
+  nextStepIntent: string;
+  businessConsequence: string;
 };
 
 export const LIKERT_OPTIONS = [

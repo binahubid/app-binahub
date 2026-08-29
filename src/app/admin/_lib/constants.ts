@@ -1,4 +1,4 @@
-export const tabs = ["Overview", "Automation Center", "Assessment", "Katalog & Rules", "Meeting", "Kontak & Leads", "Inquiry Masuk", "T-BOS"] as const;
+export const tabs = ["Overview", "Sales Pipeline", "Automation Center", "Assessment", "Katalog & Rules", "Meeting", "Kontak & Leads", "Inquiry Masuk", "T-BOS"] as const;
 
 export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: string; description: string }> = {
   Overview: {
@@ -15,6 +15,11 @@ export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: s
     eyebrow: "Client intelligence",
     title: "Review assessment dan follow-up komersial",
     description: "Buka detail klien, cek readiness score, kirim result/proposal, dan pastikan follow-up tidak terlewat.",
+  },
+  "Sales Pipeline": {
+    eyebrow: "Revenue operations",
+    title: "Kendalikan setiap peluang dan tindak lanjut",
+    description: "Tetapkan owner, next action, tenggat, nilai peluang, dan human gate dengan jejak audit yang jelas.",
   },
   "Katalog & Rules": {
     eyebrow: "Commercial governance",

@@ -1,21 +1,21 @@
 # Status Implementasi BinaHub AI Business Process
 
-Tanggal audit dan implementasi: 28 Agustus 2026  
+Tanggal audit dan implementasi: 29 Agustus 2026
 Repositori: `website-prod`, `app-binahub`, `binahub-api`, dan `binahub-automation`
 
 ## Ringkasan Eksekutif
 
-Fondasi proses dari prospect masuk sampai follow-up sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan yang sudah final kini menjadi guardrail sistem, sedangkan data yang masih kosong menjadi activation blocker dan tidak diisi dengan asumsi developer.
+Fondasi proses dari prospect masuk sampai follow-up sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan yang sudah final kini menjadi guardrail sistem, sedangkan data yang masih kosong menjadi activation blocker dan tidak diisi dengan asumsi developer. Implementasi kode Fase 2 tersedia pada working copy v0.8.0; rincian deployment dan sisa pekerjaan ada di `PHASE-2-IMPLEMENTATION-STATUS.md`.
 
 Kode dalam dokumen ini belum berarti sudah aktif di production. Migration database, environment secret, deployment tiga aplikasi, dan aktivasi scheduler tetap harus dilakukan sesuai urutan pada bagian **Runbook Produksi**.
 
 ## Posisi Fase Saat Ini
 
 - **Fase 0 — Keputusan bisnis:** selesai sebagian dan sudah dibekukan sebagai `v1.0-approved-partial`; sembilan kelompok data masih menjadi activation blocker.
-- **Fase 1 — Fondasi dan guardrail:** implementasi kode selesai untuk qualification, proposal gate, Cal.com stop condition, follow-up limit, audit, serta tampilan admin; menunggu migration `0026`, deploy v0.7.0, dan UAT production-like.
-- **Fase 2 — Operasional Lead & Proposal:** baru dapat dituntaskan setelah katalog modul riil dan ownership tersedia. Proposal/outbound otomatis belum boleh diaktifkan.
+- **Fase 1 — Fondasi dan guardrail:** implementasi kode selesai.
+- **Fase 2 — Operasional Lead & Proposal:** implementasi kode utama selesai pada v0.8.0; migration `0027`, deployment, konfigurasi Resend, data resmi, dan UAT masih menunggu.
 
-Dengan demikian, pekerjaan saat ini berada di akhir Fase 1 dan belum masuk aktivasi otomatis penuh.
+Dengan demikian, pekerjaan saat ini berada pada Fase 2 pra-deployment. Aktivasi otomatis penuh tetap terkunci.
 
 ## Status Workflow End-to-End
 
@@ -23,8 +23,8 @@ Dengan demikian, pekerjaan saat ini berada di akhir Fase 1 dan belum masuk aktiv
 |---|---|---|---|
 | 1. Data Konsumen & Awareness | Landing page BinaInsight di `website-prod`, form kontak, BinaInsight publik/gratis | UTM dan click ID Google/Meta/Microsoft diteruskan ke assessment tanpa membawa query sensitif dari referrer | Akun dan anggaran Ads, integrasi Apollo, sumber data berizin, kebijakan consent, deduplikasi/impor data massal, dan domain outbound |
 | 2. Prospecting | Assessment publik, analisis AI, PDF hasil, email hasil, data admin; BinaInsight juga sudah dapat diaktifkan sebagai modul program | Attribution disimpan; configurator memilih modul di bawah produk; katalog publik hanya memuat modul riil/siap; snapshot harga dan PDF proposal tidak memberi AI kewenangan menentukan angka; 12 data proposal kini divalidasi eksplisit | Daftar modul resmi, scope/output/satuan/harga/status modul, kebijakan transaksi di bawah minimum, dan wording pajak final |
-| 3. Lead Qualification | Lifecycle, temperature, opportunity stage, serta dashboard admin tersedia | Skor Cold/Warm/Hot kini deterministik dan dapat diaudit: threshold 50/75, minimum tiga buying signals, syarat wajib Hot, ICP minimum 20 orang, exclusion industri, confidence, evidence, missing data, dan versi rules | Form publik/admin perlu menangkap industri, lokasi, timeline, budget, sponsor, next step, dan konsekuensi bisnis agar confidence dapat meningkat; owner individu masih kosong |
-| 4. Follow-up | Manual follow-up dan endpoint otomatis H+2/H+7/H+14; stop status, pause, history, dan anti-duplikasi claim sudah ada | Window 08.00–17.00 WIB, maksimum tiga pesan per opportunity lintas channel, atomic claim, unsubscribe/suppression, serta stop dan auto-pause saat meeting Cal.com aktif | Scheduler production, timezone per lead, reply/bounce/complaint webhook, template final+owner, dan alert operasional belum diaktifkan |
+| 3. Lead Qualification | Lifecycle, temperature, opportunity stage, serta dashboard admin tersedia | Skor Cold/Warm/Hot deterministik; form kini menangkap industri, lokasi, timeline, budget, sponsor, next-step intent, dan konsekuensi bisnis; Sales Pipeline menambahkan owner, next action, due date, nilai, lost reason, pause, dan audit | Owner riil dan data organisasi lama masih perlu dilengkapi; override qualification eksplisit masih perlu kebijakan |
+| 4. Follow-up | Manual follow-up dan endpoint otomatis H+2/H+7/H+14; stop status, pause, history, dan anti-duplikasi claim sudah ada | Activation gate, 18 template ID/EN berversi, atomic approval, webhook Resend idempotent, suppression bounce/complaint, reply pause, health email, retry n8n, dan no-show control | Template final+owner, inbound receiving, webhook production, VPS n8n, serta kanal alert eksternal belum dikonfigurasi |
 | 5. Client | Status Deal, organisasi/program, modul program, peserta, fasilitator, LEP, T-BOS, dan data delivery tersedia | Lifecycle database sudah memiliki tahap `client` dan opportunity `won` sebagai tujuan normalisasi | Otomasi Deal → organisasi/program, kontrak/e-sign, invoice/payment, kickoff checklist, assignment PIC, dan integrasi project management |
 | 6. Retain | Data program dan histori interaksi menjadi fondasi account record | Lifecycle database sudah menyediakan tahap `retained` | Account health, QBR cadence, renewal/upsell signal, perubahan PIC/HRD, data freshness, NPS/CSAT, referral, dan loop kembali ke opportunity baru |
 
@@ -104,10 +104,10 @@ Ketika assessment selesai, qualification deterministik menyimpan score, temperat
 Urutan ini penting. Jangan deploy API baru sebelum migration tersedia karena API mengandalkan kolom dan RPC baru.
 
 1. Backup database Supabase dan jalankan `supabase/production_readiness.sql` secara read-only.
-2. Pastikan migration `0023_business_process_p0.sql`–`0025_catalog_requests_and_calcom.sql` telah diterapkan, lalu terapkan `0026_business_rules_v1_confirmed.sql` melalui prosedur di `binahub-api/supabase/DEPLOYMENT.md`.
-3. Tambahkan secret production yang berbeda untuk `UNSUBSCRIBE_SECRET`, `FOLLOW_UP_CRON_SECRET`, `TRANSFORMATION_WORKER_SECRET`, `PROPOSAL_LINK_SECRET`, dan `CALCOM_WEBHOOK_SECRET`. Masing-masing harus acak; unsubscribe minimal 32 karakter.
+2. Pastikan migration `0023_business_process_p0.sql`–`0026_business_rules_v1_confirmed.sql` telah diterapkan, lalu terapkan `0027_sales_pipeline_and_deliverability.sql` melalui prosedur di `binahub-api/supabase/DEPLOYMENT.md`.
+3. Tambahkan secret production yang berbeda untuk `UNSUBSCRIBE_SECRET`, `FOLLOW_UP_CRON_SECRET`, `TRANSFORMATION_WORKER_SECRET`, `PROPOSAL_LINK_SECRET`, `CALCOM_WEBHOOK_SECRET`, dan `RESEND_WEBHOOK_SECRET`. Masing-masing harus acak; unsubscribe minimal 32 karakter.
 4. Pastikan `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`, URL website, dan URL app mengarah ke domain production yang benar.
-5. Deploy berurutan: `binahub-api` v0.7.0 → `app-binahub` v0.7.0 → `website-prod`.
+5. Deploy berurutan: `binahub-api` v0.8.0 → `app-binahub` v0.8.0 → `website-prod`.
 6. Impor workflow dari `binahub-automation/workflows`, sambungkan credentials, uji manual, lalu aktifkan satu per satu.
 7. Simpan secret di credential store n8n, bukan di node text atau repository. Tambahkan retry terbatas dan alert jika respons bukan 2xx.
 8. Lakukan smoke test UTM → assessment → qualification evidence → admin; proposal dengan data tidak lengkap; booking → auto-pause; unsubscribe → suppression; serta dua pemanggilan follow-up paralel pada lead yang sama.

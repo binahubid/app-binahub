@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Building2, User, Briefcase, Users, ChevronDown, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, User, Briefcase, Users, ChevronDown, Check, Factory, MapPin } from "lucide-react";
 import { FormData } from "../_types";
 import { useLocale } from "@/i18n/use-locale";
 
@@ -36,12 +36,16 @@ const COPY = {
       role: "Jabatan *",
       company: "Nama Perusahaan *",
       employees: "Jumlah Karyawan *",
+      industry: "Industri *",
+      location: "Lokasi Utama *",
     },
     placeholders: {
       name: "Contoh: Budi Santoso",
       role: "Contoh: CEO / HR Director",
       company: "Nama PT / Instansi",
       employees: "Pilih skala perusahaan...",
+      industry: "Contoh: Manufaktur / Teknologi",
+      location: "Contoh: Jakarta / Makassar",
     },
     back: "Kembali",
     next: "Lanjut ke Instruksi",
@@ -62,12 +66,16 @@ const COPY = {
       role: "Role *",
       company: "Company Name *",
       employees: "Number of Employees *",
+      industry: "Industry *",
+      location: "Primary Location *",
     },
     placeholders: {
       name: "Example: Sarah Johnson",
       role: "Example: CEO / HR Director",
       company: "Company / Institution name",
       employees: "Select company scale...",
+      industry: "Example: Manufacturing / Technology",
+      location: "Example: Jakarta / Makassar",
     },
     back: "Back",
     next: "Continue to Instructions",
@@ -223,6 +231,19 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
             </div>
           </div>
 
+          <div className="space-y-1">
+            <label className={labelClass}>
+              <Factory size={14} className="text-[#D9A441]" /> {copy.fields.industry}
+            </label>
+            <input required type="text" placeholder={copy.placeholders.industry} value={formData.industry} onChange={(e) => onChange({ industry: e.target.value })} className={inputClass} />
+          </div>
+          <div className="space-y-1">
+            <label className={labelClass}>
+              <MapPin size={14} className="text-[#D9A441]" /> {copy.fields.location}
+            </label>
+            <input required type="text" placeholder={copy.placeholders.location} value={formData.location} onChange={(e) => onChange({ location: e.target.value })} className={inputClass} />
+          </div>
+
         </div>
 
         <div className="flex items-center justify-between gap-4">
@@ -235,7 +256,8 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
           </button>
           <button
             type="submit"
-            className="flex-1 h-14 bg-[#0B2C6B] text-white rounded-xl text-[11px] font-medium tracking-widest hover:bg-black transition-all flex items-center justify-center gap-3 uppercase shadow-lg shadow-black/10"
+            disabled={!formData.employees}
+            className="flex-1 h-14 bg-[#0B2C6B] text-white rounded-xl text-[11px] font-medium tracking-widest hover:bg-black transition-all flex items-center justify-center gap-3 uppercase shadow-lg shadow-black/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {copy.next} <ArrowRight size={16} />
           </button>

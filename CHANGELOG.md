@@ -3,6 +3,14 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [0.11.2] - 2026-08-29
+
+### Fixed — Hostinger Security Headers
+
+- Memindahkan security headers dari artifact `.htaccess` ke response Next.js karena deployment Hostinger berjalan sebagai Node.js Web App dan tidak membaca konfigurasi Apache di `public`.
+- Mengubah build dari static export menjadi Next.js server output agar header HSTS, CSP, permissions policy, referrer policy, frame denial, dan nosniff diterapkan oleh origin.
+- Mempertahankan `poweredByHeader: false` agar identitas framework tidak diekspos setelah cache deployment dibersihkan.
+
 ## [0.11.1] - 2026-08-29
 
 ### Security — Phase 7 Integrated UAT

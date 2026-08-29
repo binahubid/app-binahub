@@ -271,6 +271,141 @@ export type EmailDeliveryEventRecord = {
   receivedAt: string;
 };
 
+export type ClientAccountRecord = {
+  id: string;
+  organizationId: string;
+  organizationName: string;
+  industry: string | null;
+  organizationSize: string | null;
+  location: string | null;
+  sourceLeadId: string | null;
+  commercialOwner: string;
+  deliveryOwner: string;
+  status: string;
+  healthScore: number | null;
+  healthStatus: string;
+  nextReviewAt: string | null;
+  renewalDate: string | null;
+  retainStatus: string;
+  churnReason: string | null;
+  notes: string | null;
+  clientSince: string;
+  updatedAt: string;
+};
+
+export type ClientStakeholderRecord = {
+  id: string;
+  clientAccountId: string;
+  sourceLeadId: string | null;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  roleTitle: string | null;
+  department: string | null;
+  relationshipRole: string;
+  isPrimary: boolean;
+  active: boolean;
+  lastVerifiedAt: string | null;
+  notes: string | null;
+  updatedAt: string;
+};
+
+export type DeliveryProjectRecord = {
+  id: string;
+  clientAccountId: string;
+  sourceLeadId: string | null;
+  engagementId: string | null;
+  clientName: string;
+  contactName: string | null;
+  contactEmail: string | null;
+  programName: string;
+  service: string | null;
+  projectType: string | null;
+  scope: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: string | null;
+  deliveryStage: string;
+  deliveryOwner: string | null;
+  kickoffAt: string | null;
+  deliveryGoal: string | null;
+  successMetrics: string[];
+  riskLevel: string;
+  riskSummary: string | null;
+  initialHandoff: boolean;
+  handoffApprovedBy: string | null;
+  handoffApprovedAt: string | null;
+  updatedAt: string | null;
+  createdAt: string | null;
+};
+
+export type ProjectMilestoneRecord = {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  owner: string;
+  dueDate: string | null;
+  status: string;
+  progress: number;
+  weight: number;
+  blockerReason: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+};
+
+export type AccountHealthReviewRecord = {
+  id: string;
+  clientAccountId: string;
+  projectId: string | null;
+  reviewDate: string;
+  deliveryScore: number;
+  engagementScore: number;
+  sentimentScore: number;
+  commercialScore: number;
+  overallScore: number;
+  riskLevel: string;
+  riskReasons: string[];
+  notes: string | null;
+  nextAction: string | null;
+  nextActionDueAt: string | null;
+  reviewedBy: string;
+  createdAt: string;
+};
+
+export type RetentionOpportunityRecord = {
+  id: string;
+  clientAccountId: string;
+  sourceProjectId: string | null;
+  opportunityType: string;
+  status: string;
+  owner: string;
+  moduleRequestData: Record<string, unknown>;
+  estimatedValue: number | null;
+  expectedCloseDate: string | null;
+  nextAction: string | null;
+  nextActionDueAt: string | null;
+  lostReason: string | null;
+  humanGateStatus: string;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  approvalNote: string | null;
+  updatedAt: string;
+};
+
+export type ClientActivityRecord = {
+  id: string;
+  clientAccountId: string;
+  projectId: string | null;
+  milestoneId: string | null;
+  retentionOpportunityId: string | null;
+  eventType: string;
+  actor: string;
+  note: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};
+
 export type CoachRecord = {
   id?: string;
   name?: string;
@@ -404,6 +539,11 @@ export type DashboardData = {
     overdueNextActions?: number;
     unassignedOpportunities?: number;
     deliverabilityAlerts?: number;
+    activeClients?: number;
+    atRiskClients?: number;
+    openDeliveryProjects?: number;
+    overdueMilestones?: number;
+    retentionPipelineValue?: number;
   };
   dimensionStats: DimensionScore[];
   categoryBreakdown: { category: string; count: number }[];
@@ -426,6 +566,13 @@ export type DashboardData = {
   opportunityActivities?: OpportunityActivityRecord[];
   emailDeliverySummary?: EmailDeliverySummary;
   emailDeliveryEvents?: EmailDeliveryEventRecord[];
+  clientAccounts?: ClientAccountRecord[];
+  clientStakeholders?: ClientStakeholderRecord[];
+  deliveryProjects?: DeliveryProjectRecord[];
+  projectMilestones?: ProjectMilestoneRecord[];
+  accountHealthReviews?: AccountHealthReviewRecord[];
+  retentionOpportunities?: RetentionOpportunityRecord[];
+  clientActivities?: ClientActivityRecord[];
 };
 
 export type AdminTab = typeof import("./constants").tabs[number];

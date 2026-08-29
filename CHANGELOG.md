@@ -17,6 +17,21 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 - Dependensi diperbarui ke patch aman Next.js; `npm audit` frontend dan API tidak lagi melaporkan vulnerability.
 - Dokumentasi architecture, data model, permission, state machine, dan deployment database diselaraskan dengan implementasi aktual.
 
+## [0.9.0] - 2026-08-29
+
+### Added — Client Success & Delivery Workspace
+
+- Menambahkan tab `Client & Delivery` untuk mengubah deal menjadi client dan initial delivery project.
+- Menambahkan pengelolaan owner account, status client/retain, stakeholder, delivery stage, success metric, risiko, dan milestone.
+- Menambahkan account health review dengan empat dimensi, risk level, next action, serta riwayat review.
+- Menambahkan retention opportunity untuk renewal, upsell, cross-sell, repeat order, dan referral dengan human gate.
+- Menambahkan activity trail per client serta indikator client aktif/berisiko, delivery terbuka, milestone terlambat, dan nilai pipeline retain.
+
+### Safety
+
+- UI tidak menyediakan jalan pintas untuk mengonversi lead yang belum won.
+- Status risiko, blocked, proposal, dan won meminta data guardrail yang sesuai sebelum request dikirim.
+
 ## [0.8.0] - 2026-08-29
 
 ### Added — Sales Operations Workspace

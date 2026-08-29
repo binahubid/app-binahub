@@ -5,7 +5,7 @@ Repositori: `website-prod`, `app-binahub`, `binahub-api`, dan `binahub-automatio
 
 ## Ringkasan Eksekutif
 
-Fondasi proses dari prospect masuk sampai follow-up sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan yang sudah final kini menjadi guardrail sistem, sedangkan data yang masih kosong menjadi activation blocker dan tidak diisi dengan asumsi developer. Implementasi kode Fase 2 tersedia pada working copy v0.8.0; rincian deployment dan sisa pekerjaan ada di `PHASE-2-IMPLEMENTATION-STATUS.md`.
+Fondasi proses dari prospect masuk sampai follow-up sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan yang sudah final kini menjadi guardrail sistem, sedangkan data yang masih kosong menjadi activation blocker dan tidak diisi dengan asumsi developer. Fase 2 v0.8.0 sudah dideploy oleh operator. Implementasi kode Fase 3 tersedia pada working copy v0.9.0; rincian deployment dan sisa pekerjaan ada di `PHASE-3-IMPLEMENTATION-STATUS.md`.
 
 Kode dalam dokumen ini belum berarti sudah aktif di production. Migration database, environment secret, deployment tiga aplikasi, dan aktivasi scheduler tetap harus dilakukan sesuai urutan pada bagian **Runbook Produksi**.
 
@@ -13,9 +13,10 @@ Kode dalam dokumen ini belum berarti sudah aktif di production. Migration databa
 
 - **Fase 0 — Keputusan bisnis:** selesai sebagian dan sudah dibekukan sebagai `v1.0-approved-partial`; sembilan kelompok data masih menjadi activation blocker.
 - **Fase 1 — Fondasi dan guardrail:** implementasi kode selesai.
-- **Fase 2 — Operasional Lead & Proposal:** implementasi kode utama selesai pada v0.8.0; migration `0027`, deployment, konfigurasi Resend, data resmi, dan UAT masih menunggu.
+- **Fase 2 — Operasional Lead & Proposal:** kode API dan app v0.8.0 sudah dideploy; data resmi, aktivasi outbound, dan UAT masih menunggu.
+- **Fase 3 — Client, Delivery & Retain:** implementasi kode utama tersedia pada v0.9.0; migration `0028`, readiness, deployment, data operasional, dan UAT masih menunggu.
 
-Dengan demikian, pekerjaan saat ini berada pada Fase 2 pra-deployment. Aktivasi otomatis penuh tetap terkunci.
+Dengan demikian, pekerjaan saat ini berada pada Fase 3 pra-deployment. Aktivasi otomatis penuh tetap terkunci dan Fase 2 tetap memakai dry-run sampai UAT disetujui.
 
 ## Status Workflow End-to-End
 
@@ -25,8 +26,8 @@ Dengan demikian, pekerjaan saat ini berada pada Fase 2 pra-deployment. Aktivasi 
 | 2. Prospecting | Assessment publik, analisis AI, PDF hasil, email hasil, data admin; BinaInsight juga sudah dapat diaktifkan sebagai modul program | Attribution disimpan; configurator memilih modul di bawah produk; katalog publik hanya memuat modul riil/siap; snapshot harga dan PDF proposal tidak memberi AI kewenangan menentukan angka; 12 data proposal kini divalidasi eksplisit | Daftar modul resmi, scope/output/satuan/harga/status modul, kebijakan transaksi di bawah minimum, dan wording pajak final |
 | 3. Lead Qualification | Lifecycle, temperature, opportunity stage, serta dashboard admin tersedia | Skor Cold/Warm/Hot deterministik; form kini menangkap industri, lokasi, timeline, budget, sponsor, next-step intent, dan konsekuensi bisnis; Sales Pipeline menambahkan owner, next action, due date, nilai, lost reason, pause, dan audit | Owner riil dan data organisasi lama masih perlu dilengkapi; override qualification eksplisit masih perlu kebijakan |
 | 4. Follow-up | Manual follow-up dan endpoint otomatis H+2/H+7/H+14; stop status, pause, history, dan anti-duplikasi claim sudah ada | Activation gate, 18 template ID/EN berversi, atomic approval, webhook Resend idempotent, suppression bounce/complaint, reply pause, health email, retry n8n, dan no-show control | Template final+owner, inbound receiving, webhook production, VPS n8n, serta kanal alert eksternal belum dikonfigurasi |
-| 5. Client | Status Deal, organisasi/program, modul program, peserta, fasilitator, LEP, T-BOS, dan data delivery tersedia | Lifecycle database sudah memiliki tahap `client` dan opportunity `won` sebagai tujuan normalisasi | Otomasi Deal → organisasi/program, kontrak/e-sign, invoice/payment, kickoff checklist, assignment PIC, dan integrasi project management |
-| 6. Retain | Data program dan histori interaksi menjadi fondasi account record | Lifecycle database sudah menyediakan tahap `retained` | Account health, QBR cadence, renewal/upsell signal, perubahan PIC/HRD, data freshness, NPS/CSAT, referral, dan loop kembali ke opportunity baru |
+| 5. Client | Status Deal, organisasi/program, modul program, peserta, fasilitator, LEP, T-BOS, dan data delivery tersedia | Won-to-client handoff atomik; client account; stakeholder; owner; delivery project; milestone; risk; health review; audit trail | Kontrak/e-sign, invoice/payment, kickoff checklist per modul, dan integrasi project management eksternal |
+| 6. Retain | Data program dan histori interaksi menjadi fondasi account record | Account health; pergantian PIC tanpa menghapus histori; renewal/upsell/cross-sell/repeat/referral opportunity; human gate; loop tertaut ke account lama | QBR cadence resmi, reminder 90/60/30, NPS/CSAT, katalog retention riil, dan policy bobot health |
 
 ## Perubahan yang Sudah Dikerjakan
 
@@ -104,10 +105,10 @@ Ketika assessment selesai, qualification deterministik menyimpan score, temperat
 Urutan ini penting. Jangan deploy API baru sebelum migration tersedia karena API mengandalkan kolom dan RPC baru.
 
 1. Backup database Supabase dan jalankan `supabase/production_readiness.sql` secara read-only.
-2. Pastikan migration `0023_business_process_p0.sql`–`0026_business_rules_v1_confirmed.sql` telah diterapkan, lalu terapkan `0027_sales_pipeline_and_deliverability.sql` melalui prosedur di `binahub-api/supabase/DEPLOYMENT.md`.
+2. Pastikan migration `0023_business_process_p0.sql`–`0027_sales_pipeline_and_deliverability.sql` telah diterapkan, lalu terapkan `0028_client_delivery_and_retention.sql` melalui prosedur di `binahub-api/supabase/DEPLOYMENT.md`.
 3. Tambahkan secret production yang berbeda untuk `UNSUBSCRIBE_SECRET`, `FOLLOW_UP_CRON_SECRET`, `TRANSFORMATION_WORKER_SECRET`, `PROPOSAL_LINK_SECRET`, `CALCOM_WEBHOOK_SECRET`, dan `RESEND_WEBHOOK_SECRET`. Masing-masing harus acak; unsubscribe minimal 32 karakter.
 4. Pastikan `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`, URL website, dan URL app mengarah ke domain production yang benar.
-5. Deploy berurutan: `binahub-api` v0.8.0 → `app-binahub` v0.8.0 → `website-prod`.
+5. Deploy berurutan: `binahub-api` v0.9.0 → `app-binahub` v0.9.0. `website-prod` tidak berubah pada iterasi Fase 3 ini.
 6. Impor workflow dari `binahub-automation/workflows`, sambungkan credentials, uji manual, lalu aktifkan satu per satu.
 7. Simpan secret di credential store n8n, bukan di node text atau repository. Tambahkan retry terbatas dan alert jika respons bukan 2xx.
 8. Lakukan smoke test UTM → assessment → qualification evidence → admin; proposal dengan data tidak lengkap; booking → auto-pause; unsubscribe → suppression; serta dua pemanggilan follow-up paralel pada lead yang sama.

@@ -15,6 +15,7 @@ import { MeetingsPanel } from "./_components/meetings-panel";
 import { Overview } from "./_components/overview";
 import { PipelinePanel } from "./_components/pipeline-panel";
 import { ClientDeliveryPanel } from "./_components/client-delivery-panel";
+import { OperationsControlPanel } from "./_components/operations-control-panel";
 import { SmartCenterPanel } from "./_components/smart-center-panel";
 import { DashboardSkeleton, NotificationBadge } from "./_components/shared";
 import { TAB_META, tabs } from "./_lib/constants";
@@ -384,6 +385,9 @@ function AdminDashboardContent() {
                 )}
                 {activeTab === "Client & Delivery" && (
                   <ClientDeliveryPanel data={data} onAction={adminRequest} onRefresh={fetchDashboard} />
+                )}
+                {activeTab === "Operations Control" && (
+                  <OperationsControlPanel onAction={adminRequest} />
                 )}
                 {activeTab === "Automation Center" && (
                   <SmartCenterPanel data={data} onAction={adminRequest} onRefresh={fetchDashboard} />

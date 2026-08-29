@@ -17,6 +17,20 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 - Dependensi diperbarui ke patch aman Next.js; `npm audit` frontend dan API tidak lagi melaporkan vulnerability.
 - Dokumentasi architecture, data model, permission, state machine, dan deployment database diselaraskan dengan implementasi aktual.
 
+## [0.10.0] - 2026-08-29
+
+### Added — Operations Control
+
+- Menambahkan tab `Operations Control` untuk mengelola human task yang dibentuk scheduler Fase 4.
+- Menampilkan task aktif, SLA overdue, critical priority, serta automation run gagal.
+- Menambahkan assignment owner, due time, priority, status, dan catatan penyelesaian dengan guardrail manusia.
+- Menampilkan audit run dry-run/live, jumlah kandidat, task yang dibuat, serta error workflow.
+
+### Safety
+
+- UI tidak menyediakan tombol untuk mengaktifkan scheduler atau menonaktifkan dry-run.
+- Task tidak dapat diselesaikan/dibatalkan tanpa catatan resolusi dan task aktif tidak dapat berjalan tanpa owner.
+
 ## [0.9.0] - 2026-08-29
 
 ### Added — Client Success & Delivery Workspace

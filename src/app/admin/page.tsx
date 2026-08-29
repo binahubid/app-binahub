@@ -8,6 +8,7 @@ import { ArrowRight, LogOut, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AssessmentPanel } from "./_components/assessment-panel";
+import { AcquisitionControlPanel } from "./_components/acquisition-control-panel";
 import { BusinessRulesPanel } from "./_components/business-rules-panel";
 import { ContactsPanel } from "./_components/contacts-panel";
 import { InquiriesPanel } from "./_components/inquiries-panel";
@@ -380,6 +381,9 @@ function AdminDashboardContent() {
             ) : (
               <>
                 {activeTab === "Overview" && <Overview data={data} />}
+                {activeTab === "Acquisition Control" && (
+                  <AcquisitionControlPanel onAction={adminRequest} />
+                )}
                 {activeTab === "Sales Pipeline" && (
                   <PipelinePanel data={data} onAction={adminRequest} onRefresh={fetchDashboard} />
                 )}

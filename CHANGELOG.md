@@ -17,6 +17,19 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 - Dependensi diperbarui ke patch aman Next.js; `npm audit` frontend dan API tidak lagi melaporkan vulnerability.
 - Dokumentasi architecture, data model, permission, state machine, dan deployment database diselaraskan dengan implementasi aktual.
 
+## [0.11.0] - 2026-08-29
+
+### Added — Acquisition Control
+
+- Menambahkan tab `Acquisition Control` untuk governed data source, campaign, prospect batch, dan human review.
+- Menampilkan status source/campaign, valid/invalid/duplicate/suppressed prospect, serta hasil promotion.
+- Menambahkan form legal source, campaign UTM/budget, staging JSON maksimal 500 record, dan approval/rejection batch.
+
+### Safety
+
+- UI tidak menyediakan scraping, enrichment otomatis, email blast, atau tombol aktivasi n8n.
+- Source, campaign, dan batch melewati server-side human/legal gate sebelum prospect dapat menjadi consumer lead.
+
 ## [0.10.0] - 2026-08-29
 
 ### Added — Operations Control

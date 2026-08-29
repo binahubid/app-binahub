@@ -3,6 +3,14 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [0.12.0] - 2026-08-30
+
+### Added — Phase 8 Launch Control
+
+- Menambahkan tab `Launch Control` read-only untuk merangkum kesiapan teknis, mode dry-run/live, bukti run terakhir, dan blocker keputusan per workflow.
+- Menampilkan Business Rules yang masih terbuka dengan istilah bisnis, jumlah modul siap/berharga, template approved, bukti webhook email, health event queue, dan lineage Cal.com.
+- Tidak menambahkan tombol aktivasi. Status “layak human review” tetap membutuhkan persetujuan, perubahan environment, aktivasi n8n, dan rollback plan secara terpisah.
+
 ## [0.11.2] - 2026-08-29
 
 ### Fixed — Hostinger Security Headers

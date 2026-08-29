@@ -5,7 +5,7 @@ Repositori: `website-prod`, `app-binahub`, `binahub-api`, dan `binahub-automatio
 
 ## Ringkasan Eksekutif
 
-Fondasi proses dari prospect masuk sampai retain sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan final menjadi guardrail, sedangkan data kosong tetap menjadi activation blocker. Website v0.2.18, app/API sampai v0.11.0, serta migration sampai `0030` sudah dideploy oleh operator. Pekerjaan kini berada pada Fase 6 Release Reconciliation; rinciannya ada di `PHASE-6-IMPLEMENTATION-STATUS.md`.
+Fondasi proses dari prospect masuk sampai retain sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan final menjadi guardrail, sedangkan data kosong tetap menjadi activation blocker. Engineering gate Fase 7 sudah lulus pada API `0.11.2`, app `0.11.2`, website `0.2.20`, dan migration sampai `0033`. Pekerjaan kini berada pada Fase 8 Launch Control & Observability; rinciannya ada di `PHASE-8-IMPLEMENTATION-STATUS.md`.
 
 Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktifkan proposal auto-send dan outbound, empat workflow n8n tetap inactive, dan UAT terintegrasi belum selesai.
 
@@ -17,9 +17,11 @@ Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktif
 - **Fase 3 — Client, Delivery & Retain:** migration `0028`, API, dan app v0.9.0 sudah dideploy; UAT ditunda.
 - **Fase 4 — Automation Control & Production Hardening:** migration `0029`, API, dan app v0.10.0 sudah dideploy; workflow masih inactive dan UAT ditunda.
 - **Fase 5 — Acquisition Governance & Growth Operations:** migration `0030`, API, dan app v0.11.0 sudah dideploy; workflow sudah diimpor tetapi inactive, data governance riil dan UAT masih menunggu.
-- **Fase 6 — Release Reconciliation:** website v0.2.18 dan empat workflow lokal sudah terverifikasi; migration `0031`, API v0.11.1, credential workflow 03/04, readiness production, serta initial commit/remote automation masih menunggu.
+- **Fase 6 — Release Reconciliation:** selesai; katalog publik, credential n8n, migration `0031`, dan deployment telah direkonsiliasi.
+- **Fase 7 — Integrated UAT & Security Gate:** engineering gate selesai; migration `0032`/`0033`, smoke 18/18, retry/idempotensi, Cal.com lineage, RLS, dan security headers terverifikasi. Human scenario riil tetap menjadi activation gate akhir.
+- **Fase 8 — Launch Control & Observability:** implementasi app/API `0.12.0` selesai lokal; deployment dan pengisian audit run Follow-up/Event Worker menunggu operator.
 
-Dengan demikian, pekerjaan saat ini berada pada Fase 6. Aktivasi otomatis penuh tetap terkunci dan seluruh worker terjadwal tetap inactive/dry-run sampai Fase 7 UAT disetujui.
+Dengan demikian, pekerjaan saat ini berada pada Fase 8. Aktivasi otomatis penuh tetap terkunci dan seluruh worker terjadwal tetap inactive/dry-run sampai seluruh blocker bisnis, human UAT, dan keputusan go-live disetujui.
 
 ## Status Workflow End-to-End
 

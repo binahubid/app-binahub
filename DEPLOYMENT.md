@@ -40,4 +40,4 @@ Frontend memakai `output: "export"`, sehingga hasil production berupa situs stat
 
 API tetap dideploy terpisah dari repository `../binahub-api` ke `https://api.binahub.id`.
 
-Target Fase 7 per 29 Agustus 2026: website v0.2.19, app v0.11.1, API v0.11.2, migration sampai `0033`, dan automation v0.1.1. Empat workflow n8n tetap inactive sampai seluruh gate pada `PHASE-7-IMPLEMENTATION-STATUS.md` lulus.
+Baseline Fase 7 per 30 Agustus 2026: website v0.2.20, app v0.11.2, API v0.11.2, migration sampai `0033`, dan automation v0.1.1. Fase 8 memakai app/API v0.12.0 tanpa migration baru. Empat workflow n8n tetap inactive; baca `PHASE-8-IMPLEMENTATION-STATUS.md` untuk dry-run evidence dan Launch Control.

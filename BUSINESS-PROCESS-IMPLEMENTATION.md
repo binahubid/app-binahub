@@ -5,7 +5,7 @@ Repositori: `website-prod`, `app-binahub`, `binahub-api`, dan `binahub-automatio
 
 ## Ringkasan Eksekutif
 
-Fondasi proses dari prospect masuk sampai retain sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan final menjadi guardrail, sedangkan data kosong tetap menjadi activation blocker. Engineering gate Fase 7 sudah lulus pada API `0.11.2`, app `0.11.2`, website `0.2.20`, dan migration sampai `0033`. Pekerjaan kini berada pada Fase 8 Launch Control & Observability; rinciannya ada di `PHASE-8-IMPLEMENTATION-STATUS.md`.
+Fondasi proses dari prospect masuk sampai retain sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan final menjadi guardrail, sedangkan data kosong tetap menjadi activation blocker. Engineering gate Fase 7 sudah lulus pada API `0.11.2`, app `0.11.2`, website `0.2.20`, dan migration sampai `0033`. Launch Control Fase 8 dan Human UAT & Pilot Gate Fase 9 kini selesai dibangun lokal; rincian terakhir ada di `PHASE-9-IMPLEMENTATION-STATUS.md`.
 
 Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktifkan proposal auto-send dan outbound, empat workflow n8n tetap inactive, dan UAT terintegrasi belum selesai.
 
@@ -20,8 +20,9 @@ Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktif
 - **Fase 6 — Release Reconciliation:** selesai; katalog publik, credential n8n, migration `0031`, dan deployment telah direkonsiliasi.
 - **Fase 7 — Integrated UAT & Security Gate:** engineering gate selesai; migration `0032`/`0033`, smoke 18/18, retry/idempotensi, Cal.com lineage, RLS, dan security headers terverifikasi. Human scenario riil tetap menjadi activation gate akhir.
 - **Fase 8 — Launch Control & Observability:** implementasi app/API `0.12.0` selesai lokal; deployment dan pengisian audit run Follow-up/Event Worker menunggu operator.
+- **Fase 9 — Human UAT & Pilot Gate:** implementasi migration `0034`, API/app `0.13.0`, checklist 12 skenario wajib, bukti, owner, dan audit trail selesai lokal; eksekusi skenario manusia menunggu setelah deployment.
 
-Dengan demikian, pekerjaan saat ini berada pada Fase 8. Aktivasi otomatis penuh tetap terkunci dan seluruh worker terjadwal tetap inactive/dry-run sampai seluruh blocker bisnis, human UAT, dan keputusan go-live disetujui.
+Dengan demikian, pembangunan saat ini berada pada Fase 9. Aktivasi otomatis penuh tetap terkunci dan seluruh worker terjadwal tetap inactive/dry-run sampai seluruh blocker bisnis, human UAT, dan keputusan go-live disetujui.
 
 ## Status Workflow End-to-End
 

@@ -3,6 +3,19 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [0.13.0] - 2026-08-30
+
+### Added — Phase 9 Human UAT & Pilot Gate
+
+- Menambahkan tab `UAT & Pilot Gate` untuk menjalankan 12 skenario wajib dengan owner, environment, status, bukti, hasil aktual, dan alasan blocker.
+- Menampilkan progres kelulusan, skenario gagal/terblokir, kelayakan human review, serta audit trail per skenario.
+- Mempertahankan batas aman: dashboard tidak menyediakan tombol aktivasi n8n, perubahan dry-run, atau pengiriman komunikasi live.
+- Menambahkan runbook Fase 9 yang memisahkan kelulusan engineering, eksekusi UAT manusia, dan keputusan pilot.
+
+### Fixed
+
+- Menambahkan reverse proxy server `/api/*` ke `NEXT_PUBLIC_BINAHUB_API_URL`; deployment `app.binahub.id` sebelumnya mengembalikan 404 untuk request dashboard karena frontend dan API berada pada host berbeda.
+
 ## [0.12.0] - 2026-08-30
 
 ### Added — Phase 8 Launch Control

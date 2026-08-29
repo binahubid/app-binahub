@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const apiOrigin = (process.env.NEXT_PUBLIC_BINAHUB_API_URL || "https://api.binahub.id").replace(/\/+$/, "");
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -15,6 +17,14 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiOrigin}/api/:path*`,
+      },
+    ];
+  },
   async headers() {
     return [
       {

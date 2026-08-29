@@ -4,7 +4,7 @@ Frontend memakai `output: "export"`, sehingga hasil production berupa situs stat
 
 ## Urutan deployment
 
-1. Ikuti runbook `../binahub-api/supabase/DEPLOYMENT.md` dan terapkan migration API sampai `0033_phase7_calcom_booking_lineage.sql`, lalu jalankan `supabase/production_readiness.sql`. Semua flag `*_ready`, termasuk gate Fase 7, harus `true` dan seluruh counter `*_issues` harus nol.
+1. Ikuti runbook `../binahub-api/supabase/DEPLOYMENT.md` dan terapkan migration API sampai `0034_phase9_human_uat_pilot_gate.sql`, lalu jalankan `supabase/production_readiness.sql`. Semua flag `*_ready`, termasuk `human_uat_pilot_gate_phase9_ready`, harus `true` dan seluruh counter `*_issues` harus nol.
 2. Pastikan environment production menggunakan:
    - `NEXT_PUBLIC_APP_URL=https://app.binahub.id`
    - `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`
@@ -19,6 +19,7 @@ Frontend memakai `output: "export"`, sehingga hasil production berupa situs stat
 7. Publikasikan **seluruh isi** folder `out/` ke document root `app.binahub.id`. Jangan hanya mengunggah `admin/tbos.html`, karena nama chunk pada `out/_next/static/` berubah setiap build.
 8. Hapus file lama yang tidak lagi direferensikan dan bersihkan cache hosting/CDN.
 9. Jalankan smoke test akses peserta dan T-BOS di bawah.
+10. Uji `https://app.binahub.id/api/auth/role` tanpa token; hasil yang benar adalah `401`, bukan `404`. Ini membuktikan rewrite `/api/*` menuju `https://api.binahub.id` aktif.
 
 ## Smoke test akses peserta
 
@@ -40,4 +41,4 @@ Frontend memakai `output: "export"`, sehingga hasil production berupa situs stat
 
 API tetap dideploy terpisah dari repository `../binahub-api` ke `https://api.binahub.id`.
 
-Baseline Fase 7 per 30 Agustus 2026: website v0.2.20, app v0.11.2, API v0.11.2, migration sampai `0033`, dan automation v0.1.1. Fase 8 memakai app/API v0.12.0 tanpa migration baru. Empat workflow n8n tetap inactive; baca `PHASE-8-IMPLEMENTATION-STATUS.md` untuk dry-run evidence dan Launch Control.
+Baseline Fase 7 per 30 Agustus 2026: website v0.2.20, app v0.11.2, API v0.11.2, migration sampai `0033`, dan automation v0.1.1. Fase 8 memakai app/API v0.12.0 tanpa migration baru. Fase 9 memakai app/API v0.13.0 dan migration `0034`. Empat workflow n8n tetap inactive; baca `PHASE-9-IMPLEMENTATION-STATUS.md` untuk Human UAT & Pilot Gate.

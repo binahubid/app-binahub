@@ -3,6 +3,21 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Operations — Phase 13 Human UAT & Rehearsal
+
+- Menambahkan runbook Fase 13 dengan baseline production, 12 skenario UAT, urutan evidence, keputusan bisnis, monitoring policy, release, rehearsal, dan acceptance.
+- Mencatat evidence awal: tiga workflow healthy, Follow-up deferred di luar window, watchdog dry-run/locked, serta tidak ada outbound atau incident yang dimaterialisasi.
+
+## [0.16.1] - 2026-08-30
+
+### Changed — Admin Navigation & Internal Gate UI
+
+- Mengelompokkan sidebar admin menjadi accordion yang ringkas dan menyediakan area scroll independen agar seluruh menu tetap dapat dijangkau pada layar pendek.
+- Mengeluarkan Launch Control, Human UAT, Pilot Operations, Operational Assurance, dan Pilot Certification dari navigasi produk; evidence dan instruksi pengujian tetap dikelola sebagai artefak developer/backend.
+- Perubahan UI ini memerlukan deployment app berikutnya, tetapi tidak mengubah API, database, n8n, atau status dry-run.
+
 ## [0.16.0] - 2026-08-30
 
 ### Added — Phase 12 Pilot Rehearsal & Acceptance

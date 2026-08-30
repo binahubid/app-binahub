@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, LogOut, RefreshCw } from "lucide-react";
+import { ArrowRight, ChevronDown, LogOut, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AssessmentPanel } from "./_components/assessment-panel";
@@ -17,15 +17,51 @@ import { Overview } from "./_components/overview";
 import { PipelinePanel } from "./_components/pipeline-panel";
 import { ClientDeliveryPanel } from "./_components/client-delivery-panel";
 import { OperationsControlPanel } from "./_components/operations-control-panel";
-import { LaunchControlPanel } from "./_components/launch-control-panel";
-import { PilotReadinessPanel } from "./_components/pilot-readiness-panel";
-import { PilotOperationsPanel } from "./_components/pilot-operations-panel";
-import { OperationalAssurancePanel } from "./_components/operational-assurance-panel";
-import { PilotCertificationPanel } from "./_components/pilot-certification-panel";
 import { SmartCenterPanel } from "./_components/smart-center-panel";
 import { DashboardSkeleton, NotificationBadge } from "./_components/shared";
 import { TAB_META, tabs } from "./_lib/constants";
 import type { DashboardData } from "./_lib/types";
+
+type AdminTab = (typeof tabs)[number];
+
+const ADMIN_TAB_GROUPS = [
+  { id: "overview", label: "Ringkasan", tabs: ["Overview"] },
+  {
+    id: "growth",
+    label: "Akuisisi & Penjualan",
+    tabs: ["Acquisition Control", "Sales Pipeline", "Assessment", "Meeting", "Kontak & Leads", "Inquiry Masuk"],
+  },
+  {
+    id: "delivery",
+    label: "Delivery & Otomasi",
+    tabs: ["Client & Delivery", "Operations Control", "Automation Center", "Katalog & Rules"],
+  },
+  { id: "modules", label: "Modul", tabs: ["T-BOS"] },
+] satisfies ReadonlyArray<{ id: string; label: string; tabs: readonly AdminTab[] }>;
+
+const ADMIN_LINK_GROUPS = [
+  {
+    id: "governance",
+    label: "Manajemen & Tata Kelola",
+    links: [
+      { href: "/admin/users", label: "Manajemen User & Role" },
+      { href: "/admin/engagements", label: "Program Engagements" },
+      { href: "/admin/rbac", label: "Matriks Izin RBAC" },
+    ],
+  },
+  {
+    id: "field-operations",
+    label: "Operasional Lapangan",
+    links: [
+      { href: "/fasilitator/tbos/observations", label: "Kelola & Kunci Observasi" },
+      { href: "/fasilitator/tbos", label: "Form Input Observasi" },
+      { href: "/admin/lep", label: "Kelola Evaluasi LEP" },
+      { href: "/peserta/dashboard", label: "Dashboard Peserta" },
+    ],
+  },
+] as const;
+
+const VISIBLE_ADMIN_TABS = ADMIN_TAB_GROUPS.flatMap((group) => group.tabs);
 
 export default function AdminDashboardPage() {
   return (
@@ -41,7 +77,8 @@ function AdminDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [adminName, setAdminName] = useState("");
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Overview");
+  const [activeTab, setActiveTab] = useState<AdminTab>("Overview");
+  const [openSidebarGroups, setOpenSidebarGroups] = useState<Set<string>>(() => new Set(["overview"]));
   const [query, setQuery] = useState("");
   const [assessmentCategory, setAssessmentCategory] = useState("Semua");
   const [assessmentEmployeeRange, setAssessmentEmployeeRange] = useState("Semua");
@@ -49,12 +86,30 @@ function AdminDashboardContent() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [seenState, setSeenState] = useState({ assessment: "", inquiries: "" });
 
-  const handleTabChange = (tab: (typeof tabs)[number]) => {
+  const handleTabChange = (tab: AdminTab) => {
     if (tab === "T-BOS") {
       router.push("/admin/tbos");
       return;
     }
+    const targetGroup = ADMIN_TAB_GROUPS.find((group) => group.tabs.some((item) => item === tab));
+    if (targetGroup) {
+      setOpenSidebarGroups((current) => {
+        if (current.has(targetGroup.id)) return current;
+        const next = new Set(current);
+        next.add(targetGroup.id);
+        return next;
+      });
+    }
     setActiveTab(tab);
+  };
+
+  const toggleSidebarGroup = (groupId: string) => {
+    setOpenSidebarGroups((current) => {
+      const next = new Set(current);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
   };
 
   const fetchDashboard = async () => {
@@ -218,10 +273,10 @@ function AdminDashboardContent() {
     <>
       <main className="admin-root min-h-screen bg-[#FAF8F4] text-slate-900 font-sans selection:bg-[#C79A3C]/20 selection:text-[#0B2C6B]">
         {/* Sidebar */}
-        <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-slate-800/60 bg-[#071B3D] px-5 py-6 text-white lg:flex lg:flex-col lg:justify-between z-30">
-          <div>
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-800/60 bg-[#071B3D] px-5 py-6 text-white lg:flex">
+          <div className="shrink-0">
             {/* Genuine Logo */}
-            <div className="mb-8 px-2">
+            <div className="mb-5 px-2">
               <Link href="/home" className="inline-block transition-opacity hover:opacity-90">
                 <Image
                   src="/binahub_logo.webp"
@@ -239,92 +294,89 @@ function AdminDashboardContent() {
                 </span>
               </div>
             </div>
+          </div>
 
-            {/* Navigation Tabs: Analitik & Intelijen */}
-            <nav className="space-y-1">
-              <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Pusat Analitik &amp; Intelijen
-              </p>
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => handleTabChange(tab)}
-                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2 text-left text-xs font-semibold transition-all ${
-                    activeTab === tab
-                      ? "bg-white text-[#0B2C6B] shadow-sm shadow-black/10"
-                      : "text-slate-300 hover:bg-white/[0.08] hover:text-white"
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    {tab}
-                    {tab === "Assessment" && newAssessmentCount > 0 && <NotificationBadge count={newAssessmentCount} />}
-                    {tab === "Inquiry Masuk" && newInquiryCount > 0 && <NotificationBadge count={newInquiryCount} />}
-                  </span>
-                  {activeTab === tab && <ArrowRight size={14} className="text-[#D9A441]" />}
-                </button>
-              ))}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+            <nav className="space-y-2" aria-label="Navigasi admin">
+              {ADMIN_TAB_GROUPS.map((group) => {
+                const isOpen = openSidebarGroups.has(group.id);
+                const containsActiveTab = group.tabs.some((tab) => tab === activeTab);
+                return (
+                  <div key={group.id} className="border-b border-slate-800/80 pb-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleSidebarGroup(group.id)}
+                      aria-expanded={isOpen}
+                      aria-controls={`admin-sidebar-${group.id}`}
+                      className={`flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-[10px] font-bold uppercase tracking-wider transition-colors ${containsActiveTab ? "text-[#D9A441]" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    >
+                      {group.label}
+                      <ChevronDown size={14} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {isOpen && (
+                      <div id={`admin-sidebar-${group.id}`} className="mt-1 space-y-1">
+                        {group.tabs.map((tab) => (
+                          <button
+                            key={tab}
+                            type="button"
+                            onClick={() => handleTabChange(tab)}
+                            className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2 text-left text-xs font-semibold transition-all ${
+                              activeTab === tab
+                                ? "bg-white text-[#0B2C6B] shadow-sm shadow-black/10"
+                                : "text-slate-300 hover:bg-white/[0.08] hover:text-white"
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              {tab}
+                              {tab === "Assessment" && newAssessmentCount > 0 && <NotificationBadge count={newAssessmentCount} />}
+                              {tab === "Inquiry Masuk" && newInquiryCount > 0 && <NotificationBadge count={newInquiryCount} />}
+                            </span>
+                            {activeTab === tab && <ArrowRight size={14} className="text-[#D9A441]" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {ADMIN_LINK_GROUPS.map((group) => {
+                const isOpen = openSidebarGroups.has(group.id);
+                return (
+                  <div key={group.id} className="border-b border-slate-800/80 pb-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleSidebarGroup(group.id)}
+                      aria-expanded={isOpen}
+                      aria-controls={`admin-sidebar-${group.id}`}
+                      className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    >
+                      {group.label}
+                      <ChevronDown size={14} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {isOpen && (
+                      <div id={`admin-sidebar-${group.id}`} className="mt-1 space-y-1">
+                        {group.links.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className="flex rounded-xl px-3.5 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white"
+                          >
+                            {item.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </nav>
-
-            {/* Manajemen & Tata Kelola */}
-            <div className="mt-5 border-t border-slate-800/80 pt-3 space-y-1">
-              <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Manajemen &amp; Tata Kelola
-              </p>
-              <Link
-                href="/admin/users"
-                className="flex rounded-xl px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors"
-              >
-                Manajemen User &amp; Role
-              </Link>
-              <Link
-                href="/admin/engagements"
-                className="flex rounded-xl px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors"
-              >
-                Program Engagements
-              </Link>
-              <Link
-                href="/admin/rbac"
-                className="flex rounded-xl px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors"
-              >
-                Matriks Izin RBAC
-              </Link>
-            </div>
-
-            {/* Operasional Lapangan */}
-            <div className="mt-4 border-t border-slate-800/80 pt-3 space-y-1">
-              <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Operasional Lapangan
-              </p>
-              <Link
-                href="/fasilitator/tbos/observations"
-                className="flex rounded-xl px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors"
-              >
-                Kelola &amp; Kunci Observasi
-              </Link>
-              <Link
-                href="/fasilitator/tbos"
-                className="flex rounded-xl px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors"
-              >
-                Form Input Observasi
-              </Link>
-              <Link
-                href="/admin/lep"
-                className="flex rounded-xl px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors"
-              >
-                Kelola Evaluasi LEP
-              </Link>
-              <Link
-                href="/peserta/dashboard"
-                className="flex rounded-xl px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors"
-              >
-                Dashboard Peserta
-              </Link>
-            </div>
           </div>
 
           <button
+            type="button"
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-red-500/15 hover:border-red-500/30 hover:text-red-300 transition-all"
+            className="mt-4 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-300 transition-all hover:border-red-500/30 hover:bg-red-500/15 hover:text-red-300"
           >
             <LogOut size={14} /> Keluar dari Sesi
           </button>
@@ -348,10 +400,10 @@ function AdminDashboardContent() {
               <div className="flex flex-wrap items-center gap-2">
                 <select
                   value={activeTab}
-                  onChange={(event) => handleTabChange(event.target.value as (typeof tabs)[number])}
+                  onChange={(event) => handleTabChange(event.target.value as AdminTab)}
                   className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-xs lg:hidden"
                 >
-                  {tabs.map((tab) => (
+                  {VISIBLE_ADMIN_TABS.map((tab) => (
                     <option key={tab}>{tab}</option>
                   ))}
                 </select>
@@ -386,21 +438,6 @@ function AdminDashboardContent() {
             ) : (
               <>
                 {activeTab === "Overview" && <Overview data={data} />}
-                {activeTab === "Launch Control" && (
-                  <LaunchControlPanel onAction={adminRequest} />
-                )}
-                {activeTab === "UAT & Pilot Gate" && (
-                  <PilotReadinessPanel onAction={adminRequest} />
-                )}
-                {activeTab === "Pilot Operations" && (
-                  <PilotOperationsPanel onAction={adminRequest} />
-                )}
-                {activeTab === "Operational Assurance" && (
-                  <OperationalAssurancePanel onAction={adminRequest} />
-                )}
-                {activeTab === "Pilot Certification" && (
-                  <PilotCertificationPanel onAction={adminRequest} />
-                )}
                 {activeTab === "Acquisition Control" && (
                   <AcquisitionControlPanel onAction={adminRequest} />
                 )}

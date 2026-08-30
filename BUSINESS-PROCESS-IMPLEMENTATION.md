@@ -7,7 +7,7 @@ Repositori: `website-prod`, `app-binahub`, `binahub-api`, dan `binahub-automatio
 
 Fondasi proses dari prospect masuk sampai retain sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan final menjadi guardrail, sedangkan data kosong tetap menjadi activation blocker. Engineering gate, Launch Control, Human UAT, controlled pilot, Operational Assurance, dan Pilot Certification kini telah dibangun sampai app/API `0.16.0`, website `0.2.20`, automation `0.2.0`, dan migration `0037`; rincian terakhir ada di `PHASE-12-IMPLEMENTATION-STATUS.md`.
 
-Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktifkan proposal auto-send dan outbound, lima workflow n8n tetap inactive, dan UAT terintegrasi belum selesai.
+Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktifkan proposal auto-send dan outbound, lima workflow n8n tetap inactive, dan UAT terintegrasi belum selesai. Fase 13 sudah dimulai sebagai eksekusi evidence; runbook dan baseline riil tersedia di `PHASE-13-EXECUTION-RUNBOOK.md`.
 
 ## Posisi Fase Saat Ini
 
@@ -19,13 +19,14 @@ Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktif
 - **Fase 5 — Acquisition Governance & Growth Operations:** migration `0030`, API, dan app v0.11.0 sudah dideploy; workflow sudah diimpor tetapi inactive, data governance riil dan UAT masih menunggu.
 - **Fase 6 — Release Reconciliation:** selesai; katalog publik, credential n8n, migration `0031`, dan deployment telah direkonsiliasi.
 - **Fase 7 — Integrated UAT & Security Gate:** engineering gate selesai; migration `0032`/`0033`, smoke 18/18, retry/idempotensi, Cal.com lineage, RLS, dan security headers terverifikasi. Human scenario riil tetap menjadi activation gate akhir.
-- **Fase 8 — Launch Control & Observability:** implementasi app/API `0.12.0` selesai lokal; deployment dan pengisian audit run Follow-up/Event Worker menunggu operator.
-- **Fase 9 — Human UAT & Pilot Gate:** implementasi migration `0034`, API/app `0.13.0`, checklist 12 skenario wajib, bukti, owner, dan audit trail selesai lokal; eksekusi skenario manusia menunggu setelah deployment.
-- **Fase 10 — Controlled Pilot Operations & Kill Switch:** implementation migration `0035`, API/app `0.14.0`, release plan, requested/effective mode, volume ceiling, approval gate, rollback guard, dan kill switch selesai dibangun; deployment dan UAT manusia menunggu operator.
-- **Fase 11 — Operational Assurance & Go/No-Go:** implementation migration `0036`, API/app `0.15.0`, policy monitoring, snapshot deterministik, incident register, watchdog, dan human go/no-go selesai dibangun; deployment dan evidence riil menunggu operator.
-- **Fase 12 — Pilot Rehearsal & Acceptance:** implementation migration `0037`, API/app `0.16.0`, delapan langkah production dry-run rehearsal, evidence binding, final acceptance, dan gate tambahan selesai dibangun; deployment dan pengisian evidence riil menunggu operator.
+- **Fase 8 — Launch Control & Observability:** implementasi dan deployment selesai; audit run production dry-run mulai dikumpulkan pada Fase 13.
+- **Fase 9 — Human UAT & Pilot Gate:** migration `0034` serta API/app `0.13.0` sudah dideploy; 12 skenario tersedia tetapi seluruhnya masih `not_started` tanpa owner/evidence.
+- **Fase 10 — Controlled Pilot Operations & Kill Switch:** migration `0035` serta API/app `0.14.0` sudah dideploy; runtime control production tetap `dry_run`, belum ada release plan non-mock.
+- **Fase 11 — Operational Assurance & Go/No-Go:** migration `0036` serta API/app `0.15.0` sudah dideploy; tiga workflow healthy pada evidence awal Fase 13, Follow-up masih kekurangan run dalam 24 jam, dan policy masih mock/tanpa owner.
+- **Fase 12 — Pilot Rehearsal & Acceptance:** migration `0037` serta API/app `0.16.0` sudah dideploy dan smoke 11/11 lulus; rehearsal serta acceptance production belum dibuat.
+- **Fase 13 — Human UAT & Production Dry-Run Rehearsal:** berjalan. Baseline aman telah dicatat tanpa outbound; penyelesaian menunggu 12 UAT, keputusan bisnis/template, release non-mock, snapshot real, delapan rehearsal step, acceptance, dan go/no-go.
 
-Dengan demikian, pembangunan engineering saat ini selesai sampai Fase 12. Aktivasi otomatis penuh tetap terkunci dan seluruh worker terjadwal tetap inactive/dry-run sampai seluruh blocker bisnis, human UAT, release approval, policy real, monitoring evidence, rehearsal, acceptance, dan keputusan go-live disetujui.
+Dengan demikian, pembangunan engineering selesai sampai Fase 12 dan Fase 13 menjadi fase verifikasi operasional. Aktivasi otomatis penuh tetap terkunci dan seluruh worker terjadwal tetap inactive/dry-run sampai seluruh blocker bisnis, human UAT, release approval, policy real, monitoring evidence, rehearsal, acceptance, dan keputusan go-live disetujui.
 
 ## Status Workflow End-to-End
 

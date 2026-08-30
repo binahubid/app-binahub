@@ -1,10 +1,10 @@
 # Deployment app.binahub.id
 
-Frontend memakai `output: "export"`, sehingga hasil production berupa situs statis di folder `out/`.
+Frontend memakai Next.js server output agar reverse proxy `/api/*` dan security headers berjalan di origin production.
 
 ## Urutan deployment
 
-1. Ikuti runbook `../binahub-api/supabase/DEPLOYMENT.md` dan terapkan migration API sampai `0034_phase9_human_uat_pilot_gate.sql`, lalu jalankan `supabase/production_readiness.sql`. Semua flag `*_ready`, termasuk `human_uat_pilot_gate_phase9_ready`, harus `true` dan seluruh counter `*_issues` harus nol.
+1. Ikuti runbook `../binahub-api/supabase/DEPLOYMENT.md` dan terapkan migration API sampai `0035_phase10_pilot_operations_control_plane.sql`, lalu jalankan `supabase/production_readiness.sql`. Semua flag `*_ready`, termasuk `pilot_operations_phase10_ready`, harus `true` dan seluruh counter `*_issues` harus nol.
 2. Pastikan environment production menggunakan:
    - `NEXT_PUBLIC_APP_URL=https://app.binahub.id`
    - `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`
@@ -16,7 +16,7 @@ Frontend memakai `output: "export"`, sehingga hasil production berupa situs stat
 4. Jalankan `npm run typecheck`, `npm run lint`, dan `npm run test:run`.
 5. Jalankan `npm run build`.
 6. Deploy `binahub-api` lebih dahulu.
-7. Publikasikan **seluruh isi** folder `out/` ke document root `app.binahub.id`. Jangan hanya mengunggah `admin/tbos.html`, karena nama chunk pada `out/_next/static/` berubah setiap build.
+7. Deploy hasil build sebagai aplikasi Node.js Next.js dan jalankan `npm run start`; jangan mengunggahnya sebagai static export karena rewrite `/api/*` tidak akan berjalan.
 8. Hapus file lama yang tidak lagi direferensikan dan bersihkan cache hosting/CDN.
 9. Jalankan smoke test akses peserta dan T-BOS di bawah.
 10. Uji `https://app.binahub.id/api/auth/role` tanpa token; hasil yang benar adalah `401`, bukan `404`. Ini membuktikan rewrite `/api/*` menuju `https://api.binahub.id` aktif.
@@ -41,4 +41,4 @@ Frontend memakai `output: "export"`, sehingga hasil production berupa situs stat
 
 API tetap dideploy terpisah dari repository `../binahub-api` ke `https://api.binahub.id`.
 
-Baseline Fase 7 per 30 Agustus 2026: website v0.2.20, app v0.11.2, API v0.11.2, migration sampai `0033`, dan automation v0.1.1. Fase 8 memakai app/API v0.12.0 tanpa migration baru. Fase 9 memakai app/API v0.13.0 dan migration `0034`. Empat workflow n8n tetap inactive; baca `PHASE-9-IMPLEMENTATION-STATUS.md` untuk Human UAT & Pilot Gate.
+Baseline per 30 Agustus 2026: website v0.2.20, app/API v0.14.0, migration sampai `0035`, dan automation v0.1.1. Empat workflow n8n tetap inactive dan seluruh environment dry-run tetap `true`; baca `PHASE-10-IMPLEMENTATION-STATUS.md` untuk controlled pilot dan kill switch.

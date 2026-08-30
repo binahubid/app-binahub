@@ -2,6 +2,8 @@
 
 Frontend authenticated untuk `app.binahub.id`. Backend berada di repositori sejajar `../binahub-api` dan ditargetkan ke `api.binahub.id`.
 
+Fase 10 menyediakan tab `Pilot Operations` untuk controlled release, runtime ceiling, dan kill switch. Dashboard hanya mencatat requested state; effective mode tetap mengikuti environment backend dan aktivasi n8n dilakukan di luar aplikasi.
+
 Panduan build dan publikasi frontend tersedia di [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## Stack

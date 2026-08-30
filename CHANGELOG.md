@@ -3,6 +3,15 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] - 2026-08-30
+
+### Added — Phase 10 Controlled Pilot Operations
+
+- Menambahkan tab `Pilot Operations` untuk menyusun release pilot, cohort, owner, jadwal, kriteria sukses, trigger rollback, dan keputusan manusia.
+- Menampilkan empat gate aktivasi, requested/effective mode, environment dry-run, batas volume, versi control, dan approved release.
+- Menambahkan kill switch per worker dengan alasan wajib dan audit event.
+- Mempertahankan batas aman: UI tidak mengubah environment dan tidak mengaktifkan workflow n8n; server tetap menolak pilot/live ketika gate belum lengkap.
+
 ## [0.13.0] - 2026-08-30
 
 ### Added — Phase 9 Human UAT & Pilot Gate

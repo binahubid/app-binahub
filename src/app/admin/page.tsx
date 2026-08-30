@@ -19,6 +19,7 @@ import { ClientDeliveryPanel } from "./_components/client-delivery-panel";
 import { OperationsControlPanel } from "./_components/operations-control-panel";
 import { LaunchControlPanel } from "./_components/launch-control-panel";
 import { PilotReadinessPanel } from "./_components/pilot-readiness-panel";
+import { PilotOperationsPanel } from "./_components/pilot-operations-panel";
 import { SmartCenterPanel } from "./_components/smart-center-panel";
 import { DashboardSkeleton, NotificationBadge } from "./_components/shared";
 import { TAB_META, tabs } from "./_lib/constants";
@@ -388,6 +389,9 @@ function AdminDashboardContent() {
                 )}
                 {activeTab === "UAT & Pilot Gate" && (
                   <PilotReadinessPanel onAction={adminRequest} />
+                )}
+                {activeTab === "Pilot Operations" && (
+                  <PilotOperationsPanel onAction={adminRequest} />
                 )}
                 {activeTab === "Acquisition Control" && (
                   <AcquisitionControlPanel onAction={adminRequest} />

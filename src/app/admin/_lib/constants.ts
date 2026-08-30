@@ -1,4 +1,4 @@
-export const tabs = ["Overview", "Launch Control", "UAT & Pilot Gate", "Acquisition Control", "Sales Pipeline", "Client & Delivery", "Operations Control", "Automation Center", "Assessment", "Katalog & Rules", "Meeting", "Kontak & Leads", "Inquiry Masuk", "T-BOS"] as const;
+export const tabs = ["Overview", "Launch Control", "UAT & Pilot Gate", "Pilot Operations", "Acquisition Control", "Sales Pipeline", "Client & Delivery", "Operations Control", "Automation Center", "Assessment", "Katalog & Rules", "Meeting", "Kontak & Leads", "Inquiry Masuk", "T-BOS"] as const;
 
 export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: string; description: string }> = {
   Overview: {
@@ -25,6 +25,11 @@ export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: s
     eyebrow: "Human validation",
     title: "Buktikan alur end-to-end sebelum pilot",
     description: "Tetapkan owner, jalankan skenario wajib, simpan bukti, dan selesaikan blocker; kelulusan UAT tetap membutuhkan keputusan manusia sebelum aktivasi.",
+  },
+  "Pilot Operations": {
+    eyebrow: "Controlled pilot",
+    title: "Rencanakan pilot, batas eksekusi, dan kill switch",
+    description: "Kelola release terkontrol dan effective mode setiap worker tanpa melewati UAT, approval manusia, rollback plan, atau environment dry-run.",
   },
   "Acquisition Control": {
     eyebrow: "Growth governance",

@@ -4,14 +4,14 @@ Frontend memakai Next.js server output agar reverse proxy `/api/*` dan security 
 
 ## Urutan deployment
 
-1. Ikuti runbook `../binahub-api/supabase/DEPLOYMENT.md` dan terapkan migration API sampai `0035_phase10_pilot_operations_control_plane.sql`, lalu jalankan `supabase/production_readiness.sql`. Semua flag `*_ready`, termasuk `pilot_operations_phase10_ready`, harus `true` dan seluruh counter `*_issues` harus nol.
+1. Ikuti runbook `../binahub-api/supabase/DEPLOYMENT.md` dan terapkan migration API sampai `0036_phase11_operational_assurance.sql`, lalu jalankan `supabase/production_readiness.sql`. Semua flag `*_ready`, termasuk `operational_assurance_phase11_ready`, harus `true`; seluruh counter integritas `*_issues` harus nol.
 2. Pastikan environment production menggunakan:
    - `NEXT_PUBLIC_APP_URL=https://app.binahub.id`
    - `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`
    - `NEXT_PUBLIC_COMPANY_WEBSITE_URL=https://binahub.id`
    - pada `website-prod`: `NEXT_PUBLIC_BINAHUB_APP_URL=https://app.binahub.id`, `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`, dan `NEXT_PUBLIC_CALCOM_BOOKING_URL=https://cal.com/binahub/konsultasi`
-   - pada API: secret unik untuk Follow-up, Transformation Worker, Operations, Acquisition, Cal.com, Resend, proposal link, dan unsubscribe
-   - pada API selama UAT: `FOLLOW_UP_DRY_RUN=true`, `TRANSFORMATION_WORKER_DRY_RUN=true`, `OPERATIONS_DRY_RUN=true`, dan `ACQUISITION_DRY_RUN=true`
+   - pada API: secret unik untuk Follow-up, Transformation Worker, Operations, Acquisition, Pilot Monitor, Cal.com, Resend, proposal link, dan unsubscribe
+   - pada API selama UAT: `FOLLOW_UP_DRY_RUN=true`, `TRANSFORMATION_WORKER_DRY_RUN=true`, `OPERATIONS_DRY_RUN=true`, `ACQUISITION_DRY_RUN=true`, dan `PILOT_MONITOR_DRY_RUN=true`
 3. Jalankan `npm ci`.
 4. Jalankan `npm run typecheck`, `npm run lint`, dan `npm run test:run`.
 5. Jalankan `npm run build`.
@@ -41,4 +41,4 @@ Frontend memakai Next.js server output agar reverse proxy `/api/*` dan security 
 
 API tetap dideploy terpisah dari repository `../binahub-api` ke `https://api.binahub.id`.
 
-Baseline per 30 Agustus 2026: website v0.2.20, app/API v0.14.0, migration sampai `0035`, dan automation v0.1.1. Empat workflow n8n tetap inactive dan seluruh environment dry-run tetap `true`; baca `PHASE-10-IMPLEMENTATION-STATUS.md` untuk controlled pilot dan kill switch.
+Baseline Fase 11 per 30 Agustus 2026: website v0.2.20, app/API v0.15.0, migration sampai `0036`, dan automation v0.2.0. Lima workflow n8n tetap inactive dan seluruh environment dry-run tetap `true`; baca `PHASE-11-IMPLEMENTATION-STATUS.md` untuk monitoring, incident response, dan go/no-go.

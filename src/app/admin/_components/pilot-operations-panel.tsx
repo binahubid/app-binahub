@@ -326,7 +326,7 @@ export function PilotOperationsPanel({ onAction }: { onAction: AdminAction }) {
             <LockKeyhole className="mt-0.5 shrink-0" size={20} />
             <div>
               <p className="font-bold">Control plane tidak mengaktifkan n8n atau mengubah environment</p>
-              <p className="mt-1 max-w-4xl text-sm leading-relaxed">Database hanya dapat memperketat mode dan batas eksekusi. Variabel dry-run tetap menjadi otoritas terakhir; perubahan ke pilot/live membutuhkan gate lengkap, release non-mock, persetujuan manusia, serta langkah aktivasi eksternal.</p>
+              <p className="mt-1 max-w-4xl text-sm leading-relaxed">Database hanya dapat memperketat mode dan batas eksekusi. Variabel dry-run tetap menjadi otoritas terakhir; perubahan ke pilot/live membutuhkan gate lengkap, release non-mock, keputusan Operational Assurance, persetujuan manusia, serta langkah aktivasi eksternal.</p>
             </div>
           </div>
           <button type="button" onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-amber-900/15 bg-white px-3.5 py-2 text-xs font-bold disabled:opacity-50">
@@ -400,7 +400,7 @@ export function PilotOperationsPanel({ onAction }: { onAction: AdminAction }) {
         </div>
       </Panel>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-500"><div className="flex gap-2"><AlertTriangle size={15} className="shrink-0 text-amber-600" /><p>Jika requested mode pilot/live tetapi environment masih dry-run, effective mode tetap <strong>dry_run</strong>. Setelah semua gate lulus, perubahan environment dan aktivasi n8n harus dilakukan sebagai langkah deployment terpisah dengan monitoring aktif.</p></div></div>
+      <div className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-500"><div className="flex gap-2"><AlertTriangle size={15} className="shrink-0 text-amber-600" /><p>Jika requested mode pilot/live tetapi environment masih dry-run, effective mode tetap <strong>dry_run</strong>. Fase 11 juga mewajibkan go/conditional go dan tidak adanya critical incident. Perubahan environment serta aktivasi n8n tetap dilakukan sebagai deployment terpisah.</p></div></div>
     </div>
   );
 }

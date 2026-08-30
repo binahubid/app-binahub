@@ -3,6 +3,15 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [0.15.0] - 2026-08-30
+
+### Added — Phase 11 Operational Assurance
+
+- Menambahkan tab `Operational Assurance` untuk snapshot kesehatan automation, monitoring policy, incident response, dan keputusan go/no-go.
+- Menampilkan execution evidence per workflow, failure rate, consecutive failure, stale run, status environment guard, serta blocker pilot.
+- Menambahkan form owner/resolution incident dan human gate yang mengikat keputusan ke snapshot terbaru.
+- Mempertahankan activation lock: dashboard tidak mengaktifkan n8n, tidak mengubah environment, dan tidak mengirim outbound.
+
 ## [0.14.0] - 2026-08-30
 
 ### Added — Phase 10 Controlled Pilot Operations

@@ -1,4 +1,4 @@
-export const tabs = ["Overview", "Launch Control", "UAT & Pilot Gate", "Pilot Operations", "Operational Assurance", "Acquisition Control", "Sales Pipeline", "Client & Delivery", "Operations Control", "Automation Center", "Assessment", "Katalog & Rules", "Meeting", "Kontak & Leads", "Inquiry Masuk", "T-BOS"] as const;
+export const tabs = ["Overview", "Launch Control", "UAT & Pilot Gate", "Pilot Operations", "Operational Assurance", "Pilot Certification", "Acquisition Control", "Sales Pipeline", "Client & Delivery", "Operations Control", "Automation Center", "Assessment", "Katalog & Rules", "Meeting", "Kontak & Leads", "Inquiry Masuk", "T-BOS"] as const;
 
 export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: string; description: string }> = {
   Overview: {
@@ -35,6 +35,11 @@ export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: s
     eyebrow: "Operational assurance",
     title: "Pantau kesehatan automation dan keputusan pilot",
     description: "Tinjau execution evidence, policy monitoring, incident response, serta catatan go/no-go tanpa mengaktifkan workflow.",
+  },
+  "Pilot Certification": {
+    eyebrow: "Pilot acceptance",
+    title: "Kunci rehearsal dan evidence sebelum go/no-go",
+    description: "Jalankan delapan pemeriksaan dry-run produksi, ikat hasilnya ke snapshot monitoring, dan catat acceptance manusia tanpa mengaktifkan workflow.",
   },
   "Acquisition Control": {
     eyebrow: "Growth governance",

@@ -5,7 +5,7 @@ Repositori: `website-prod`, `app-binahub`, `binahub-api`, dan `binahub-automatio
 
 ## Ringkasan Eksekutif
 
-Fondasi proses dari prospect masuk sampai retain sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan final menjadi guardrail, sedangkan data kosong tetap menjadi activation blocker. Engineering gate, Launch Control, Human UAT, controlled pilot, dan Operational Assurance kini telah dibangun sampai app/API `0.15.0`, website `0.2.20`, automation `0.2.0`, dan migration `0036`; rincian terakhir ada di `PHASE-11-IMPLEMENTATION-STATUS.md`.
+Fondasi proses dari prospect masuk sampai retain sudah tersedia dan BinaInsight dapat dipakai publik tanpa autentikasi. Business Rules yang dikembalikan pengambil keputusan telah diterjemahkan menjadi `v1.0-approved-partial`: keputusan final menjadi guardrail, sedangkan data kosong tetap menjadi activation blocker. Engineering gate, Launch Control, Human UAT, controlled pilot, Operational Assurance, dan Pilot Certification kini telah dibangun sampai app/API `0.16.0`, website `0.2.20`, automation `0.2.0`, dan migration `0037`; rincian terakhir ada di `PHASE-12-IMPLEMENTATION-STATUS.md`.
 
 Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktifkan proposal auto-send dan outbound, lima workflow n8n tetap inactive, dan UAT terintegrasi belum selesai.
 
@@ -23,8 +23,9 @@ Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktif
 - **Fase 9 — Human UAT & Pilot Gate:** implementasi migration `0034`, API/app `0.13.0`, checklist 12 skenario wajib, bukti, owner, dan audit trail selesai lokal; eksekusi skenario manusia menunggu setelah deployment.
 - **Fase 10 — Controlled Pilot Operations & Kill Switch:** implementation migration `0035`, API/app `0.14.0`, release plan, requested/effective mode, volume ceiling, approval gate, rollback guard, dan kill switch selesai dibangun; deployment dan UAT manusia menunggu operator.
 - **Fase 11 — Operational Assurance & Go/No-Go:** implementation migration `0036`, API/app `0.15.0`, policy monitoring, snapshot deterministik, incident register, watchdog, dan human go/no-go selesai dibangun; deployment dan evidence riil menunggu operator.
+- **Fase 12 — Pilot Rehearsal & Acceptance:** implementation migration `0037`, API/app `0.16.0`, delapan langkah production dry-run rehearsal, evidence binding, final acceptance, dan gate tambahan selesai dibangun; deployment dan pengisian evidence riil menunggu operator.
 
-Dengan demikian, pembangunan saat ini berada pada Fase 11. Aktivasi otomatis penuh tetap terkunci dan seluruh worker terjadwal tetap inactive/dry-run sampai seluruh blocker bisnis, human UAT, release approval, policy real, monitoring evidence, incident blocker, dan keputusan go-live disetujui.
+Dengan demikian, pembangunan engineering saat ini selesai sampai Fase 12. Aktivasi otomatis penuh tetap terkunci dan seluruh worker terjadwal tetap inactive/dry-run sampai seluruh blocker bisnis, human UAT, release approval, policy real, monitoring evidence, rehearsal, acceptance, dan keputusan go-live disetujui.
 
 ## Status Workflow End-to-End
 
@@ -46,7 +47,7 @@ Dengan demikian, pembangunan saat ini berada pada Fase 11. Aktivasi otomatis pen
 - Cal.com mengirim webhook langsung ke API; signature `X-Cal-Signature-256` diverifikasi sebelum booking disimpan dan lead dipindahkan ke tahap consultation.
 - `binahub-automation` menyediakan Docker Compose n8n + PostgreSQL, lima workflow, export/import script, dan runbook migrasi VPS.
 - Workflow di repository selalu inactive dan secret harus dihubungkan melalui n8n Credentials.
-- Docker Desktop, n8n, dan PostgreSQL lokal sudah berjalan; empat workflow lama sudah diimpor dan inactive. Workflow kelima Pilot Monitoring siap diimpor setelah API `0.15.0`; seluruh workflow tetap inactive.
+- Docker Desktop, n8n, dan PostgreSQL lokal sudah berjalan; lima workflow sudah diimpor tepat satu kali dan semuanya inactive.
 - Migration `0024` dan `0025` sudah diverifikasi melalui tabel Business Rules, katalog, booking, dan webhook event yang dapat diakses API.
 - Lokal/UAT memakai `FOLLOW_UP_DRY_RUN=true`, sehingga scheduler hanya menampilkan kandidat tanpa mengirim email atau mengubah status.
 
@@ -113,11 +114,11 @@ Ketika assessment selesai, qualification deterministik menyimpan score, temperat
 Urutan ini penting. Jangan deploy API baru sebelum migration tersedia karena API mengandalkan kolom dan RPC baru.
 
 1. Backup database Supabase dan jalankan `../binahub-api/supabase/production_readiness.sql` secara read-only.
-2. Terapkan migration API sampai `0036_phase11_operational_assurance.sql`, lalu pastikan seluruh flag readiness true dan counter integritas issue nol.
+2. Terapkan migration API sampai `0037_phase12_pilot_rehearsal_certification.sql`, lalu pastikan seluruh flag readiness true dan counter integritas issue nol.
 3. Tambahkan secret production yang berbeda untuk `UNSUBSCRIBE_SECRET`, `FOLLOW_UP_CRON_SECRET`, `TRANSFORMATION_WORKER_SECRET`, `PROPOSAL_LINK_SECRET`, `PILOT_MONITOR_SECRET`, `CALCOM_WEBHOOK_SECRET`, dan `RESEND_WEBHOOK_SECRET`. Masing-masing harus acak; unsubscribe minimal 32 karakter.
 4. Pastikan `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`, URL website, dan URL app mengarah ke domain production yang benar.
-5. Deploy `binahub-api` v0.15.0, lalu `app-binahub` v0.15.0; website tetap v0.2.20. Pastikan API health, reverse proxy `/api/*`, dan role boundary merespons sesuai kontrak.
-6. Lima workflow harus tersedia dalam kondisi inactive. Sambungkan credential Pilot Monitor hanya untuk dry-run; jangan aktifkan scheduler bisnis pada Fase 11.
+5. Deploy `binahub-api` v0.16.0, lalu `app-binahub` v0.16.0; website tetap v0.2.20. Pastikan API health, reverse proxy `/api/*`, dan role boundary merespons sesuai kontrak.
+6. Lima workflow harus tetap inactive. Isi evidence Pilot Certification melalui dashboard; jangan aktifkan scheduler bisnis pada deployment Fase 12.
 7. Simpan secret di credential store n8n, bukan di node text atau repository. Tambahkan retry terbatas dan alert jika respons bukan 2xx.
 8. Lakukan smoke test UTM → assessment → qualification evidence → admin; proposal dengan data tidak lengkap; booking → auto-pause; unsubscribe → suppression; serta dua pemanggilan follow-up paralel pada lead yang sama.
 
@@ -129,7 +130,7 @@ Urutan ini penting. Jangan deploy API baru sebelum migration tersedia karena API
 2. **Konfigurasi deliverability.** Verifikasi domain Resend, SPF, DKIM, DMARC, alamat balasan, bounce/complaint webhook, dan batas kirim. Owner: IT/Marketing.
 3. **Persetujuan legal outbound.** Tetapkan lawful basis, sumber data yang boleh digunakan, disclosure, retention, dan proses data deletion sebelum impor Apollo/LinkedIn/Google. Owner: Pimpinan/Legal.
 4. **Lengkapi activation blockers.** Isi status produk, katalog dan harga modul, kebijakan transaksi di bawah Rp15 juta, owner/backup, approver individu, SLA legal/reputasi, owner template, dan wording pajak. Owner: Product/Commercial/Finance/Legal.
-5. **Rekonsiliasi release dan secrets.** Terapkan `0036`, deploy API/app v0.15.0, tambahkan `PILOT_MONITOR_SECRET`, hubungkan credential n8n tanpa menyalin secret ke workflow, dan dokumentasikan rollback/restore. Owner: Engineering/Ops.
+5. **Rekonsiliasi release dan evidence.** Terapkan `0037`, deploy API/app v0.16.0, jalankan smoke Phase 12, lalu isi rehearsal dan acceptance tanpa mengaktifkan workflow. Owner: Engineering/Ops.
 
 ### P1 — Membuat proses Lead dan Proposal benar-benar operasional
 
@@ -153,10 +154,10 @@ Urutan ini penting. Jangan deploy API baru sebelum migration tersedia karena API
 
 | Vendor/komponen | Kondisi kode saat ini | Tindakan |
 |---|---|---|
-| Supabase | Sudah menjadi system of record; migration sampai `0036` disiapkan | Terapkan `0036`, jalankan readiness, backup, cek limit plan, dan tetapkan owner database |
+| Supabase | Sudah menjadi system of record; migration sampai `0037` disiapkan | Terapkan `0037`, jalankan readiness, backup, cek limit plan, dan tetapkan owner database |
 | Resend | Sudah dipakai untuk result, proposal, dan follow-up | Verifikasi domain, quota, webhook bounce/complaint, serta pilih plan berdasarkan volume nyata |
 | OpenRouter/model AI | Sudah dipakai untuk analisis assessment, narasi proposal, dan follow-up; keputusan temperature memakai rules deterministik | Pilih model production, budget cap, fallback, logging biaya, dan evaluasi kualitas narasi |
-| Vercel/hosting | Website v0.2.20 serta app/API v0.15.0 disiapkan | Deploy setelah migration `0036`; konfirmasi observability, reverse proxy, dan kebijakan preview |
+| Vercel/hosting | Website v0.2.20 live; app/API v0.16.0 disiapkan | Deploy setelah migration `0037`; konfirmasi observability, reverse proxy, dan kebijakan preview |
 | n8n | Docker Desktop, PostgreSQL, dan lima workflow inactive tersedia; worker memakai runtime ceiling, kill switch, dan watchdog | Uji `test:phase11`, hubungkan credential dengan dry-run, lalu setelah exit criteria pindahkan ke VPS dengan HTTPS/backup/alert |
 | Cal.com Hosted | Event konsultasi, kalender, HMAC webhook production, booking store, create/reschedule/cancel, dan update opportunity sudah tersedia | Uji no-show, reminder, dan aturan resume setelah cancellation |
 | Apollo | Belum terintegrasi | Putuskan seat/credit, aturan ekspor, enrichment, dedupe, consent, dan batas outreach |

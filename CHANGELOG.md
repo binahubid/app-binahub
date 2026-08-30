@@ -3,6 +3,19 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] - 2026-08-30
+
+### Added — Phase 12 Pilot Rehearsal & Acceptance
+
+- Menambahkan tab `Pilot Certification` untuk merencanakan production dry-run rehearsal, mencatat delapan bukti eksekusi, dan mengikat hasil ke snapshot monitoring.
+- Menambahkan form acceptance manusia dengan keputusan accepted, accepted with conditions, atau rejected sebelum proses go/no-go.
+- Menampilkan gate UAT, policy monitoring, critical incident, status rehearsal, dan acceptance dalam satu workspace audit.
+
+### Safety
+
+- Dashboard tidak mengaktifkan n8n, tidak mengubah environment, dan tidak mengirim outbound.
+- Rehearsal real hanya dapat lulus dengan delapan langkah passed dan snapshot real yang fresh; acceptance tetap membutuhkan deployment terpisah untuk aktivasi.
+
 ## [0.15.0] - 2026-08-30
 
 ### Added — Phase 11 Operational Assurance

@@ -21,6 +21,7 @@ import { LaunchControlPanel } from "./_components/launch-control-panel";
 import { PilotReadinessPanel } from "./_components/pilot-readiness-panel";
 import { PilotOperationsPanel } from "./_components/pilot-operations-panel";
 import { OperationalAssurancePanel } from "./_components/operational-assurance-panel";
+import { PilotCertificationPanel } from "./_components/pilot-certification-panel";
 import { SmartCenterPanel } from "./_components/smart-center-panel";
 import { DashboardSkeleton, NotificationBadge } from "./_components/shared";
 import { TAB_META, tabs } from "./_lib/constants";
@@ -396,6 +397,9 @@ function AdminDashboardContent() {
                 )}
                 {activeTab === "Operational Assurance" && (
                   <OperationalAssurancePanel onAction={adminRequest} />
+                )}
+                {activeTab === "Pilot Certification" && (
+                  <PilotCertificationPanel onAction={adminRequest} />
                 )}
                 {activeTab === "Acquisition Control" && (
                   <AcquisitionControlPanel onAction={adminRequest} />

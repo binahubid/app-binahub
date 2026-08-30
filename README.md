@@ -2,7 +2,7 @@
 
 Frontend authenticated untuk `app.binahub.id`. Backend berada di repositori sejajar `../binahub-api` dan ditargetkan ke `api.binahub.id`.
 
-Fase 11 menyediakan tab `Operational Assurance` di atas controlled release Fase 10. Dashboard menampilkan snapshot deterministik, policy monitoring, incident response, dan human go/no-go. Keputusan tetap tidak mengubah environment atau mengaktifkan n8n.
+Fase 12 menyediakan tab `Pilot Certification` di atas Operational Assurance Fase 11. Dashboard mengelola production dry-run rehearsal, delapan bukti eksekusi, snapshot monitoring, dan acceptance manusia sebelum go/no-go. Keputusan tetap tidak mengubah environment atau mengaktifkan n8n.
 
 Panduan build dan publikasi frontend tersedia di [DEPLOYMENT.md](./DEPLOYMENT.md).
 

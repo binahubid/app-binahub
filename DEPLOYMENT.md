@@ -4,7 +4,7 @@ Frontend memakai Next.js server output agar reverse proxy `/api/*` dan security 
 
 ## Urutan deployment
 
-1. Ikuti runbook `../binahub-api/supabase/DEPLOYMENT.md` dan terapkan migration API sampai `0036_phase11_operational_assurance.sql`, lalu jalankan `supabase/production_readiness.sql`. Semua flag `*_ready`, termasuk `operational_assurance_phase11_ready`, harus `true`; seluruh counter integritas `*_issues` harus nol.
+1. Ikuti runbook `../binahub-api/supabase/DEPLOYMENT.md` dan terapkan migration API sampai `0037_phase12_pilot_rehearsal_certification.sql`, lalu jalankan `supabase/production_readiness.sql`. Semua flag `*_ready`, termasuk `pilot_certification_phase12_ready`, harus `true`; seluruh counter integritas `*_issues` harus nol.
 2. Pastikan environment production menggunakan:
    - `NEXT_PUBLIC_APP_URL=https://app.binahub.id`
    - `NEXT_PUBLIC_BINAHUB_API_URL=https://api.binahub.id`
@@ -41,4 +41,4 @@ Frontend memakai Next.js server output agar reverse proxy `/api/*` dan security 
 
 API tetap dideploy terpisah dari repository `../binahub-api` ke `https://api.binahub.id`.
 
-Baseline Fase 11 per 30 Agustus 2026: website v0.2.20, app/API v0.15.0, migration sampai `0036`, dan automation v0.2.0. Lima workflow n8n tetap inactive dan seluruh environment dry-run tetap `true`; baca `PHASE-11-IMPLEMENTATION-STATUS.md` untuk monitoring, incident response, dan go/no-go.
+Target deployment Fase 12 per 30 Agustus 2026: website v0.2.20, app/API v0.16.0, migration sampai `0037`, dan automation v0.2.0. Lima workflow n8n tetap inactive dan seluruh environment dry-run tetap `true`; baca `PHASE-12-IMPLEMENTATION-STATUS.md` untuk rehearsal dan acceptance.

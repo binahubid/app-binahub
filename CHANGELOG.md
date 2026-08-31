@@ -9,6 +9,7 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 - Menambahkan runbook Fase 13 dengan baseline production, 12 skenario UAT, urutan evidence, keputusan bisnis, monitoring policy, release, rehearsal, dan acceptance.
 - Mencatat evidence awal: tiga workflow healthy, Follow-up deferred di luar window, watchdog dry-run/locked, serta tidak ada outbound atau incident yang dimaterialisasi.
+- Mencatat skenario `public_assessment_pdf_email` sebagai passed di production berdasarkan hasil pengguna, screenshot email/admin, dan PDF empat halaman; temuan visual dipisahkan sebagai improvement non-blocking.
 
 ## [0.16.1] - 2026-08-30
 
@@ -16,6 +17,10 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 - Mengelompokkan sidebar admin menjadi accordion yang ringkas dan menyediakan area scroll independen agar seluruh menu tetap dapat dijangkau pada layar pendek.
 - Mengeluarkan Launch Control, Human UAT, Pilot Operations, Operational Assurance, dan Pilot Certification dari navigasi produk; evidence dan instruksi pengujian tetap dikelola sebagai artefak developer/backend.
+- Mendesain ulang pengisian assessment per dimensi menjadi satu pertanyaan fokus dengan navigator, progres terjawab, pilihan respons yang lebih ekspresif, dan perpindahan otomatis ke pertanyaan berikutnya.
+- Memperbaiki label respons kelima pada locale Inggris agar tidak lagi menggunakan fallback bahasa Indonesia.
+- Memusatkan pemeriksaan role client-side dan memastikan gate admin, fasilitator, peserta, serta klien selalu meneruskan bearer token sesi ke endpoint `/api/auth/role`.
+- Menambahkan tes regresi untuk token kosong, header otorisasi, cache bypass, dan penolakan role yang tidak dikenal.
 - Perubahan UI ini memerlukan deployment app berikutnya, tetapi tidak mengubah API, database, n8n, atau status dry-run.
 
 ## [0.16.0] - 2026-08-30

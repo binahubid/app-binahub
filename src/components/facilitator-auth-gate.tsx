@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { fetchAuthenticatedRole } from "@/lib/authenticated-role";
 
 export function FacilitatorAuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -21,9 +22,8 @@ export function FacilitatorAuthGate({ children }: { children: React.ReactNode })
       }
 
       try {
-        const response = await fetch("/api/auth/role");
-        const result = await response.json();
-        const role = response.ok && result.success ? result.role : null;
+        const result = await fetchAuthenticatedRole(session.access_token);
+        const role = result.ok ? result.role : null;
 
         if (role !== "facilitator" && role !== "admin") {
           if (alive) router.replace("/login");

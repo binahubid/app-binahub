@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { fetchAuthenticatedRole } from "@/lib/authenticated-role";
 
 export type AppRole = "admin" | "facilitator" | "client" | "peserta";
 
@@ -23,12 +24,11 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const response = await fetch("/api/auth/role");
-        const result = await response.json().catch(() => null);
-        const role = response.ok && result.success ? result.role : null;
+        const result = await fetchAuthenticatedRole(session.access_token);
+        const role = result.ok ? result.role : null;
 
         if (role !== "admin") {
-          if (alive) router.replace(response.status === 401 ? "/login" : "/access-denied");
+          if (alive) router.replace(result.status === 401 ? "/login" : "/access-denied");
           return;
         }
 
@@ -73,9 +73,8 @@ export function PermissionGate({ children, allowedRoles, fallback }: PermissionG
         return;
       }
 
-      const response = await fetch("/api/auth/role");
-      const result = await response.json();
-      const userRole = (response.ok && result.success ? result.role : "peserta") as AppRole;
+      const result = await fetchAuthenticatedRole(session.access_token);
+      const userRole = (result.ok ? result.role : "peserta") as AppRole;
       if (alive) setGranted(allowedRoles.includes(userRole));
     }
 

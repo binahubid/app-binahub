@@ -17,6 +17,7 @@
 
 # Codex temporary workspace and generated previews
 /.codex_tmp/
+/tmp/
 *.inspect.ndjson
 
 # next.js

@@ -20,7 +20,7 @@ Deployment kode tidak berarti otomatisasi aktif. Business Rules masih menonaktif
 - **Fase 6 — Release Reconciliation:** selesai; katalog publik, credential n8n, migration `0031`, dan deployment telah direkonsiliasi.
 - **Fase 7 — Integrated UAT & Security Gate:** engineering gate selesai; migration `0032`/`0033`, smoke 18/18, retry/idempotensi, Cal.com lineage, RLS, dan security headers terverifikasi. Human scenario riil tetap menjadi activation gate akhir.
 - **Fase 8 — Launch Control & Observability:** implementasi dan deployment selesai; audit run production dry-run mulai dikumpulkan pada Fase 13.
-- **Fase 9 — Human UAT & Pilot Gate:** migration `0034` serta API/app `0.13.0` sudah dideploy; 12 skenario tersedia tetapi seluruhnya masih `not_started` tanpa owner/evidence.
+- **Fase 9 — Human UAT & Pilot Gate:** migration `0034` serta API/app `0.13.0` sudah dideploy; 12 skenario tersedia dan `public_assessment_pdf_email` sudah `passed` di production pada 31 Agustus 2026, sementara 11 skenario lain menunggu evidence.
 - **Fase 10 — Controlled Pilot Operations & Kill Switch:** migration `0035` serta API/app `0.14.0` sudah dideploy; runtime control production tetap `dry_run`, belum ada release plan non-mock.
 - **Fase 11 — Operational Assurance & Go/No-Go:** migration `0036` serta API/app `0.15.0` sudah dideploy; tiga workflow healthy pada evidence awal Fase 13, Follow-up masih kekurangan run dalam 24 jam, dan policy masih mock/tanpa owner.
 - **Fase 12 — Pilot Rehearsal & Acceptance:** migration `0037` serta API/app `0.16.0` sudah dideploy dan smoke 11/11 lulus; rehearsal serta acceptance production belum dibuat.

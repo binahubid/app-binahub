@@ -326,7 +326,7 @@ export default function InsightPage() {
         <AnimatePresence mode="wait">
           {step === 0  && !isSubmitting && <LeadCaptureStep formData={formData} onChange={handleFormChange} onNext={handleSubmitLead} onPrev={prevStep} />}
           {step === 1  && !isSubmitting && <InstructionStep onNext={nextStep} onPrev={prevStep} />}
-          {step >= 2 && step <= 8 && !isSubmitting && <QuestionsStep step={step} answers={answers} onAnswer={handleAnswer} />}
+          {step >= 2 && step <= 8 && !isSubmitting && <QuestionsStep key={step} step={step} answers={answers} onAnswer={handleAnswer} />}
           {step === 9  && <OpenQuestionsStep formData={formData} onChange={handleFormChange} onNext={handleSubmitLead} onPrev={prevStep} isSubmitting={isSubmitting} />}
           {step === 10 && <ContactStep formData={formData} onChange={handleFormChange} onSubmit={handleSubmitFinal} onPrev={prevStep} isSubmitting={isSubmitting} />}
           {step === 11 && !isSubmitting && <SuccessStep name={formData.name} company={formData.company} />}

@@ -33,9 +33,25 @@ Output readiness yang disalin pada awal Fase 13 hanya memuat result set RLS. Seb
 
 Snapshot awal: `21cd22e8-9a12-4f86-8d99-8aef1cdde0eb`. Validasi evidence kit kemudian menghasilkan snapshot `14016ae1-1b92-4efa-9e34-c5d2ef1bc138`. Keduanya `is_mock=true` dan belum terikat release, sehingga bukan snapshot final untuk acceptance.
 
+## UAT Evidence — 31 Agustus 2026
+
+Skenario `public_assessment_pdf_email` sudah dicatat **passed** pada environment production dengan owner/tester `admin@binahub.id`.
+
+Evidence pengguna yang diverifikasi:
+
+- landing page mengarahkan CTA ke assessment publik dan assessment dapat dibuka tanpa login;
+- seluruh pertanyaan berhasil disubmit dan halaman sukses muncul;
+- email hasil beserta PDF empat halaman diterima dan dapat dibaca;
+- dashboard admin menampilkan tepat satu record assessment;
+- tidak ada error fungsional yang dilaporkan.
+
+Temuan visual bersifat non-blocking. Assessment kemudian didesain ulang menjadi satu pertanyaan fokus per layar dimensi pada app `0.16.1`, sedangkan PDF diperbaiki pada API `0.16.1` agar tidak memotong kata/narasi, memiliki hierarki editorial lebih baik, dan memuat roadmap 90 hari. Website `0.2.21` mengubah CTA halaman Insight menjadi **Mulai Diagnosa** yang mengarah langsung ke `https://app.binahub.id/insight`.
+
+Preflight skenario `admin_role_boundaries` menemukan gate admin, fasilitator, dan peserta belum meneruskan bearer token sesi ketika memeriksa role. Perbaikan sudah diterapkan bersama tes regresi pada app, dan API memperoleh runner `npm run test:phase13:access` yang tidak melakukan mutasi valid. Skenario ini tetap **belum boleh ditandai passed** sampai app terbaru dideploy dan runner production membuktikan akun anonim, token invalid, serta akun non-admin ditolak sementara akun admin sah berhasil.
+
 ## Kondisi Awal yang Belum Boleh Ditandai Lulus
 
-- Seluruh 12 skenario UAT masih `not_started`, environment `staging`, tanpa owner dan evidence.
+- Pada baseline awal, seluruh 12 skenario UAT masih `not_started`; per 31 Agustus 2026, `public_assessment_pdf_email` sudah `passed` di production dan 11 skenario lain masih menunggu evidence.
 - Empat monitoring policy masih `is_mock=true` dan belum memiliki owner.
 - Delapan belas outreach template tersedia, tetapi belum ada yang `approved` dan non-mock.
 - Business Rules `v1.0-approved-partial` masih draft dan memiliki sembilan activation blocker.

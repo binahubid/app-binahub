@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { fetchAuthenticatedRole } from "@/lib/authenticated-role";
 
 export function ClientAuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -19,11 +20,8 @@ export function ClientAuthGate({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const response = await fetch("/api/auth/role", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        const result = await response.json();
-        const role = response.ok && result.success ? result.role : null;
+        const result = await fetchAuthenticatedRole(session.access_token);
+        const role = result.ok ? result.role : null;
 
         if (role !== "client") {
           if (alive) router.replace(role === "admin" ? "/admin/programs" : role === "facilitator" ? "/facilitator/tbos" : "/client/access");

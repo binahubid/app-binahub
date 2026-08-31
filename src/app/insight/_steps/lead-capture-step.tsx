@@ -138,10 +138,11 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
         >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8 md:mb-12">
           <div className="space-y-1">
-            <label className={labelClass}>
+            <label htmlFor="insight-name" className={labelClass}>
               <User size={14} className="text-[#D9A441]" /> {copy.fields.name}
             </label>
             <input
+              id="insight-name"
               required
               type="text"
               placeholder={copy.placeholders.name}
@@ -151,10 +152,11 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
             />
           </div>
           <div className="space-y-1">
-            <label className={labelClass}>
+            <label htmlFor="insight-role" className={labelClass}>
               <Briefcase size={14} className="text-[#D9A441]" /> {copy.fields.role}
             </label>
             <input
+              id="insight-role"
               required
               type="text"
               placeholder={copy.placeholders.role}
@@ -165,10 +167,11 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
           </div>
 
           <div className="space-y-1">
-            <label className={labelClass}>
+            <label htmlFor="insight-company" className={labelClass}>
               <Building2 size={14} className="text-[#D9A441]" /> {copy.fields.company}
             </label>
             <input
+              id="insight-company"
               required
               type="text"
               placeholder={copy.placeholders.company}
@@ -178,19 +181,24 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
             />
           </div>
           <div className="space-y-1">
-            <label className={labelClass}>
+            <p id="insight-employees-label" className={labelClass}>
               <Users size={14} className="text-[#D9A441]" /> {copy.fields.employees}
-            </label>
+            </p>
             <div className="relative">
-              <div 
+              <button
+                type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className={`${inputClass} cursor-pointer flex items-center justify-between group hover:border-black/30`}
+                aria-expanded={isDropdownOpen}
+                aria-haspopup="listbox"
+                aria-controls="insight-employees-options"
+                aria-labelledby="insight-employees-label"
+                className={`${inputClass} cursor-pointer flex items-center justify-between text-left group hover:border-black/30`}
               >
                 <span className={formData.employees ? "text-black" : "text-black/20"}>
                   {formData.employees ? EMPLOYEE_OPTIONS.find(o => o.value === formData.employees)?.[locale] : copy.placeholders.employees}
                 </span>
                 <ChevronDown size={16} className={`transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""} text-black/20 group-hover:text-black/40`} />
-              </div>
+              </button>
 
               <AnimatePresence>
                 {isDropdownOpen && (
@@ -200,19 +208,25 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
                       initial={{ opacity: 0, y: 5, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 5, scale: 0.98 }}
+                      id="insight-employees-options"
+                      role="listbox"
+                      aria-labelledby="insight-employees-label"
                       className="absolute left-0 right-0 top-full z-[101] mt-2 overflow-hidden rounded-[12px] border border-black/[0.06] bg-white shadow-[0_18px_58px_-42px_rgba(11,44,107,0.34)]"
                     >
                       <div className="p-2 max-h-[240px] overflow-y-auto">
                         {EMPLOYEE_OPTIONS.map((opt) => {
                           const isSelected = formData.employees === opt.value;
                           return (
-                            <div
+                            <button
+                              type="button"
                               key={opt.value}
                               onClick={() => {
                                 onChange({ employees: opt.value });
                                 setIsDropdownOpen(false);
                               }}
-                              className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
+                              role="option"
+                              aria-selected={isSelected}
+                              className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left cursor-pointer transition-all duration-200 ${
                                 isSelected 
                                   ? "bg-[#0B2C6B] text-white" 
                                   : "hover:bg-black/[0.03] text-black/60 hover:text-black"
@@ -220,7 +234,7 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
                             >
                               <span className="text-sm font-medium">{opt[locale]}</span>
                               {isSelected && <Check size={14} className="text-white" />}
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
@@ -232,16 +246,16 @@ export function LeadCaptureStep({ formData, onChange, onNext, onPrev }: LeadCapt
           </div>
 
           <div className="space-y-1">
-            <label className={labelClass}>
+            <label htmlFor="insight-industry" className={labelClass}>
               <Factory size={14} className="text-[#D9A441]" /> {copy.fields.industry}
             </label>
-            <input required type="text" placeholder={copy.placeholders.industry} value={formData.industry} onChange={(e) => onChange({ industry: e.target.value })} className={inputClass} />
+            <input id="insight-industry" required type="text" placeholder={copy.placeholders.industry} value={formData.industry} onChange={(e) => onChange({ industry: e.target.value })} className={inputClass} />
           </div>
           <div className="space-y-1">
-            <label className={labelClass}>
+            <label htmlFor="insight-location" className={labelClass}>
               <MapPin size={14} className="text-[#D9A441]" /> {copy.fields.location}
             </label>
-            <input required type="text" placeholder={copy.placeholders.location} value={formData.location} onChange={(e) => onChange({ location: e.target.value })} className={inputClass} />
+            <input id="insight-location" required type="text" placeholder={copy.placeholders.location} value={formData.location} onChange={(e) => onChange({ location: e.target.value })} className={inputClass} />
           </div>
 
         </div>

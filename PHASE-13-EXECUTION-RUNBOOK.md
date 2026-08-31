@@ -10,7 +10,7 @@ Fase 13 mengubah engineering evidence Fase 1–12 menjadi bukti operasional manu
 ## Baseline Production
 
 - Migration production tersedia sampai `0037`.
-- API dan app `0.16.0` sudah dideploy; website tetap `0.2.20`.
+- API dan app `0.16.1` sudah dideploy; website `0.2.21` sudah mengarahkan CTA Insight ke assessment publik.
 - Smoke Phase 12 lulus 11/11.
 - Seluruh tabel yang dilaporkan memiliki RLS aktif, anonymous blocked, dan authenticated direct-write blocked.
 - Lima workflow n8n lokal tersedia tepat satu kali dan semuanya inactive.
@@ -47,11 +47,15 @@ Evidence pengguna yang diverifikasi:
 
 Temuan visual bersifat non-blocking. Assessment kemudian didesain ulang menjadi satu pertanyaan fokus per layar dimensi pada app `0.16.1`, sedangkan PDF diperbaiki pada API `0.16.1` agar tidak memotong kata/narasi, memiliki hierarki editorial lebih baik, dan memuat roadmap 90 hari. Website `0.2.21` mengubah CTA halaman Insight menjadi **Mulai Diagnosa** yang mengarah langsung ke `https://app.binahub.id/insight`.
 
-Preflight skenario `admin_role_boundaries` menemukan gate admin, fasilitator, dan peserta belum meneruskan bearer token sesi ketika memeriksa role. Perbaikan sudah diterapkan bersama tes regresi pada app, dan API memperoleh runner `npm run test:phase13:access` yang tidak melakukan mutasi valid. Skenario ini tetap **belum boleh ditandai passed** sampai app terbaru dideploy dan runner production membuktikan akun anonim, token invalid, serta akun non-admin ditolak sementara akun admin sah berhasil.
+Skenario `admin_role_boundaries` sudah dicatat **passed** pada production tanggal 31 Agustus 2026. Runner `npm run test:phase13:access` lulus 13/13: anonymous ditolak 401, token invalid dan role non-admin ditolak 403, administrator sah dapat membaca dashboard/evidence UAT, dan probe mutasi admin berhenti pada validasi payload 400 tanpa perubahan data. Runner tidak mencetak token maupun kata sandi.
+
+Audit data Cal.com menemukan masing-masing satu event `BOOKING_CREATED`, `BOOKING_RESCHEDULED`, dan `BOOKING_CANCELLED` berstatus `processed`. Booking awal tersimpan `rescheduled`, booking pengganti `cancelled` dengan cancellation reason, dan lead terkait berada pada opportunity stage `consultation`. Pada 31 Agustus 2026, runner `npm run test:phase13:calcom` melengkapi bukti no-show dengan webhook bertanda tangan valid untuk data `example.invalid`: 11/11 pemeriksaan lulus untuk no-show, idempotensi, lineage, pause outreach, dan opportunity activity audit. Skenario `calcom_booking_lifecycle` sekarang **passed**. Runner tidak membuat booking pada vendor dan tidak mengirim email.
+
+Skenario `resend_delivery_webhook` sudah **passed**. Runner `npm run test:phase13:resend` memverifikasi delivery event, bounce, idempotensi, dan suppression menggunakan alamat `example.invalid` tanpa outbound. Skenario `email_suppression_stop_rules` sudah **in_progress**: pause outreach, pause inquiry, suppression, dan audit bounce lulus, sedangkan pembuktian terakhir bahwa Follow-up Scheduler mengabaikan contact tersebut harus diulang pada business window.
 
 ## Kondisi Awal yang Belum Boleh Ditandai Lulus
 
-- Pada baseline awal, seluruh 12 skenario UAT masih `not_started`; per 31 Agustus 2026, `public_assessment_pdf_email` sudah `passed` di production dan 11 skenario lain masih menunggu evidence.
+- Pada baseline awal, seluruh 12 skenario UAT masih `not_started`; per 31 Agustus 2026, empat skenario sudah `passed`, dua skenario `in_progress`, dan enam skenario masih `not_started`.
 - Empat monitoring policy masih `is_mock=true` dan belum memiliki owner.
 - Delapan belas outreach template tersedia, tetapi belum ada yang `approved` dan non-mock.
 - Business Rules `v1.0-approved-partial` masih draft dan memiliki sembilan activation blocker.
@@ -123,6 +127,21 @@ Remove-Item Env:PHASE13_CONFIRM_DRY_RUN
 Script melakukan preflight terhadap runtime control database dan berhenti sebelum memanggil worker jika salah satu workflow bukan `dry_run`. Secret dimuat server-side dari `.env.local` dan tidak dicetak.
 
 Follow-up harus diulang pada Senin–Jumat di dalam window 08.00–17.00 WIB. Request deferred membuktikan guard waktu bekerja, tetapi tidak memenuhi minimum satu run dalam 24 jam.
+
+Untuk menutup skenario suppression sesudah business window dimulai, jalankan perintah aman berikut. Script hanya memakai alamat `example.invalid`, tetap mengharuskan `dryRun=true`, dan tidak mengirim email:
+
+```powershell
+Set-Location "C:\Users\USER\OneDrive\Documents\Dokumen Binahub\binahub-api"
+$env:PHASE13_API_URL="https://api.binahub.id"
+$env:PHASE13_CONFIRM_SUPPRESSION_TEST="true"
+$env:PHASE13_RUN_LABEL="phase13-suppression"
+npm run test:phase13:suppression
+Remove-Item Env:PHASE13_API_URL
+Remove-Item Env:PHASE13_CONFIRM_SUPPRESSION_TEST
+Remove-Item Env:PHASE13_RUN_LABEL
+```
+
+Status lulus membutuhkan baris `[PASS] Scheduler dry-run mengabaikan inquiry yang sudah suppressed`; apabila muncul `[PENDING]`, ulangi pada hari kerja pukul 08.00–17.00 WIB.
 
 Sesudah sign-in ke n8n melalui UI, jalankan workflow secara manual dari editor untuk memperoleh execution log n8n. Jangan mengubah toggle workflow menjadi active.
 

@@ -5,11 +5,17 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
-### Operations — Phase 13 Human UAT & Rehearsal
+## [0.16.2] - 2026-08-31
+
+### Fixed — Assessment Accessibility & Phase 13 Evidence
 
 - Menambahkan runbook Fase 13 dengan baseline production, 12 skenario UAT, urutan evidence, keputusan bisnis, monitoring policy, release, rehearsal, dan acceptance.
 - Mencatat evidence awal: tiga workflow healthy, Follow-up deferred di luar window, watchdog dry-run/locked, serta tidak ada outbound atau incident yang dimaterialisasi.
 - Mencatat skenario `public_assessment_pdf_email` sebagai passed di production berdasarkan hasil pengguna, screenshot email/admin, dan PDF empat halaman; temuan visual dipisahkan sebagai improvement non-blocking.
+- Mencatat `admin_role_boundaries` passed berdasarkan 13/13 pemeriksaan production.
+- Mencatat `calcom_booking_lifecycle` passed setelah booking, reschedule, cancellation, no-show, idempotensi, lineage, dan opportunity audit diverifikasi pada production tanpa membuat booking vendor.
+- Mencatat `resend_delivery_webhook` passed serta `email_suppression_stop_rules` in-progress sampai Follow-up Scheduler dapat diperiksa pada business window.
+- Menghubungkan seluruh input profil assessment dengan label semantiknya dan mengubah pemilih jumlah karyawan menjadi kontrol keyboard/reader-friendly (`button` + `listbox`), sehingga form inti dapat dibaca dan dioperasikan teknologi bantu.
 
 ## [0.16.1] - 2026-08-30
 

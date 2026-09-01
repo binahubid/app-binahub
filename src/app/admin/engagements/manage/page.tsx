@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, CalendarPlus, Check, ExternalLink, Eye, KeyRound, MessageSquare, Send, StickyNote, Trash2, Archive, Pencil, UserRound } from "lucide-react";
+import { ArrowRight, BarChart3, CalendarPlus, Check, ExternalLink, Eye, KeyRound, MessageSquare, Send, StickyNote, Trash2, Archive, Pencil, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { useEngagements, useEvidence } from "@/hooks/use-transformation-data";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
@@ -301,6 +301,9 @@ function ManageEngagementContent() {
                   </label>
                 ))}
               </div>
+              <Link href={`/admin/programs/tests?programId=${encodeURIComponent(engagement.id)}`} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 text-xs font-bold text-blue-900 hover:border-blue-300 hover:bg-blue-100">
+                <BarChart3 className="h-4 w-4" /> Susun soal & lihat statistik pre/post-test
+              </Link>
             </fieldset>
 
             <div className="mt-5">

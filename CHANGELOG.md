@@ -5,6 +5,27 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-01
+
+### Added — Configurable Commercial & Learning Operations
+
+- Menambahkan workspace katalog produk dengan CRUD produk/modul, harga, scope, deliverables, urutan, featured state, serta publish/unpublish yang tervalidasi.
+- Menambahkan katalog publik `/catalog` yang hanya menampilkan produk dan modul berstatus siap, aktif, non-mock, serta sengaja dipublikasikan.
+- Menambahkan pusat Pengaturan Bisnis untuk minimum transaksi, owner/backup, approver/delegasi, SLA risiko, dan template wording proposal/invoice.
+- Menambahkan builder Pre-test dan Post-test per program, impor soal DOCX/TXT/CSV/JSON, publish gate, halaman pengisian peserta, skoring, dan statistik per soal.
+- Menambahkan QR akses program yang dapat dipindai dan diunduh sebagai PNG dengan nama serta kode program pada gambar dan nama file.
+
+### Changed
+
+- Mengubah bantuan halaman dari sidebar permanen yang menghalangi konten menjadi panel kontekstual yang dibuka melalui ikon informasi.
+- Menambahkan Pre-test dan Post-test sebagai modul program yang dapat diaktifkan secara independen.
+- Menambahkan tautan Katalog Produk dan Pengaturan Bisnis pada navigasi admin desktop maupun mobile.
+
+### Safety
+
+- Template finance/legal awal tetap berstatus `review`, SLA awal tetap nonaktif, dan delegasi awal tetap nonaktif sampai admin menyimpan keputusan manusia.
+- Item katalog tidak otomatis menjadi publik; publish membutuhkan status/readiness yang sah dan data publik minimum.
+
 ## [0.16.4] - 2026-09-01
 
 ### Changed — Sales Pipeline Workspace Redesign

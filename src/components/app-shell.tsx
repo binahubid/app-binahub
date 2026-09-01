@@ -12,7 +12,7 @@ import {
   Eye,
   HelpCircle,
   Home,
-  Lightbulb,
+  Info,
   LogOut,
   Menu,
   ShieldCheck,
@@ -20,6 +20,8 @@ import {
   UsersRound,
   X,
   ClipboardPenLine,
+  PackageSearch,
+  Settings,
 } from "lucide-react";
 
 import type { Role } from "@/lib/roles";
@@ -42,6 +44,8 @@ const navByRole: Record<Role, { href: string; label: string; icon: React.ReactNo
   admin: [
     { href: "/admin", label: "Dashboard", icon: <Home size={16} /> },
     { href: "/admin/programs", label: "Program", icon: <ClipboardCheck size={16} /> },
+    { href: "/admin/catalog", label: "Katalog", icon: <PackageSearch size={16} /> },
+    { href: "/admin/settings", label: "Pengaturan", icon: <Settings size={16} /> },
     { href: "/admin/tbos", label: "T-BOS", icon: <Trophy size={16} /> },
     { href: "/admin/lep", label: "LEP", icon: <ClipboardPenLine size={16} /> },
     { href: "/admin/users", label: "Pengguna", icon: <UsersRound size={16} /> },
@@ -309,10 +313,9 @@ export function AppShell({
                 onClick={() => setShowTips(!showTips)}
                 aria-expanded={showTips}
                 aria-label="Tampilkan tips"
-                 className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-[#0B2C6B]/10 px-3 py-1.5 text-xs font-semibold text-[#0B2C6B]/70 hover:bg-[#F5F7FA] lg:hidden"
+                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#0B2C6B]/10 bg-white text-[#0B2C6B]/70 shadow-sm hover:border-[#D9A441]/60 hover:bg-[#FFF9EA] hover:text-[#0B2C6B]"
                >
-                 <Lightbulb size={12} />
-                 <span className="hidden sm:inline">Tips</span>
+                 <Info size={18} />
               </button>}
                {role === "admin" ? (
                 <button type="button" onClick={logout} aria-label="Keluar dari sesi" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50 lg:hidden">
@@ -333,13 +336,8 @@ export function AppShell({
 
 
         </header>
-        <div className={`flex gap-6 px-4 sm:px-6 lg:px-6 ${compactHeader ? "py-4" : "py-6"}`}>
-          <div className="min-w-0 flex-1">{children}</div>
-          {navigation !== "tbos" && <aside className="hidden w-64 shrink-0 lg:block">
-            <div className="sticky top-6">
-              <HelpSidebar currentPath={pathname} />
-            </div>
-          </aside>}
+        <div className={`px-4 sm:px-6 lg:px-6 ${compactHeader ? "py-4" : "py-6"}`}>
+          {children}
         </div>
       </main>
 
@@ -364,11 +362,11 @@ export function AppShell({
       )}
 
       {navigation !== "tbos" && showTips && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setShowTips(false)} />
-           <div ref={tipsPanelRef} role="dialog" aria-modal="true" aria-label="Tips halaman" className="absolute right-0 top-0 h-full w-80 overflow-y-auto bg-white p-4 shadow-xl">
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-slate-950/35 backdrop-blur-[1px]" onClick={() => setShowTips(false)} />
+           <div ref={tipsPanelRef} role="dialog" aria-modal="true" aria-label="Informasi halaman" className="absolute right-0 top-0 h-full w-[min(24rem,92vw)] overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#0B2C6B]">Tips</p>
+              <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#D9A441]">Panduan kontekstual</p><p className="mt-1 text-base font-semibold text-[#0B2C6B]">Informasi halaman</p></div>
                <button type="button" onClick={() => setShowTips(false)} aria-label="Tutup tips" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#4A4C54]/50 hover:bg-[#F5F7FA] hover:text-[#0B2C6B]">
                 <X size={16} />
               </button>

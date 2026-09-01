@@ -1,6 +1,8 @@
 "use client";
 
-import { Copy, Link2, Send, ShieldCheck } from "lucide-react";
+import { Copy, Download, Link2, QrCode, Send, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { programAccessUrl, programInvitationText } from "@/lib/program-access-link";
@@ -17,6 +19,7 @@ export function ProgramShareCard({
   status: string;
 }) {
   const [origin, setOrigin] = useState("https://app.binahub.id");
+  const [qrDataUrl, setQrDataUrl] = useState("");
   const available = ["active", "in_progress", "review"].includes(status);
 
   useEffect(() => {
@@ -25,6 +28,21 @@ export function ProgramShareCard({
 
   const link = programAccessUrl(programId, origin);
   const invitation = programInvitationText({ programId, code, title, origin });
+
+  useEffect(() => {
+    let active = true;
+    void QRCode.toDataURL(link, {
+      width: 640,
+      margin: 2,
+      errorCorrectionLevel: "H",
+      color: { dark: "#0B2C6B", light: "#FFFFFF" },
+    }).then((value) => {
+      if (active) setQrDataUrl(value);
+    }).catch(() => {
+      if (active) setQrDataUrl("");
+    });
+    return () => { active = false; };
+  }, [link]);
 
   const copy = async (value: string, message: string) => {
     try {
@@ -46,6 +64,47 @@ export function ProgramShareCard({
       if (error instanceof DOMException && error.name === "AbortError") return;
       toast.error("Undangan belum dapat dibagikan. Coba salin tautan dan kode secara terpisah.");
     }
+  };
+
+  const downloadQr = async () => {
+    if (!qrDataUrl) {
+      toast.error("QR code belum siap. Coba beberapa saat lagi.");
+      return;
+    }
+    const image = new window.Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 760;
+      canvas.height = 900;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.fillStyle = "#FFFFFF";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = "#0B2C6B";
+      context.font = "700 28px Arial, sans-serif";
+      context.textAlign = "center";
+      context.fillText("BinaHub Program Access", canvas.width / 2, 54);
+      context.drawImage(image, 60, 82, 640, 640);
+      context.fillStyle = "#0F172A";
+      context.font = "700 27px Arial, sans-serif";
+      const readableTitle = title.length > 42 ? `${title.slice(0, 39)}…` : title;
+      context.fillText(readableTitle, canvas.width / 2, 770);
+      context.fillStyle = "#D18B15";
+      context.font = "700 24px Arial, sans-serif";
+      context.fillText(`Kode program: ${code}`, canvas.width / 2, 810);
+      context.fillStyle = "#64748B";
+      context.font = "400 17px Arial, sans-serif";
+      context.fillText("Pindai QR, lalu masukkan kode program untuk melanjutkan.", canvas.width / 2, 850);
+
+      const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "program";
+      const anchor = document.createElement("a");
+      anchor.href = canvas.toDataURL("image/png");
+      anchor.download = `binahub-qr-${code.toLowerCase()}-${safeTitle}.png`;
+      anchor.click();
+      toast.success("QR code program diunduh.");
+    };
+    image.onerror = () => toast.error("QR code gagal diproses.");
+    image.src = qrDataUrl;
   };
 
   return (
@@ -78,6 +137,19 @@ export function ProgramShareCard({
             <p className="mt-1 font-mono text-base font-bold tracking-[0.12em] text-[#0B2C6B]">{code}</p>
           </div>
           <button type="button" onClick={() => void copy(code, "Kode akses disalin.")} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-white px-3 text-xs font-bold text-[#0B2C6B] shadow-sm"><Copy className="h-3.5 w-3.5" /> Salin</button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-[9rem_1fr] sm:items-center">
+        <div className="flex aspect-square items-center justify-center border border-slate-200 bg-white p-2" aria-label={`QR code untuk program ${title}`}>
+          {qrDataUrl ? <Image src={qrDataUrl} alt={`QR code akses program ${title}`} width={640} height={640} unoptimized className="h-full w-full" /> : <QrCode className="h-10 w-10 animate-pulse text-slate-300" aria-hidden="true" />}
+        </div>
+        <div>
+          <p className="text-sm font-bold text-[#0B2C6B]">QR akses peserta</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">File unduhan menyertakan nama dan kode program, sehingga tetap mudah dikenali saat tersimpan atau dicetak.</p>
+          <button type="button" onClick={() => void downloadQr()} disabled={!qrDataUrl} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-xl border border-blue-200 px-4 text-xs font-bold text-blue-900 hover:bg-blue-50 disabled:cursor-wait disabled:opacity-50">
+            <Download className="h-4 w-4" /> Download PNG
+          </button>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BarChart3, ClipboardCheck, Gamepad2, Info, Layers3 } from "lucide-react";
+import { ArrowRight, BarChart3, ClipboardCheck, FileQuestion, Gamepad2, Info, Layers3 } from "lucide-react";
 import { EmptyState, ModuleStatusBadge } from "@/components/ui";
 import type { ProgramModuleKey } from "@/lib/program-modules";
 
@@ -51,6 +51,20 @@ export function ClientProgramModules({ modules }: { modules: ClientProgramModule
               <h3 className="mt-1 text-lg font-bold text-[#0B2C6B]">BinaInsight</h3>
               <p className="mt-2 text-sm leading-6 text-[#4A4C54]/68">Petakan kekuatan, hambatan, dan prioritas pengembangan. Hasil PDF dikirim langsung ke email Anda.</p>
               <span className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-900 px-4 text-xs font-bold text-white">{module.completed ? "Isi ulang assessment" : "Mulai assessment"} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span>
+            </div>
+          </Link>
+        ) : module.key === "pre_test" || module.key === "post_test" ? (
+          <Link key={module.key} href={`/client/program/test?kind=${module.key}`} className="group relative overflow-hidden rounded-2xl border border-[#0B2C6B]/10 bg-white p-5 shadow-[0_18px_55px_-44px_rgba(11,44,107,0.45)] transition hover:-translate-y-0.5 hover:border-[#D9A441]/70 hover:shadow-[0_24px_60px_-40px_rgba(11,44,107,0.55)] sm:p-6">
+            <div className="absolute right-0 top-0 h-28 w-28 translate-x-9 -translate-y-9 rounded-full bg-[#FFF4D8]" />
+            <div className="relative">
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0B2C6B] text-[#F3CE7A]"><FileQuestion className="h-5 w-5" /></span>
+                <ModuleStatusBadge tone="available" label={module.completed ? "Selesai" : "Tersedia"} />
+              </div>
+              <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#D9A441]">Pengukuran pembelajaran</p>
+              <h3 className="mt-1 text-lg font-bold text-[#0B2C6B]">{module.key === "pre_test" ? "Pre-test" : "Post-test"}</h3>
+              <p className="mt-2 text-sm leading-6 text-[#4A4C54]/68">{module.key === "pre_test" ? "Ukur pemahaman awal sebelum rangkaian program dimulai." : "Ukur perkembangan setelah rangkaian program diselesaikan."}</p>
+              <span className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-900 px-4 text-xs font-bold text-white">{module.completed ? "Lihat hasil" : "Mulai test"} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span>
             </div>
           </Link>
         ) : (

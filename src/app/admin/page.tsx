@@ -60,6 +60,8 @@ const ADMIN_LINK_GROUPS = [
     links: [
       { href: "/admin/users", label: "Pengguna & Peran" },
       { href: "/admin/engagements", label: "Program" },
+      { href: "/admin/catalog", label: "Katalog Produk" },
+      { href: "/admin/settings", label: "Pengaturan Bisnis" },
       { href: "/admin/rbac", label: "Izin Akses" },
     ],
   },

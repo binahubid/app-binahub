@@ -5,6 +5,23 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
+## [0.16.4] - 2026-09-01
+
+### Changed — Sales Pipeline Workspace Redesign
+
+- Mendesain ulang Sales Pipeline sebagai ruang kerja komersial dengan nilai pipeline aktif, jumlah peluang yang memerlukan tindakan, tenggat terlewat, dan peluang tanpa penanggung jawab sebagai metrik utama.
+- Memisahkan peluang aktif dari hasil `Berhasil` dan `Tidak lanjut`, sehingga board harian hanya memuat lima tahap yang masih memerlukan pekerjaan.
+- Memperlebar kolom board dan meringkas kartu peluang agar nama, perusahaan, nilai, penanggung jawab, tindakan berikutnya, serta tenggat dapat dipindai dengan cepat.
+- Mengurutkan peluang secara otomatis berdasarkan urgensi: tenggat terlewat, belum memiliki penanggung jawab, data tindak lanjut belum lengkap, jatuh tempo dalam 24 jam, dan prioritas lead.
+- Menambahkan filter penanggung jawab dan filter `Perlu tindakan`, serta tampilan satu tahap pada perangkat seluler untuk menghindari kanban mini yang sulit digunakan.
+- Memindahkan kesehatan pengiriman email ke panel pendukung yang dapat dibuka saat dibutuhkan.
+- Menyembunyikan evidence pengujian internal dari board operasional tanpa menghapus data atau mengubah API.
+- Menyederhanakan editor peluang dan menerjemahkan label tahap, suhu lead, aktivitas, serta kontrol tindak lanjut ke bahasa bisnis yang konsisten.
+
+### Safety
+
+- Redesign tidak mengubah endpoint, payload mutasi, aturan validasi tahap, data database, atau status otomasi.
+
 ## [0.16.3] - 2026-09-01
 
 ### Changed — Admin UI/UX Production Hardening

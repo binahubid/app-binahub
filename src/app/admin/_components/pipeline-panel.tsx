@@ -1,20 +1,47 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, CircleDollarSign, MailWarning, Pencil, UserRoundX } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarClock,
+  ChevronDown,
+  CircleDollarSign,
+  Clock3,
+  MailWarning,
+  TrendingUp,
+  UserRound,
+  UserRoundX,
+} from "lucide-react";
 import type { DashboardData, PipelineLeadRecord } from "../_lib/types";
 import { formatDate } from "../_lib/utils";
-import { AdminInput, AdminModal, AdminSearch, AdminSelect, AdminTextarea, Badge, EmptyState, Panel, StatCard } from "./shared";
+import { AdminInput, AdminModal, AdminSearch, AdminSelect, AdminTextarea, Badge, EmptyState } from "./shared";
 
-const STAGES = ["identified", "qualified", "consultation", "proposal", "negotiation", "won", "lost"] as const;
-const STAGE_LABELS: Record<string, string> = {
+const ACTIVE_STAGES = ["identified", "qualified", "consultation", "proposal", "negotiation"] as const;
+const CLOSED_STAGES = ["won", "lost"] as const;
+const STAGES = [...ACTIVE_STAGES, ...CLOSED_STAGES] as const;
+
+type PipelineStage = typeof STAGES[number];
+type PipelineView = "active" | "won" | "lost";
+
+const STAGE_LABELS: Record<PipelineStage, string> = {
   identified: "Teridentifikasi",
-  qualified: "Qualified",
+  qualified: "Terkualifikasi",
   consultation: "Konsultasi",
   proposal: "Proposal",
   negotiation: "Negosiasi",
-  won: "Deal",
-  lost: "Tidak Lanjut",
+  won: "Berhasil",
+  lost: "Tidak lanjut",
+};
+
+const STAGE_DESCRIPTIONS: Record<PipelineStage, string> = {
+  identified: "Lead baru yang perlu ditinjau",
+  qualified: "Kebutuhan dan potensi terkonfirmasi",
+  consultation: "Diskusi kebutuhan sedang berjalan",
+  proposal: "Penawaran sedang disiapkan atau ditinjau",
+  negotiation: "Ruang lingkup dan komersial sedang disepakati",
+  won: "Peluang berhasil menjadi klien",
+  lost: "Peluang ditutup tanpa kesepakatan",
 };
 
 type PipelineForm = {
@@ -58,9 +85,156 @@ function rupiah(value: number | null) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 }
 
-function dueTone(value: string | null) {
-  if (!value) return "navy" as const;
-  return new Date(value).getTime() < Date.now() ? "red" as const : "gold" as const;
+function compactRupiah(value: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+function isActiveStage(stage: string): stage is typeof ACTIVE_STAGES[number] {
+  return ACTIVE_STAGES.includes(stage as typeof ACTIVE_STAGES[number]);
+}
+
+function isOverdue(lead: PipelineLeadRecord, now = Date.now()) {
+  return Boolean(lead.nextActionDueAt && new Date(lead.nextActionDueAt).getTime() < now);
+}
+
+export function isLikelyTestLead(lead: PipelineLeadRecord) {
+  const marker = [lead.name, lead.email, lead.company, lead.source].filter(Boolean).join(" ");
+  return /@example\.invalid$/i.test(lead.email) || /\bphase\s*1[0-9]\b/i.test(marker) || /\bphase1[0-9][-_]/i.test(marker);
+}
+
+export function leadNeedsAttention(lead: PipelineLeadRecord, now = Date.now()) {
+  if (!isActiveStage(lead.opportunityStage)) return false;
+  if (!lead.opportunityOwner || isOverdue(lead, now)) return true;
+  if (lead.opportunityStage !== "identified" && (!lead.nextAction || !lead.nextActionDueAt)) return true;
+  return false;
+}
+
+function leadPriority(lead: PipelineLeadRecord, now: number) {
+  let score = 0;
+  if (isOverdue(lead, now)) score += 100;
+  if (!lead.opportunityOwner) score += 60;
+  if (lead.opportunityStage !== "identified" && (!lead.nextAction || !lead.nextActionDueAt)) score += 45;
+  if (lead.nextActionDueAt) {
+    const remaining = new Date(lead.nextActionDueAt).getTime() - now;
+    if (remaining >= 0 && remaining <= 86_400_000) score += 25;
+  }
+  if (lead.leadTemperature === "hot") score += 15;
+  return score;
+}
+
+export function sortPipelineLeads(leads: PipelineLeadRecord[], now = Date.now()) {
+  return [...leads].sort((left, right) => {
+    const priorityDifference = leadPriority(right, now) - leadPriority(left, now);
+    if (priorityDifference) return priorityDifference;
+    const dueLeft = left.nextActionDueAt ? new Date(left.nextActionDueAt).getTime() : Number.POSITIVE_INFINITY;
+    const dueRight = right.nextActionDueAt ? new Date(right.nextActionDueAt).getTime() : Number.POSITIVE_INFINITY;
+    if (dueLeft !== dueRight) return dueLeft - dueRight;
+    return (right.opportunityValue || 0) - (left.opportunityValue || 0);
+  });
+}
+
+function temperatureLabel(value: string) {
+  return ({ hot: "Prioritas tinggi", warm: "Potensial", cold: "Tahap awal", new: "Baru", won: "Berhasil" } as Record<string, string>)[value] || value;
+}
+
+function activityLabel(value: string) {
+  const labels: Record<string, string> = {
+    created: "Peluang dibuat",
+    stage_changed: "Tahap diperbarui",
+    owner_assigned: "Penanggung jawab ditetapkan",
+    next_action_updated: "Tindakan berikutnya diperbarui",
+    outreach_paused: "Tindak lanjut dijeda",
+    outreach_resumed: "Tindak lanjut dilanjutkan",
+    converted_to_client: "Dikonversi menjadi klien",
+  };
+  return labels[value] || value.replaceAll("_", " ");
+}
+
+function stageLabel(value: string | null) {
+  return value && value in STAGE_LABELS ? STAGE_LABELS[value as PipelineStage] : value || "–";
+}
+
+function PipelineMetric({
+  label,
+  value,
+  description,
+  icon: Icon,
+  tone = "navy",
+}: {
+  label: string;
+  value: string | number;
+  description: string;
+  icon: typeof CircleDollarSign;
+  tone?: "navy" | "gold" | "red" | "green";
+}) {
+  const tones = {
+    navy: "bg-[#0B2C6B] text-white",
+    gold: "bg-[#FFF4D8] text-[#9B6C17]",
+    red: "bg-red-50 text-red-700",
+    green: "bg-emerald-50 text-emerald-700",
+  };
+  return (
+    <article className="border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-42px_rgba(7,27,61,0.6)] first:rounded-t-2xl last:rounded-b-2xl sm:rounded-2xl">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{label}</p>
+          <p className="mt-2 text-2xl font-bold tracking-[-0.035em] text-slate-950">{value}</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+        </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tones[tone]}`}><Icon size={18} aria-hidden="true" /></span>
+      </div>
+    </article>
+  );
+}
+
+function PipelineCard({ lead, onOpen }: { lead: PipelineLeadRecord; onOpen: (lead: PipelineLeadRecord) => void }) {
+  const overdue = isOverdue(lead);
+  const needsAttention = leadNeedsAttention(lead);
+  const borderClass = overdue ? "border-red-200" : needsAttention ? "border-amber-200" : "border-slate-200";
+  return (
+    <article className={`group relative overflow-hidden rounded-2xl border bg-white shadow-[0_16px_36px_-32px_rgba(7,27,61,0.75)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_44px_-30px_rgba(7,27,61,0.45)] ${borderClass}`}>
+      <span className={`absolute inset-y-0 left-0 w-1 ${overdue ? "bg-red-500" : needsAttention ? "bg-[#D9A441]" : "bg-[#0B2C6B]"}`} aria-hidden="true" />
+      <div className="p-4 pl-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h4 className="truncate text-sm font-bold text-slate-950">{lead.name}</h4>
+            <p className="mt-0.5 truncate text-xs text-slate-500">{lead.company || "Perusahaan belum tercatat"}</p>
+          </div>
+          <p className="shrink-0 text-xs font-bold text-[#0B2C6B]">{lead.opportunityValue == null ? "–" : compactRupiah(lead.opportunityValue)}</p>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <Badge tone={lead.leadTemperature === "hot" ? "red" : lead.leadTemperature === "warm" ? "gold" : lead.opportunityStage === "won" ? "green" : "navy"}>{temperatureLabel(lead.leadTemperature)}</Badge>
+          {overdue && <Badge tone="red">Terlambat</Badge>}
+          {lead.outreachPaused && <Badge tone="red">Tindak lanjut dijeda</Badge>}
+        </div>
+
+        <dl className="mt-4 space-y-3 text-xs">
+          <div className="flex items-start gap-2.5">
+            <UserRound size={14} className={`mt-0.5 shrink-0 ${lead.opportunityOwner ? "text-slate-400" : "text-amber-600"}`} aria-hidden="true" />
+            <div className="min-w-0"><dt className="sr-only">Penanggung jawab</dt><dd className={`truncate font-semibold ${lead.opportunityOwner ? "text-slate-700" : "text-amber-700"}`}>{lead.opportunityOwner || "Belum ada penanggung jawab"}</dd></div>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <ArrowRight size={14} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
+            <div className="min-w-0"><dt className="sr-only">Tindakan berikutnya</dt><dd className={`line-clamp-2 leading-5 ${lead.nextAction ? "text-slate-700" : "text-slate-400"}`}>{lead.nextAction || "Tindakan berikutnya belum ditentukan"}</dd></div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Clock3 size={14} className={`shrink-0 ${overdue ? "text-red-600" : "text-slate-400"}`} aria-hidden="true" />
+            <div><dt className="sr-only">Tenggat</dt><dd className={`font-semibold ${overdue ? "text-red-700" : lead.nextActionDueAt ? "text-slate-600" : "text-slate-400"}`}>{lead.nextActionDueAt ? formatDate(lead.nextActionDueAt) : "Belum ada tenggat"}</dd></div>
+          </div>
+        </dl>
+
+        <button type="button" onClick={() => onOpen(lead)} className="mt-4 inline-flex min-h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-bold text-[#0B2C6B] transition hover:border-[#0B2C6B]/20 hover:bg-[#0B2C6B] hover:text-white" aria-label={`Buka detail peluang ${lead.name}`}>
+          Buka detail <ArrowRight size={14} aria-hidden="true" />
+        </button>
+      </div>
+    </article>
+  );
 }
 
 export function PipelinePanel({
@@ -74,18 +248,36 @@ export function PipelinePanel({
 }) {
   const leads = useMemo(() => data.pipelineLeads || [], [data.pipelineLeads]);
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<PipelineView>("active");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [attentionOnly, setAttentionOnly] = useState(false);
+  const [mobileStage, setMobileStage] = useState<PipelineStage>("identified");
   const [selected, setSelected] = useState<PipelineLeadRecord | null>(null);
   const [form, setForm] = useState<PipelineForm | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const operationalLeads = useMemo(() => leads.filter((lead) => !isLikelyTestLead(lead)), [leads]);
+  const owners = useMemo(() => Array.from(new Set(operationalLeads.map((lead) => lead.opportunityOwner).filter(Boolean) as string[])).sort(), [operationalLeads]);
+  const activeLeads = useMemo(() => operationalLeads.filter((lead) => isActiveStage(lead.opportunityStage)), [operationalLeads]);
+  const pipelineValue = useMemo(() => activeLeads.reduce((sum, lead) => sum + (lead.opportunityValue || 0), 0), [activeLeads]);
+  const overdueCount = useMemo(() => activeLeads.filter((lead) => isOverdue(lead)).length, [activeLeads]);
+  const unassignedCount = useMemo(() => activeLeads.filter((lead) => !lead.opportunityOwner).length, [activeLeads]);
+  const attentionCount = useMemo(() => activeLeads.filter((lead) => leadNeedsAttention(lead)).length, [activeLeads]);
+
   const filtered = useMemo(() => {
-    const keyword = search.toLowerCase();
-    return leads.filter((lead) => [lead.name, lead.email, lead.company, lead.industry, lead.location, lead.opportunityOwner, lead.nextAction]
-      .join(" ").toLowerCase().includes(keyword));
-  }, [leads, search]);
-  const activities = useMemo(() => (data.opportunityActivities || [])
-    .filter((item) => item.leadId === selected?.id)
-    .slice(0, 20), [data.opportunityActivities, selected?.id]);
+    const keyword = search.trim().toLocaleLowerCase("id-ID");
+    return sortPipelineLeads(operationalLeads.filter((lead) => {
+      const matchesSearch = !keyword || [lead.name, lead.email, lead.company, lead.industry, lead.location, lead.opportunityOwner, lead.nextAction]
+        .join(" ").toLocaleLowerCase("id-ID").includes(keyword);
+      const matchesOwner = ownerFilter === "all" || (ownerFilter === "unassigned" ? !lead.opportunityOwner : lead.opportunityOwner === ownerFilter);
+      return matchesSearch && matchesOwner && (!attentionOnly || leadNeedsAttention(lead));
+    }));
+  }, [attentionOnly, operationalLeads, ownerFilter, search]);
+
+  const displayStages: PipelineStage[] = view === "active" ? [...ACTIVE_STAGES] : [view];
+  const mobileDisplayStage = view === "active" ? mobileStage : view;
+  const activities = useMemo(() => (data.opportunityActivities || []).filter((item) => item.leadId === selected?.id).slice(0, 20), [data.opportunityActivities, selected?.id]);
   const activeFormStage = Boolean(form && ["qualified", "consultation", "proposal", "negotiation"].includes(form.stage));
   const formInvalid = !form
     || (form.stage !== "identified" && !form.owner.trim())
@@ -130,106 +322,157 @@ export function PipelinePanel({
     }
   };
 
+  const viewCounts = {
+    active: activeLeads.length,
+    won: operationalLeads.filter((lead) => lead.opportunityStage === "won").length,
+    lost: operationalLeads.filter((lead) => lead.opportunityStage === "lost").length,
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Peluang aktif" value={data.summary.openOpportunities || 0} icon={CircleDollarSign} />
-        <StatCard label="Next action terlambat" value={data.summary.overdueNextActions || 0} icon={CalendarClock} tone="danger" />
-        <StatCard label="Belum ada owner" value={data.summary.unassignedOpportunities || 0} icon={UserRoundX} tone="gold" />
-        <StatCard label="Alert deliverability" value={data.summary.deliverabilityAlerts || 0} icon={MailWarning} tone="danger" />
-      </div>
-
-      <Panel title="Sales Pipeline" action={`${filtered.length}/${leads.length} peluang`}>
-        <div className="mb-5">
-          <AdminSearch value={search} onChange={setSearch} placeholder="Cari nama, perusahaan, owner, atau next action…" />
+      <section aria-labelledby="pipeline-overview-title">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#C68B22]">Ringkasan komersial</p>
+            <h2 id="pipeline-overview-title" className="mt-1 text-xl font-bold tracking-[-0.025em] text-slate-950">Kondisi pipeline saat ini</h2>
+          </div>
+          <p className="max-w-xl text-xs leading-5 text-slate-500">Peluang yang paling mendesak selalu ditempatkan lebih dahulu di setiap tahap.</p>
         </div>
-        {!leads.length ? (
-          <EmptyState title="Belum ada peluang" description="Lead dari assessment, inquiry, atau booking Cal.com akan muncul di pipeline ini." />
-        ) : (
-          <div className="overflow-x-auto pb-3">
-            <div className="grid min-w-[1680px] grid-cols-7 gap-3">
-              {STAGES.map((stage) => {
-                const stageLeads = filtered.filter((lead) => lead.opportunityStage === stage);
-                return (
-                  <section key={stage} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-[#0B2C6B]">{STAGE_LABELS[stage]}</h3>
-                      <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-500">{stageLeads.length}</span>
-                    </div>
-                    <div className="space-y-3">
-                      {stageLeads.map((lead) => (
-                        <article key={lead.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-bold text-slate-900">{lead.name}</p>
-                              <p className="mt-0.5 truncate text-xs text-slate-500">{lead.company}</p>
-                              <p className="mt-1 truncate text-[10px] text-slate-400">{[lead.industry, lead.location].filter(Boolean).join(" · ") || lead.source}</p>
-                            </div>
-                            <button type="button" onClick={() => openEditor(lead)} aria-label={`Edit ${lead.name}`} className="rounded-lg border border-slate-200 p-1.5 text-[#0B2C6B] hover:border-[#D9A441]"><Pencil size={13} /></button>
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-1.5">
-                            <Badge tone={lead.leadTemperature === "hot" ? "red" : lead.leadTemperature === "warm" ? "gold" : "navy"}>{lead.leadTemperature}</Badge>
-                            {lead.outreachPaused && <Badge tone="red">Outreach dijeda</Badge>}
-                          </div>
-                          <dl className="mt-3 space-y-2 text-xs">
-                            <div><dt className="text-slate-400">Owner</dt><dd className="truncate font-semibold text-slate-700">{lead.opportunityOwner || "Belum ditetapkan"}</dd></div>
-                            <div><dt className="text-slate-400">Next action</dt><dd className="line-clamp-2 font-medium text-slate-700">{lead.nextAction || "Belum ditentukan"}</dd></div>
-                            <div className="flex items-center justify-between gap-2"><dd><Badge tone={dueTone(lead.nextActionDueAt)}>{lead.nextActionDueAt ? formatDate(lead.nextActionDueAt) : "Tanpa tenggat"}</Badge></dd></div>
-                          </dl>
-                          <p className="mt-3 border-t border-slate-100 pt-3 text-xs font-bold text-[#0B2C6B]">{rupiah(lead.opportunityValue)}</p>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
+        <div className="grid gap-px overflow-hidden rounded-2xl bg-slate-200 sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:bg-transparent xl:grid-cols-4">
+          <PipelineMetric label="Nilai pipeline aktif" value={compactRupiah(pipelineValue)} description={`${activeLeads.length} peluang dalam proses`} icon={CircleDollarSign} />
+          <PipelineMetric label="Perlu tindakan" value={attentionCount} description="Tanpa owner, tindakan, atau tenggat" icon={AlertTriangle} tone={attentionCount ? "gold" : "green"} />
+          <PipelineMetric label="Tenggat terlewat" value={overdueCount} description="Tindakan yang perlu segera diselesaikan" icon={CalendarClock} tone={overdueCount ? "red" : "green"} />
+          <PipelineMetric label="Belum ada owner" value={unassignedCount} description="Peluang yang perlu ditugaskan" icon={UserRoundX} tone={unassignedCount ? "gold" : "green"} />
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-58px_rgba(7,27,61,0.65)]" aria-labelledby="sales-pipeline-title">
+        <div className="border-b border-slate-200 px-4 py-5 sm:px-6">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#C68B22]">Ruang kerja penjualan</p>
+              <h2 id="sales-pipeline-title" className="mt-1 text-xl font-bold tracking-[-0.025em] text-slate-950">Sales Pipeline</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">Tentukan penanggung jawab dan tindakan berikutnya agar setiap peluang terus bergerak.</p>
+            </div>
+            <div className="inline-flex w-full rounded-xl bg-slate-100 p-1 sm:w-auto" role="group" aria-label="Tampilan pipeline">
+              {([[
+                "active", "Aktif",
+              ], ["won", "Berhasil"], ["lost", "Tidak lanjut"]] as Array<[PipelineView, string]>).map(([key, label]) => (
+                <button key={key} type="button" onClick={() => setView(key)} aria-pressed={view === key} className={`min-h-10 flex-1 rounded-lg px-3.5 text-xs font-bold transition sm:flex-none ${view === key ? "bg-white text-[#0B2C6B] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>
+                  {label} <span className="ml-1 text-[10px] opacity-60">{viewCounts[key]}</span>
+                </button>
+              ))}
             </div>
           </div>
-        )}
-      </Panel>
 
-      <Panel title="Kesehatan Email" action={`${data.emailDeliverySummary?.total || 0} event terbaru`}>
-        <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          {[
-            ["Delivered", data.emailDeliverySummary?.delivered || 0],
-            ["Reply", data.emailDeliverySummary?.received || 0],
-            ["Bounce", data.emailDeliverySummary?.bounced || 0],
-            ["Complaint", data.emailDeliverySummary?.complained || 0],
-            ["Failed", data.emailDeliverySummary?.failed || 0],
-            ["Gagal diproses", data.emailDeliverySummary?.processingFailed || 0],
-          ].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 text-xl font-bold text-slate-900">{value}</p></div>)}
+          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(260px,1fr)_220px_auto]">
+            <AdminSearch value={search} onChange={setSearch} placeholder="Cari nama, perusahaan, owner, atau tindakan…" />
+            <AdminSelect ariaLabel="Filter penanggung jawab" value={ownerFilter} onChange={setOwnerFilter} options={[["all", "Semua penanggung jawab"], ["unassigned", "Belum ditugaskan"], ...owners.map((owner) => [owner, owner] as [string, string])]} />
+            <button type="button" onClick={() => setAttentionOnly((current) => !current)} aria-pressed={attentionOnly} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-bold transition ${attentionOnly ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}>
+              <AlertTriangle size={15} aria-hidden="true" /> Perlu tindakan {attentionOnly && `(${attentionCount})`}
+            </button>
+          </div>
+
+          {view === "active" && (
+            <label className="mt-4 block lg:hidden">
+              <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Tahap yang ditampilkan</span>
+              <AdminSelect ariaLabel="Pilih tahap pipeline" value={mobileStage} onChange={(value) => setMobileStage(value as PipelineStage)} options={ACTIVE_STAGES.map((stage) => [stage, `${STAGE_LABELS[stage]} (${filtered.filter((lead) => lead.opportunityStage === stage).length})`])} />
+            </label>
+          )}
         </div>
-      </Panel>
+
+        {!operationalLeads.length ? (
+          <EmptyState title="Belum ada peluang operasional" description="Peluang baru dari assessment, inquiry, atau konsultasi akan muncul di sini." />
+        ) : view === "active" ? (
+          <>
+            <div className="hidden overflow-x-auto px-4 pb-5 pt-4 lg:block" tabIndex={0} aria-label="Board pipeline aktif; geser secara horizontal untuk melihat tahap berikutnya">
+              <div className="grid min-w-max grid-flow-col auto-cols-[300px] gap-3 xl:auto-cols-[minmax(300px,1fr)]">
+                {displayStages.map((stage) => {
+                  const stageLeads = filtered.filter((lead) => lead.opportunityStage === stage);
+                  const stageValue = stageLeads.reduce((sum, lead) => sum + (lead.opportunityValue || 0), 0);
+                  return (
+                    <section key={stage} className="flex min-h-[440px] flex-col rounded-2xl border border-slate-200 bg-[#F7F8FA]" aria-labelledby={`pipeline-stage-${stage}`}>
+                      <div className="border-b border-slate-200 px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div><h3 id={`pipeline-stage-${stage}`} className="text-xs font-bold uppercase tracking-[0.11em] text-[#0B2C6B]">{STAGE_LABELS[stage]}</h3><p className="mt-1 text-[11px] leading-4 text-slate-500">{STAGE_DESCRIPTIONS[stage]}</p></div>
+                          <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-slate-600 shadow-sm">{stageLeads.length}</span>
+                        </div>
+                        <p className="mt-3 text-xs font-bold text-slate-700">{compactRupiah(stageValue)}</p>
+                      </div>
+                      <div className="flex-1 space-y-3 p-3">
+                        {stageLeads.length ? stageLeads.map((lead) => <PipelineCard key={lead.id} lead={lead} onOpen={openEditor} />) : <p className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-xs leading-5 text-slate-400">Belum ada peluang pada tahap ini.</p>}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 lg:hidden">
+              <div className="mb-4 flex items-end justify-between gap-4"><div><h3 className="text-sm font-bold text-[#0B2C6B]">{STAGE_LABELS[mobileDisplayStage]}</h3><p className="mt-1 text-xs text-slate-500">{STAGE_DESCRIPTIONS[mobileDisplayStage]}</p></div><span className="text-xs font-bold text-slate-500">{filtered.filter((lead) => lead.opportunityStage === mobileDisplayStage).length} peluang</span></div>
+              {filtered.filter((lead) => lead.opportunityStage === mobileDisplayStage).map((lead) => <PipelineCard key={lead.id} lead={lead} onOpen={openEditor} />)}
+              {!filtered.some((lead) => lead.opportunityStage === mobileDisplayStage) && <p className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center text-xs text-slate-400">Belum ada peluang pada tahap ini.</p>}
+            </div>
+          </>
+        ) : (
+          <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3 xl:p-6">
+            {filtered.filter((lead) => lead.opportunityStage === view).map((lead) => <PipelineCard key={lead.id} lead={lead} onOpen={openEditor} />)}
+            {!filtered.some((lead) => lead.opportunityStage === view) && <div className="sm:col-span-2 xl:col-span-3"><EmptyState title={view === "won" ? "Belum ada peluang berhasil" : "Belum ada peluang yang ditutup"} description="Hasil peluang akan muncul di sini setelah tahapnya diperbarui." /></div>}
+          </div>
+        )}
+      </section>
+
+      <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-sm font-bold text-[#0B2C6B] marker:hidden">
+          <span className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100"><MailWarning size={16} aria-hidden="true" /></span><span>Kesehatan pengiriman email<span className="mt-0.5 block text-xs font-normal text-slate-500">Informasi pendukung tindak lanjut</span></span></span>
+          <span className="flex items-center gap-2 text-xs text-slate-500">{data.summary.deliverabilityAlerts || 0} perlu perhatian <ChevronDown size={16} className="transition group-open:rotate-180" aria-hidden="true" /></span>
+        </summary>
+        <div className="grid gap-px border-t border-slate-200 bg-slate-200 sm:grid-cols-3 xl:grid-cols-6">
+          {[
+            ["Terkirim", data.emailDeliverySummary?.delivered || 0],
+            ["Balasan masuk", data.emailDeliverySummary?.received || 0],
+            ["Terpental", data.emailDeliverySummary?.bounced || 0],
+            ["Keluhan", data.emailDeliverySummary?.complained || 0],
+            ["Gagal dikirim", data.emailDeliverySummary?.failed || 0],
+            ["Perlu diproses ulang", data.emailDeliverySummary?.processingFailed || 0],
+          ].map(([label, value]) => <div key={label} className="bg-white p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 text-xl font-bold text-slate-900">{value}</p></div>)}
+        </div>
+      </details>
 
       {selected && form && (
-        <AdminModal title={`${selected.name} · ${selected.company}`} eyebrow="Human control" onClose={closeEditor} maxWidth="max-w-5xl">
+        <AdminModal title={selected.name} eyebrow="Detail peluang" onClose={closeEditor} maxWidth="max-w-5xl">
+          <div className="mb-6 grid gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-3">
+            <div className="bg-white p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Perusahaan</p><p className="mt-1 text-sm font-bold text-slate-900">{selected.company || "Belum tercatat"}</p></div>
+            <div className="bg-white p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Nilai peluang</p><p className="mt-1 text-sm font-bold text-slate-900">{rupiah(selected.opportunityValue)}</p></div>
+            <div className="bg-white p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tahap saat ini</p><p className="mt-1 text-sm font-bold text-slate-900">{stageLabel(selected.opportunityStage)}</p></div>
+          </div>
           <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
             <div className="space-y-4">
-              {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+              {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="block"><span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-black/36">Tahap peluang</span><AdminSelect value={form.stage} onChange={(stage) => setForm({ ...form, stage })} options={STAGES.map((stage) => [stage, STAGE_LABELS[stage]])} /></label>
-                <AdminInput label="Owner" value={form.owner} onChange={(owner) => setForm({ ...form, owner })} placeholder="nama@binahub.id" />
+                <label className="block"><span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-black/36">Tahap peluang</span><AdminSelect ariaLabel="Tahap peluang" value={form.stage} onChange={(stage) => setForm({ ...form, stage })} options={STAGES.map((stage) => [stage, STAGE_LABELS[stage]])} /></label>
+                <AdminInput label="Penanggung jawab" value={form.owner} onChange={(owner) => setForm({ ...form, owner })} placeholder="nama@binahub.id" />
                 <AdminInput label="Nilai peluang" type="number" value={form.opportunityValue} onChange={(opportunityValue) => setForm({ ...form, opportunityValue })} placeholder="0" />
-                <AdminInput label="Zona waktu lead" value={form.leadTimeZone} onChange={(leadTimeZone) => setForm({ ...form, leadTimeZone })} />
-                <div className="md:col-span-2"><AdminTextarea label="Next action" value={form.nextAction} onChange={(nextAction) => setForm({ ...form, nextAction })} placeholder="Tindakan konkret berikutnya dan siapa yang menunggu siapa." /></div>
-                <AdminInput label="Tenggat next action" type="datetime-local" value={form.nextActionDueAt} onChange={(nextActionDueAt) => setForm({ ...form, nextActionDueAt })} />
-                {form.stage === "lost" && <AdminInput label="Alasan tidak lanjut" value={form.lostReason} onChange={(lostReason) => setForm({ ...form, lostReason })} placeholder="Wajib minimal 5 karakter" />}
-                <div className="md:col-span-2"><AdminTextarea label="Catatan audit" value={form.note} onChange={(note) => setForm({ ...form, note })} placeholder="Tuliskan konteks keputusan agar dapat ditelusuri tim." /></div>
+                <AdminInput label="Zona waktu klien" value={form.leadTimeZone} onChange={(leadTimeZone) => setForm({ ...form, leadTimeZone })} />
+                <div className="md:col-span-2"><AdminTextarea label="Tindakan berikutnya" value={form.nextAction} onChange={(nextAction) => setForm({ ...form, nextAction })} placeholder="Tuliskan tindakan konkret berikutnya dan siapa yang menunggu siapa." /></div>
+                <AdminInput label="Tenggat tindakan" type="datetime-local" value={form.nextActionDueAt} onChange={(nextActionDueAt) => setForm({ ...form, nextActionDueAt })} />
+                {form.stage === "lost" && <AdminInput label="Alasan tidak lanjut" value={form.lostReason} onChange={(lostReason) => setForm({ ...form, lostReason })} placeholder="Jelaskan alasan keputusan" />}
+                <div className="md:col-span-2"><AdminTextarea label="Catatan keputusan" value={form.note} onChange={(note) => setForm({ ...form, note })} placeholder="Tambahkan konteks agar keputusan mudah dipahami tim." /></div>
               </div>
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <label className="flex items-start gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={form.outreachPaused} onChange={(event) => setForm({ ...form, outreachPaused: event.target.checked })} className="mt-1" /><span>Jeda outreach otomatis<span className="mt-1 block text-xs font-normal leading-relaxed text-slate-600">Gunakan saat lead membalas, sedang konsultasi, ada risiko deliverability, atau memerlukan penanganan khusus.</span></span></label>
+                <label className="flex items-start gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={form.outreachPaused} onChange={(event) => setForm({ ...form, outreachPaused: event.target.checked })} className="mt-1" /><span>Jeda tindak lanjut otomatis<span className="mt-1 block text-xs font-normal leading-relaxed text-slate-600">Gunakan ketika klien sudah membalas, sedang berkonsultasi, atau memerlukan penanganan khusus.</span></span></label>
                 {form.outreachPaused && <div className="mt-3"><AdminInput label="Alasan jeda" value={form.outreachPauseReason} onChange={(outreachPauseReason) => setForm({ ...form, outreachPauseReason })} /></div>}
               </div>
-              {formInvalid && <p className="text-xs leading-relaxed text-amber-700">Tahap aktif/selesai wajib memiliki owner. Tahap aktif juga wajib memiliki next action dan tenggat; tahap lost wajib memiliki alasan.</p>}
-              <button type="button" disabled={saving || formInvalid} onClick={() => void save()} className="w-full rounded-xl bg-[#0B2C6B] px-4 py-3 text-sm font-bold text-white disabled:opacity-50">{saving ? "Menyimpan…" : "Simpan Perubahan"}</button>
+              {formInvalid && <p role="status" className="text-xs leading-relaxed text-amber-700">Peluang yang sedang berjalan wajib memiliki penanggung jawab, tindakan berikutnya, dan tenggat. Peluang tidak lanjut wajib memiliki alasan.</p>}
+              <button type="button" disabled={saving || formInvalid} onClick={() => void save()} className="w-full rounded-xl bg-[#0B2C6B] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#071B3D] disabled:cursor-not-allowed disabled:opacity-45">{saving ? "Menyimpan…" : "Simpan perubahan"}</button>
             </div>
-            <aside>
-              <div className="mb-3 flex items-center gap-2"><AlertTriangle size={16} className="text-[#D9A441]" /><h4 className="text-sm font-bold text-slate-900">Jejak aktivitas</h4></div>
+            <aside aria-labelledby="opportunity-activity-title">
+              <div className="mb-3 flex items-center gap-2"><TrendingUp size={16} className="text-[#D9A441]" aria-hidden="true" /><h3 id="opportunity-activity-title" className="text-sm font-bold text-slate-900">Riwayat peluang</h3></div>
               <div className="space-y-3">
                 {activities.length ? activities.map((activity) => (
                   <article key={activity.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs font-bold text-[#0B2C6B]">{activity.eventType.replaceAll("_", " ")}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-600">{activity.note || `${activity.fromStage || "-"} → ${activity.toStage || "-"}`}</p>
+                    <p className="text-xs font-bold text-[#0B2C6B]">{activityLabel(activity.eventType)}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-600">{activity.note || `${stageLabel(activity.fromStage)} → ${stageLabel(activity.toStage)}`}</p>
                     <p className="mt-2 text-[10px] text-slate-400">{activity.actor} · {formatDate(activity.createdAt)}</p>
                   </article>
                 )) : <p className="rounded-xl border border-dashed border-slate-200 p-5 text-center text-xs text-slate-500">Belum ada aktivitas tercatat.</p>}

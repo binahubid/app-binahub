@@ -17,10 +17,11 @@ import { programAccessPath } from "@/lib/program-access-link";
 import { PROGRAM_MODULE_KEYS, PROGRAM_MODULE_META, type ProgramModuleKey } from "@/lib/program-modules";
 
 const STATUS_ORDER = ["draft", "active", "in_progress", "review", "completed", "archived"] as const;
-const STATUS_LABELS: Record<typeof STATUS_ORDER[number], string> = {
-  draft: "Draft", active: "Aktif", in_progress: "In Progress", review: "Review", completed: "Completed", archived: "Archived",
+type ProgramStatus = typeof STATUS_ORDER[number];
+const STATUS_LABELS: Record<ProgramStatus, string> = {
+  draft: "Draf", active: "Aktif", in_progress: "Berjalan", review: "Ditinjau", completed: "Selesai", archived: "Diarsipkan",
 };
-const STATUS_FLOW: Record<string, string[]> = {
+const STATUS_FLOW: Record<ProgramStatus, ProgramStatus[]> = {
   draft: ["active"],
   active: ["in_progress"],
   in_progress: ["review", "active"],
@@ -38,7 +39,7 @@ function ManageEngagementContent() {
 
   const engagement = useMemo(() => engagements.find((e) => e.id === id) || null, [engagements, id]);
   const [transitioning, setTransitioning] = useState(false);
-  const [confirmStatus, setConfirmStatus] = useState<string | null>(null);
+  const [confirmStatus, setConfirmStatus] = useState<ProgramStatus | null>(null);
   const [notes, setNotes] = useState<Array<{ id: string; content: string; author_id: string; created_at: string; author?: { email: string } }>>([]);
   const [newNote, setNewNote] = useState("");
   const [sendingNote, setSendingNote] = useState(false);
@@ -51,8 +52,9 @@ function ManageEngagementContent() {
   const [enabledModules, setEnabledModules] = useState<ProgramModuleKey[]>([]);
   const [savingModules, setSavingModules] = useState(false);
 
-  const currentIndex = engagement ? STATUS_ORDER.indexOf(engagement.status as typeof STATUS_ORDER[number]) : -1;
-  const nextStates = engagement ? STATUS_FLOW[engagement.status] || [] : [];
+  const programStatus = engagement?.status as ProgramStatus | undefined;
+  const currentIndex = programStatus ? STATUS_ORDER.indexOf(programStatus) : -1;
+  const nextStates = programStatus ? STATUS_FLOW[programStatus] || [] : [];
 
   const fetchNotes = useCallback(async () => {
     if (!id) return;
@@ -177,7 +179,7 @@ function ManageEngagementContent() {
     setDeletingNoteId(null);
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: ProgramStatus) => {
     if (!engagement) return;
     setTransitioning(true);
     try {
@@ -242,7 +244,7 @@ function ManageEngagementContent() {
   };
 
   if (engagementsLoading) {
-    return <div className="py-20 text-center text-sm font-semibold text-[#0B2C6B]/60">Memuat program...</div>;
+    return <div role="status" aria-live="polite" className="py-20 text-center text-sm font-semibold text-[#0B2C6B]/60">Memuat program...</div>;
   }
 
   if (engagementsError || !engagement) {
@@ -252,7 +254,7 @@ function ManageEngagementContent() {
           { label: "Program", href: "/admin/programs" },
           { label: "Tidak Ditemukan" },
         ]} />
-        <div className="py-20 text-center text-sm text-[#4A4C54]/60">{engagementsError || "Program tidak ditemukan."}</div>
+        <div role="alert" className="py-20 text-center text-sm text-[#4A4C54]/60">{engagementsError || "Program tidak ditemukan."}</div>
       </div>
     );
   }
@@ -323,7 +325,7 @@ function ManageEngagementContent() {
                     onClick={() => ns === "archived" ? setConfirmStatus(ns) : handleStatusChange(ns)}
                     disabled={transitioning}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B2C6B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A255A] disabled:opacity-50">
-                    Pindah ke {ns.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")} <ArrowRight size={16} />
+                    Pindah ke {STATUS_LABELS[ns]} <ArrowRight size={16} />
                   </button>
                 ))}
               </div>
@@ -336,7 +338,7 @@ function ManageEngagementContent() {
           {engagement.code && <ProgramShareCard programId={engagement.id} code={engagement.code} title={engagement.title} status={engagement.status} />}
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D9A441]">Catatan</p>
-            <h3 className="mt-1 text-lg font-semibold text-[#0B2C6B]">{evidence.length} items</h3>
+            <h3 className="mt-1 text-lg font-semibold text-[#0B2C6B]">{evidence.length} catatan</h3>
             <div className="mt-4 space-y-2">
               {evidence.slice(0, 5).map((e) => (
                 <div key={e.id} className="flex items-center justify-between rounded-lg border border-[#0B2C6B]/8 p-2">
@@ -361,6 +363,7 @@ function ManageEngagementContent() {
                 className="flex-1 h-9 rounded-lg border border-[#0B2C6B]/15 bg-[#FAFAF8] px-3 text-sm outline-none focus:border-[#D9A441]"
               />
               <button
+                type="button"
                 onClick={() => void handleSendNote()}
                 disabled={!newNote.trim() || sendingNote}
                 className="inline-flex items-center justify-center rounded-lg bg-[#0B2C6B] p-2 text-white hover:bg-[#0A255A] disabled:opacity-50"
@@ -378,6 +381,7 @@ function ManageEngagementContent() {
                     <div className="mt-2 flex items-center justify-between text-[10px] text-[#4A4C54]/50">
                       <span>{note.author?.email || "Admin"} &bull; {new Date(note.created_at).toLocaleDateString("id-ID")}</span>
                       <button
+                        type="button"
                         onClick={() => setDeletingNoteId(note.id)}
                         className="opacity-0 transition group-hover:opacity-100 text-red-400 hover:text-red-600"
                       >
@@ -456,9 +460,9 @@ function ManageEngagementContent() {
 export default function ManageEngagementPage() {
   return (
     <AdminAuthGate>
-      <AppShell role="admin" title="Kelola Program" eyebrow="Organization Core">
+      <AppShell role="admin" title="Kelola Program" eyebrow="Program & Modul">
         <ErrorBoundary>
-          <Suspense fallback={<div className="py-20 text-center text-sm text-[#4A4C54]/60">Memuat...</div>}>
+          <Suspense fallback={<div role="status" aria-live="polite" className="py-20 text-center text-sm text-[#4A4C54]/60">Memuat...</div>}>
             <ManageEngagementContent />
           </Suspense>
         </ErrorBoundary>

@@ -5,6 +5,23 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
+## [0.16.3] - 2026-09-01
+
+### Changed — Admin UI/UX Production Hardening
+
+- Mendesain ulang navigasi administrator menjadi kelompok accordion yang ringkas, dapat digulir pada desktop, dan drawer terstruktur pada perangkat seluler.
+- Mengganti menu pilihan panjang pada mobile dengan drawer yang menampilkan hierarki area kerja, penanda halaman aktif, serta tautan operasional yang mudah dipindai.
+- Menyederhanakan bahasa antarmuka pada akuisisi, penjualan, assessment, konsultasi, klien, operasional, otomasi, katalog, program, pengguna, dan izin akses agar berorientasi tugas bisnis.
+- Menghapus instruksi pengujian, rincian penyedia layanan, status teknis mentah, dan terminologi developer dari area kerja administrator yang digunakan sehari-hari.
+- Mengganti kartu penugasan berbasis efek balik dengan kartu statis yang lebih mudah dibaca, dioperasikan melalui keyboard, dan digunakan pada perangkat sentuh.
+- Menambahkan tampilan kartu pengguna untuk mobile, matriks izin yang dapat digulir dengan aman, serta status loading, error, dan empty state yang konsisten.
+- Menambahkan skip link, fokus global yang jelas, penghormatan terhadap preferensi reduced-motion, modal dengan focus trap, dukungan Escape, pemulihan fokus, dan semantik dialog/progress yang aksesibel.
+- Menambahkan halaman loading dan error khusus area admin serta tes regresi untuk dialog, accordion, dan progress bar.
+
+### Safety
+
+- Perubahan ini hanya menyentuh pengalaman antarmuka dan aksesibilitas; tidak mengubah API, skema database, workflow otomasi, status dry-run, atau keputusan persetujuan bisnis.
+
 ## [0.16.2] - 2026-08-31
 
 ### Fixed — Assessment Accessibility & Phase 13 Evidence

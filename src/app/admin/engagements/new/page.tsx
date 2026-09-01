@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertCircle, ArrowLeft, CheckCircle2, MapPin } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { ProgramShareCard } from "@/components/program-share-card";
+import { AppShell } from "@/components/app-shell";
 import { PROGRAM_MODULE_KEYS, PROGRAM_MODULE_META, type ProgramModuleKey } from "@/lib/program-modules";
 
 const ENGAGEMENT_TYPES = ["assessment", "coaching", "training", "transformation"] as const;
@@ -107,7 +108,7 @@ function CreateEngagementContent() {
       <div className="mx-auto mt-6 max-w-2xl">
         <div className="mb-5">
           <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#D9A441]">Buat Program</p>
-          <h1 className="mt-1 text-2xl font-semibold text-[#0B2C6B]">Informasi Program</h1>
+          <h2 className="mt-1 text-2xl font-semibold text-[#0B2C6B]">Informasi Program</h2>
           <p className="mt-1 text-sm text-[#4A4C54]/60">Tentukan perusahaan, akses, modul, dan jadwal program.</p>
         </div>
 
@@ -182,7 +183,7 @@ function CreateEngagementContent() {
             Peserta baru mendaftar memakai kode program dan nama, lalu menerima kode peserta pribadi untuk login berikutnya. Anggota tim dan kapten T-BOS tetap ditetapkan saat kunjungan pos pertama.
           </div>
 
-          {error && <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><AlertCircle size={16} /> {error}</div>}
+          {error && <div role="alert" aria-live="assertive" className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><AlertCircle size={16} aria-hidden="true" /> {error}</div>}
 
           <div className="mt-6 flex justify-end">
             <button type="submit" disabled={!canSubmit || submitting} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#D9A441] px-5 text-sm font-semibold text-[#071B3D] hover:bg-[#c49235] disabled:cursor-not-allowed disabled:opacity-40">
@@ -196,5 +197,11 @@ function CreateEngagementContent() {
 }
 
 export default function CreateEngagementPage() {
-  return <AdminAuthGate><CreateEngagementContent /></AdminAuthGate>;
+  return (
+    <AdminAuthGate>
+      <AppShell role="admin" title="Buat Program" eyebrow="Program & Modul">
+        <CreateEngagementContent />
+      </AppShell>
+    </AdminAuthGate>
+  );
 }

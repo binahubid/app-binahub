@@ -44,7 +44,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
   if (!allowed) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F5F7FA] text-sm font-semibold text-[#0B2C6B]">
+      <main role="status" aria-live="polite" aria-busy="true" className="flex min-h-screen items-center justify-center bg-[#F5F7FA] text-sm font-semibold text-[#0B2C6B]">
         Memeriksa akses admin...
       </main>
     );
@@ -73,9 +73,13 @@ export function PermissionGate({ children, allowedRoles, fallback }: PermissionG
         return;
       }
 
-      const result = await fetchAuthenticatedRole(session.access_token);
-      const userRole = (result.ok ? result.role : "peserta") as AppRole;
-      if (alive) setGranted(allowedRoles.includes(userRole));
+      try {
+        const result = await fetchAuthenticatedRole(session.access_token);
+        const userRole = (result.ok ? result.role : "peserta") as AppRole;
+        if (alive) setGranted(allowedRoles.includes(userRole));
+      } catch {
+        if (alive) setGranted(false);
+      }
     }
 
     void checkPermission();

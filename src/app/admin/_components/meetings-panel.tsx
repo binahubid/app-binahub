@@ -13,6 +13,10 @@ function statusTone(status: string): "navy" | "gold" | "green" | "red" {
   return "navy";
 }
 
+function statusLabel(status: string) {
+  return ({ confirmed: "Terkonfirmasi", rescheduled: "Dijadwalkan ulang", completed: "Selesai", cancelled: "Dibatalkan", rejected: "Ditolak", no_show: "Tidak hadir", requested: "Menunggu konfirmasi" } as Record<string, string>)[status] || status.replaceAll("_", " ");
+}
+
 export function MeetingsPanel({ bookings }: { bookings: CalendarBookingRecord[] }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("Semua");
@@ -32,13 +36,13 @@ export function MeetingsPanel({ bookings }: { bookings: CalendarBookingRecord[] 
     <Panel title="Meeting Cal.com" action={`${filtered.length}/${bookings.length} booking`}>
       <div className="mb-5 grid gap-3 md:grid-cols-[1fr_220px]">
         <AdminSearch value={search} onChange={setSearch} placeholder="Cari peserta, email, atau event…" />
-        <AdminSelect value={status} onChange={setStatus} options={["Semua", ...statuses]} />
+        <AdminSelect value={status} onChange={setStatus} ariaLabel="Filter status meeting" options={[["Semua", "Semua status"], ...statuses.map((item) => [item, statusLabel(item)] as [string, string])]} />
       </div>
       {bookings.length === 0 ? (
         <div className="rounded-[12px] border border-dashed border-black/10 bg-[#FCFCFB] p-10 text-center">
           <CalendarClock className="mx-auto text-[#D9A441]" size={28} />
           <p className="mt-3 text-sm font-semibold text-[#0B2C6B]">Belum ada booking tersinkronisasi.</p>
-          <p className="mt-1 text-xs text-black/45">Aktifkan webhook Cal.com setelah migration dan secret production tersedia.</p>
+          <p className="mt-1 text-xs text-black/45">Booking baru akan tampil otomatis setelah jadwal konsultasi dibuat.</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -49,8 +53,8 @@ export function MeetingsPanel({ bookings }: { bookings: CalendarBookingRecord[] 
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-semibold text-[#0B2C6B]">{booking.title}</h3>
-                      {booking.isUpcoming && <Badge tone="gold">Upcoming</Badge>}
-                      <Badge tone={statusTone(booking.status)}>{booking.status}</Badge>
+                      {booking.isUpcoming && <Badge tone="gold">Mendatang</Badge>}
+                      <Badge tone={statusTone(booking.status)}>{statusLabel(booking.status)}</Badge>
                     </div>
                     <p className="mt-2 text-sm font-medium text-slate-700">{booking.attendeeName}</p>
                     <p className="mt-1 flex items-center gap-1.5 text-xs text-black/48"><Mail size={13} />{booking.attendeeEmail}</p>
@@ -61,7 +65,7 @@ export function MeetingsPanel({ bookings }: { bookings: CalendarBookingRecord[] 
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-black/[0.05] pt-4">
-                  <p className="text-xs text-black/45">Event: {booking.eventTypeSlug || "-"} · UID: {booking.providerUid}</p>
+                  <p className="text-xs text-black/45">Jenis jadwal: {booking.eventTypeSlug || "-"}</p>
                   {booking.meetingUrl && (
                     <a href={booking.meetingUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B2C6B] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-white">
                       Buka meeting <ExternalLink size={12} />

@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import type { Evidence } from "@/lib/transformation-types";
 import { calculateQualityScore, getTypeWeight, QualityBadge } from "./evidence-quality";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 const TYPE_LABELS: Record<string, string> = {
   assessment: "Penilaian",
@@ -46,32 +47,17 @@ export function EvidenceDetailModal({
 }) {
   const content = item.content as Record<string, unknown>;
   const qualityScore = calculateQualityScore(item.confidence_score, item.type, item.source);
-
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
-  }, [onClose]);
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "";
-    };
-  }, [handleKeyDown]);
+  const dialogRef = useDialogFocus<HTMLElement>(onClose);
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Detail Catatan"
     >
-      <section onClick={(e) => e.stopPropagation()} className="mx-4 w-full max-w-2xl rounded-2xl border border-[#0B2C6B]/10 bg-white p-6 shadow-2xl">
+      <section ref={dialogRef} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="evidence-detail-title" className="mx-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#0B2C6B]/10 bg-white p-6 shadow-2xl">
         <header className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-[#0B2C6B]">Detail Catatan</h2>
-          <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-lg p-1.5 text-[#4A4C54]/50 hover:bg-[#F5F7FA] hover:text-[#0B2C6B]">
+          <h2 id="evidence-detail-title" className="text-base font-bold text-[#0B2C6B]">Detail Catatan</h2>
+          <button type="button" data-autofocus onClick={onClose} aria-label="Tutup" className="rounded-lg p-1.5 text-[#4A4C54]/50 hover:bg-[#F5F7FA] hover:text-[#0B2C6B]">
             <X size={18} />
           </button>
         </header>

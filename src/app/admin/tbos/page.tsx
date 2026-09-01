@@ -41,6 +41,7 @@ import { TbosRanking } from "./_components/ranking";
 import { TbosBatchComparison } from "./_components/batch-comparison";
 import { TbosExecutiveSummary } from "./_components/executive-summary";
 import { TbosTeamReports } from "./_components/team-reports";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 type Tab = "overview" | "summary" | "teams" | "radar" | "heatmap" | "ranking" | "batch";
 
@@ -89,6 +90,12 @@ function TbosDashboardContent() {
   const [newBatchName, setNewBatchName] = useState("");
   const [creatingBatch, setCreatingBatch] = useState(false);
   const [batchError, setBatchError] = useState("");
+  const closeBatchModal = useCallback(() => {
+    setShowBatchModal(false);
+    setBatchError("");
+    setNewBatchName("");
+  }, []);
+  const batchDialogRef = useDialogFocus<HTMLDivElement>(closeBatchModal, creatingBatch, showBatchModal);
 
   // Facilitator assignment state
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
@@ -729,11 +736,11 @@ function TbosDashboardContent() {
         />
       )}
       {showBatchModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+        <div ref={batchDialogRef} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs" role="dialog" aria-modal="true" aria-labelledby="new-batch-title">
           <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-              <h3 className="text-base font-bold text-[#0B2C6B]">Buat Batch Baru</h3>
-              <button onClick={() => { setShowBatchModal(false); setBatchError(""); setNewBatchName(""); }} aria-label="Tutup" className="flex h-9 w-9 items-center justify-center rounded-xl text-[#4A4C54] transition-colors hover:bg-slate-100">
+              <h2 id="new-batch-title" className="text-base font-bold text-[#0B2C6B]">Buat Batch Baru</h2>
+              <button type="button" data-autofocus onClick={closeBatchModal} aria-label="Tutup" className="flex h-9 w-9 items-center justify-center rounded-xl text-[#4A4C54] transition-colors hover:bg-slate-100">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -753,7 +760,7 @@ function TbosDashboardContent() {
                 />
               </div>
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => { setShowBatchModal(false); setBatchError(""); setNewBatchName(""); }} className="min-h-11 flex-1 rounded-xl border border-slate-200 text-sm font-semibold text-[#4A4C54] transition-colors hover:bg-slate-50">Batal</button>
+                <button type="button" onClick={closeBatchModal} className="min-h-11 flex-1 rounded-xl border border-slate-200 text-sm font-semibold text-[#4A4C54] transition-colors hover:bg-slate-50">Batal</button>
                 <button type="submit" disabled={creatingBatch || !newBatchName.trim()} className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#0B2C6B] text-sm font-semibold text-white shadow-sm shadow-[#0B2C6B]/20 transition-colors hover:bg-[#071B3D] disabled:opacity-50">
                   {creatingBatch && <Loader2 className="w-4 h-4 animate-spin" />}
                   Simpan
@@ -806,12 +813,13 @@ function TeamNameModal({
   onSubmit: (event: React.FormEvent) => void;
   onClose: () => void;
 }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose, loading);
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="edit-team-title">
+    <div ref={dialogRef} className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="edit-team-title">
       <form onSubmit={onSubmit} className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
         <h2 id="edit-team-title" className="text-base font-bold text-[#0B2C6B]">Ubah Nama Tim</h2>
         <label htmlFor="edit-team-name" className="mt-4 block text-xs font-semibold text-[#0B2C6B]">Nama tim</label>
-        <input id="edit-team-name" autoFocus required maxLength={50} value={value} onChange={(event) => onChange(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#0B2C6B]" />
+        <input id="edit-team-name" data-autofocus required maxLength={50} value={value} onChange={(event) => onChange(event.target.value)} className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#0B2C6B]" />
         <div className="mt-5 flex gap-2">
           <button type="button" onClick={onClose} disabled={loading} className="min-h-11 flex-1 rounded-xl border border-slate-200 text-sm font-semibold text-[#0B2C6B] disabled:opacity-50">Batal</button>
           <button type="submit" disabled={loading || !value.trim()} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#0B2C6B] text-sm font-semibold text-white disabled:opacity-50">
@@ -843,8 +851,9 @@ function AssignmentModal({
   onSubmit: (event: React.FormEvent) => void;
   onClose: () => void;
 }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose, loading);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs" role="dialog" aria-modal="true" aria-labelledby="assignment-title">
+    <div ref={dialogRef} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs" role="dialog" aria-modal="true" aria-labelledby="assignment-title">
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div className="flex items-center gap-2.5">
@@ -853,7 +862,7 @@ function AssignmentModal({
             </span>
             <h2 id="assignment-title" className="font-bold text-[#0B2C6B]">Tugaskan Fasilitator ke Program</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup penugasan" className="flex h-9 w-9 items-center justify-center rounded-xl text-[#4A4C54] transition-colors hover:bg-slate-100">
+          <button type="button" data-autofocus onClick={onClose} aria-label="Tutup penugasan" className="flex h-9 w-9 items-center justify-center rounded-xl text-[#4A4C54] transition-colors hover:bg-slate-100">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -905,17 +914,18 @@ function AddTeamModal({
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
 }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose, loading);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+    <div ref={dialogRef} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs" role="dialog" aria-modal="true" aria-labelledby="add-team-title">
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0B2C6B]/[0.06] text-[#0B2C6B]">
               <Users className="w-4.5 h-4.5" />
             </span>
-            <h3 className="text-base font-bold text-[#0B2C6B]">Tambah Tim Baru</h3>
+            <h2 id="add-team-title" className="text-base font-bold text-[#0B2C6B]">Tambah Tim Baru</h2>
           </div>
-          <button onClick={onClose} aria-label="Tutup" className="flex h-9 w-9 items-center justify-center rounded-xl text-[#4A4C54] transition-colors hover:bg-slate-100">
+          <button type="button" data-autofocus onClick={onClose} aria-label="Tutup" className="flex h-9 w-9 items-center justify-center rounded-xl text-[#4A4C54] transition-colors hover:bg-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -928,7 +938,7 @@ function AddTeamModal({
           )}
 
           {success && (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
+            <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
               <Check className="w-4 h-4 text-emerald-600" />
               Tim berhasil ditambahkan!
             </div>
@@ -1518,22 +1528,23 @@ export function CreateProgramModal({
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
 }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose, loading);
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div ref={dialogRef} className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="create-program-title">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06]">
           <div className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-[#0B2C6B]" />
-            <h3 className="text-base font-bold text-[#0B2C6B]">Buat Program Baru</h3>
+            <h2 id="create-program-title" className="text-base font-bold text-[#0B2C6B]">Buat Program Baru</h2>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-black/[0.04] text-[#4A4C54]">
+          <button type="button" data-autofocus onClick={onClose} aria-label="Tutup" className="p-1 rounded-lg hover:bg-black/[0.04] text-[#4A4C54]">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={onSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+            <div role="alert" className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
               {error}
             </div>
           )}

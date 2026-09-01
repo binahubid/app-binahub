@@ -15,9 +15,35 @@ import {
 import { FOLLOW_UP_LEVELS } from "../_lib/constants";
 import { daysSince, exportCsv, formatDate, uniqueOptions } from "../_lib/utils";
 import type { AssessmentDocumentType, AssessmentRecord, CatalogModule, CatalogProduct, ConfirmAction, DashboardData, EmailPreview } from "../_lib/types";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+}
+
+function moduleReadinessLabel(status?: string) {
+  const labels: Record<string, string> = {
+    design: "Dalam perancangan",
+    pending: "Menunggu kelengkapan",
+    review: "Sedang ditinjau",
+    ready: "Siap ditawarkan",
+    approved: "Disetujui",
+    blocked: "Belum dapat ditawarkan",
+  };
+  return labels[status || ""] || "Perlu ditinjau";
+}
+
+function pricingUnitLabel(unit?: string) {
+  const labels: Record<string, string> = {
+    fixed: "paket",
+    package: "paket",
+    participant: "peserta",
+    per_participant: "peserta",
+    session: "sesi",
+    day: "hari",
+    month: "bulan",
+  };
+  return labels[unit || ""] || unit?.replaceAll("_", " ") || "paket";
 }
 
 function proposalGateLabel(status?: string) {
@@ -510,15 +536,15 @@ export function AssessmentPanel({
                         <div className="mb-4 rounded-[10px] border border-slate-200 bg-slate-50 px-3 py-3 text-xs leading-5 text-slate-600">
                           <div className="flex flex-wrap gap-x-4 gap-y-1">
                             <span>Confidence: <strong>{typeof record.leadScoreConfidence === "number" ? `${Math.round(record.leadScoreConfidence * 100)}%` : "-"}</strong></span>
-                            <span>Buying signals: <strong>{record.leadScoreEvidence?.buyingSignalCount ?? "-"}</strong></span>
-                            <span>Rules: <strong>{record.leadScoreRuleVersion || "-"}</strong></span>
+                            <span>Sinyal minat: <strong>{record.leadScoreEvidence?.buyingSignalCount ?? "-"}</strong></span>
+                            <span>Versi aturan: <strong>{record.leadScoreRuleVersion || "-"}</strong></span>
                           </div>
                           {record.leadScoreReason && <p className="mt-1">{record.leadScoreReason}</p>}
                           {(record.leadScoreEvidence?.missingData || []).length > 0 && (
                             <p className="mt-1 text-amber-700">Data belum lengkap: {record.leadScoreEvidence?.missingData?.join(", ")}</p>
                           )}
                           {(record.leadScoreEvidence?.exclusionReasons || []).length > 0 && (
-                            <p className="mt-1 font-semibold text-red-700">Gate ICP: {record.leadScoreEvidence?.exclusionReasons?.join(" ")}</p>
+                            <p className="mt-1 font-semibold text-red-700">Kelayakan profil: {record.leadScoreEvidence?.exclusionReasons?.join(" ")}</p>
                           )}
                         </div>
                       )}
@@ -562,6 +588,7 @@ export function AssessmentPanel({
                         />
                         <div className="flex flex-wrap gap-2">
                           <button
+                            type="button"
                             onClick={() =>
                               setConfirmAction({
                                 title: "Kirim ulang result assessment?",
@@ -578,6 +605,7 @@ export function AssessmentPanel({
                             Kirim Result
                           </button>
                           <button
+                            type="button"
                             onClick={() =>
                               setConfirmAction({
                                 title: "Tandai permintaan proposal?",
@@ -604,15 +632,15 @@ export function AssessmentPanel({
                             onClick={() =>
                               setConfirmAction({
                                 title: "Kirim proposal ke klien?",
-                                description: "Proposal dari snapshot katalog yang sudah lolos Human Gate akan dikirim ke email klien.",
+                                description: "Proposal dari katalog yang sudah memperoleh persetujuan manual akan dikirim ke email klien.",
                                 confirmLabel: "Kirim Proposal",
                                 tone: "gold",
-                                details: [`Klien: ${record.name}`, `Email: ${record.email}`, `Gate: ${record.proposalGateStatus || "belum dievaluasi"}`, `Katalog: ${record.proposalCatalogVersion || "-"}`],
+                                details: [`Klien: ${record.name}`, `Email: ${record.email}`, `Status persetujuan: ${record.proposalGateStatus || "belum dievaluasi"}`, `Katalog: ${record.proposalCatalogVersion || "-"}`],
                                 onConfirm: () => runAssessmentAction(record, "send_proposal"),
                               })
                             }
                             disabled={actionId === `${record.id}:send_proposal` || !proposalCanSend}
-                            title={record.proposalDraft?.isSimulation ? "Pengiriman proposal simulasi dinonaktifkan." : !proposalCanSend ? "Selesaikan draft dan Human Gate terlebih dahulu." : undefined}
+                            title={record.proposalDraft?.isSimulation ? "Pengiriman proposal simulasi dinonaktifkan." : !proposalCanSend ? "Selesaikan draf dan persetujuan manual terlebih dahulu." : undefined}
                             className="h-12 rounded-[10px] bg-[#0B2C6B] px-3 text-xs font-bold uppercase tracking-[0.12em] text-white disabled:opacity-50"
                           >
                             Kirim Proposal
@@ -622,7 +650,7 @@ export function AssessmentPanel({
                       <div className="mt-4 rounded-[12px] border border-black/[0.07] bg-[#F8FAFC] p-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#D9A441]">Human Gate</p>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#D9A441]">Persetujuan Manual</p>
                             <p className="mt-1 text-sm font-semibold text-[#0B2C6B]">{proposalGateLabel(record.proposalGateStatus)}</p>
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -646,7 +674,7 @@ export function AssessmentPanel({
                           </div>
                         </div>
                         {record.proposalDraft?.isSimulation && (
-                          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">SIMULASI — pengiriman eksternal dinonaktifkan sampai katalog dan Business Rules resmi aktif.</p>
+                          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">SIMULASI — pengiriman eksternal dinonaktifkan sampai katalog dan aturan bisnis resmi disetujui.</p>
                         )}
                         {(record.proposalGateReasons || []).length > 0 && (
                           <ul className="mt-3 space-y-1 text-xs leading-5 text-slate-600">
@@ -654,7 +682,7 @@ export function AssessmentPanel({
                           </ul>
                         )}
                         {record.proposalGateStatus === "pending_approval" && (
-                          <label className="mt-3 block text-xs font-semibold text-slate-600">Alasan keputusan / audit override
+                          <label className="mt-3 block text-xs font-semibold text-slate-600">Catatan keputusan
                             <textarea
                               value={approvalNotes[record.id] || ""}
                               onChange={(event) => setApprovalNotes((current) => ({ ...current, [record.id]: event.target.value }))}
@@ -674,7 +702,7 @@ export function AssessmentPanel({
                             <span>Versi: <strong>{record.proposalDraft.rulesVersion || record.proposalCatalogVersion}</strong></span>
                             <span>Subtotal: <strong>{formatCurrency(record.proposalDraft.commercials.subtotal || 0)}</strong></span>
                             <span>Total sebelum pajak: <strong>{formatCurrency(record.proposalDraft.commercials.totalBeforeTax || 0)}</strong></span>
-                            <span>SLA review: <strong>{record.proposalDraft.reviewSlaBusinessDays || 1} hari kerja</strong></span>
+                            <span>Target peninjauan: <strong>{record.proposalDraft.reviewSlaBusinessDays || 1} hari kerja</strong></span>
                           </div>
                         )}
                       </div>
@@ -682,7 +710,7 @@ export function AssessmentPanel({
                         <div className="mt-4 rounded-[12px] border border-[#0B2C6B]/15 bg-white p-4">
                           <div className="mb-3">
                             <h5 className="text-sm font-semibold text-[#0B2C6B]">Konfigurasi Modul Proposal</h5>
-                            <p className="mt-1 text-xs leading-5 text-slate-500">Harga dihitung dari modul, bukan dari nama produk. Modul mock atau belum siap otomatis masuk Human Gate.</p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">Harga dihitung dari modul. Modul yang belum siap selalu memerlukan persetujuan manual.</p>
                           </div>
                           {catalogLoading ? <p className="text-xs text-slate-500">Memuat katalog...</p> : (
                             <div className="space-y-2">
@@ -698,7 +726,7 @@ export function AssessmentPanel({
                                     />
                                     <span>
                                       <span className="block text-xs font-semibold text-[#0B2C6B]">{product?.name || "Produk"} · {module.name}</span>
-                                      <span className="mt-0.5 block text-[11px] text-slate-500">{module.pricing_unit} · {formatCurrency(Number(module.base_price || 0))} · {module.readiness_status}{module.is_mock ? " · MOCK" : ""}</span>
+                                      <span className="mt-0.5 block text-[11px] text-slate-500">{formatCurrency(Number(module.base_price || 0))} / {pricingUnitLabel(module.pricing_unit)} · {module.is_mock ? "Belum dapat ditawarkan" : moduleReadinessLabel(module.readiness_status)}</span>
                                     </span>
                                     <input
                                       type="number"
@@ -716,7 +744,7 @@ export function AssessmentPanel({
                             </div>
                           )}
                           <div className="mt-4 grid gap-3 md:grid-cols-3">
-                            <label className="text-xs font-semibold text-slate-600">Tipe scope
+                            <label className="text-xs font-semibold text-slate-600">Jenis cakupan
                               <select value={scopeType} onChange={(event) => setScopeType(event.target.value as "standard" | "custom")} className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 font-normal">
                                 <option value="standard">Standar</option><option value="custom">Custom</option>
                               </select>
@@ -724,7 +752,7 @@ export function AssessmentPanel({
                             <label className="text-xs font-semibold text-slate-600">Diskon (%)
                               <input type="number" min={0} max={100} value={discountPercent} onChange={(event) => setDiscountPercent(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 font-normal" />
                             </label>
-                            <label className="text-xs font-semibold text-slate-600">Risiko (opsional)
+                            <label className="text-xs font-semibold text-slate-600">Catatan risiko (opsional)
                               <input value={proposalRisk} onChange={(event) => setProposalRisk(event.target.value)} placeholder="Legal, reputasi, komersial..." className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 font-normal" />
                             </label>
                           </div>
@@ -746,11 +774,11 @@ export function AssessmentPanel({
                               ))}
                             </div>
                           </div>
-                          <label className="mt-3 block text-xs font-semibold text-slate-600">Catatan reviewer
+                          <label className="mt-3 block text-xs font-semibold text-slate-600">Catatan peninjau
                             <textarea value={proposalNotes} onChange={(event) => setProposalNotes(event.target.value)} rows={2} className="mt-1 w-full rounded-lg border border-slate-200 p-3 font-normal" />
                           </label>
                           <div className="mt-3 flex justify-end">
-                            <button type="button" onClick={() => void generateProposalDraft(record)} disabled={actionId === `${record.id}:proposal-draft`} className="rounded-[9px] bg-[#0B2C6B] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white disabled:opacity-50">Buat Draft & Evaluasi Gate</button>
+                          <button type="button" onClick={() => void generateProposalDraft(record)} disabled={actionId === `${record.id}:proposal-draft`} className="rounded-[9px] bg-[#0B2C6B] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white disabled:opacity-50">Buat Draf & Periksa Persetujuan</button>
                           </div>
                         </div>
                       )}
@@ -809,11 +837,11 @@ export function AssessmentPanel({
                         <div>
                           <h4 className="text-sm font-semibold">Dokumen & Email</h4>
                           <p className="mt-1 text-xs leading-relaxed text-black/45">
-                            Akses email dan attachment asli yang tersimpan di Resend.
+                            Lihat salinan email dan unduh dokumen yang telah disiapkan untuk klien.
                           </p>
                         </div>
                         <span className="rounded-full bg-[#F5F7FA] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-black/42">
-                          Resend copy
+                          Arsip komunikasi
                         </span>
                       </div>
                       <div className="grid gap-3 md:grid-cols-2">
@@ -849,7 +877,7 @@ export function AssessmentPanel({
                       )}
                       {(!record.resultEmailId || (record.proposalSentAt && !record.proposalEmailId)) && (
                         <p className="mt-3 text-xs leading-relaxed text-black/42">
-                          Data lama yang belum menyimpan Email ID perlu dikirim ulang sekali agar salinan Resend bisa dibuka langsung di sini.
+                          Sebagian arsip lama belum memiliki salinan email. Kirim ulang hasil satu kali bila salinan perlu ditampilkan di sini.
                         </p>
                       )}
                     </div>
@@ -983,21 +1011,23 @@ function EmailPreviewModal({
   preview: EmailPreview;
   onClose: () => void;
 }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose);
   return (
     <div className="fixed inset-0 z-50 bg-[#071B3D]/55 px-4 py-6 backdrop-blur-sm">
-      <div className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden rounded-[16px] bg-white shadow-[0_40px_100px_-40px_rgba(7,27,61,0.55)]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="email-preview-title" className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden rounded-[16px] bg-white shadow-[0_40px_100px_-40px_rgba(7,27,61,0.55)]">
         <div className="flex flex-col gap-4 border-b border-black/[0.06] bg-[#FAFAF8] px-5 py-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#D9A441]">Email Preview</p>
-            <h3 className="mt-1 text-lg font-semibold text-[#0B2C6B]">{preview.subject}</h3>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#D9A441]">Pratinjau Email</p>
+            <h2 id="email-preview-title" className="mt-1 text-lg font-semibold text-[#0B2C6B]">{preview.subject}</h2>
             <p className="mt-1 text-xs text-black/45">{preview.recordName}</p>
             <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-black/45">
               {preview.lastEvent && <span className="rounded-full bg-white px-2 py-1">Status: {preview.lastEvent}</span>}
               {preview.createdAt && <span className="rounded-full bg-white px-2 py-1">Dikirim: {formatDate(preview.createdAt)}</span>}
-              {preview.emailId && <span className="rounded-full bg-white px-2 py-1">Resend ID: {preview.emailId}</span>}
             </div>
           </div>
           <button
+            type="button"
+            data-autofocus
             onClick={onClose}
             className="grid h-10 w-10 place-items-center rounded-[10px] border border-black/10 bg-white text-[#0B2C6B]"
             aria-label="Tutup preview email"
@@ -1007,7 +1037,7 @@ function EmailPreviewModal({
         </div>
         <div className="grid min-h-0 flex-1 gap-0 lg:grid-cols-[240px_1fr]">
           <aside className="border-b border-black/[0.06] bg-white p-5 lg:border-b-0 lg:border-r">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-black/40">Attachment</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-black/40">Lampiran</p>
             <div className="mt-3 space-y-2">
               {(preview.from || preview.to?.length) && (
                 <div className="rounded-[10px] border border-black/[0.06] bg-white p-3">
@@ -1028,7 +1058,7 @@ function EmailPreviewModal({
               ))}
               {!preview.attachments.length && (
                 <p className="rounded-[10px] border border-black/[0.06] bg-[#F5F7FA] p-3 text-xs leading-relaxed text-black/45">
-                  Tidak ada attachment yang tercatat di email ini.
+                  Tidak ada lampiran pada email ini.
                 </p>
               )}
             </div>

@@ -3,6 +3,7 @@
 import { ShieldCheck, ShieldX, User, Users, UserCog } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AppShell } from "@/components/app-shell";
 
 type Permission = {
   id: string;
@@ -14,32 +15,32 @@ type Permission = {
 };
 
 const PERMISSIONS: Permission[] = [
-  { id: "engagement:create", label: "Buat Engagement", description: "Membuat engagement baru", admin: true, facilitator: false, client: false },
-  { id: "engagement:read", label: "Lihat Engagement", description: "Melihat daftar & detail engagement", admin: true, facilitator: true, client: true },
-  { id: "engagement:update", label: "Ubah Engagement", description: "Mengedit status & data engagement", admin: true, facilitator: false, client: false },
-  { id: "engagement:delete", label: "Hapus Engagement", description: "Menghapus engagement", admin: true, facilitator: false, client: false },
-  { id: "evidence:create", label: "Buat Evidence", description: "Menambahkan evidence baru", admin: true, facilitator: true, client: true },
-  { id: "evidence:read", label: "Lihat Evidence", description: "Melihat daftar evidence", admin: true, facilitator: true, client: true },
-  { id: "evidence:update", label: "Ubah Evidence", description: "Mengedit tag & data evidence", admin: true, facilitator: true, client: true },
-  { id: "evidence:delete", label: "Hapus Evidence", description: "Menghapus evidence", admin: true, facilitator: false, client: false },
-  { id: "action:create", label: "Buat Action", description: "Menambahkan action baru", admin: true, facilitator: true, client: true },
-  { id: "action:read", label: "Lihat Action", description: "Melihat daftar action", admin: true, facilitator: true, client: true },
-  { id: "action:update", label: "Ubah Action", description: "Mengedit status, progress, prioritas action", admin: true, facilitator: true, client: true },
-  { id: "action:delete", label: "Hapus Action", description: "Menghapus action", admin: true, facilitator: false, client: false },
+  { id: "engagement:create", label: "Buat Program", description: "Membuat program baru", admin: true, facilitator: false, client: false },
+  { id: "engagement:read", label: "Lihat Program", description: "Melihat daftar dan detail program", admin: true, facilitator: true, client: true },
+  { id: "engagement:update", label: "Ubah Program", description: "Mengubah status dan data program", admin: true, facilitator: false, client: false },
+  { id: "engagement:delete", label: "Hapus Program", description: "Menghapus program", admin: true, facilitator: false, client: false },
+  { id: "evidence:create", label: "Buat Catatan", description: "Menambahkan catatan baru", admin: true, facilitator: true, client: true },
+  { id: "evidence:read", label: "Lihat Catatan", description: "Melihat daftar catatan", admin: true, facilitator: true, client: true },
+  { id: "evidence:update", label: "Ubah Catatan", description: "Mengubah kategori dan isi catatan", admin: true, facilitator: true, client: true },
+  { id: "evidence:delete", label: "Hapus Catatan", description: "Menghapus catatan", admin: true, facilitator: false, client: false },
+  { id: "action:create", label: "Buat Tindakan", description: "Menambahkan tindakan baru", admin: true, facilitator: true, client: true },
+  { id: "action:read", label: "Lihat Tindakan", description: "Melihat daftar tindakan", admin: true, facilitator: true, client: true },
+  { id: "action:update", label: "Ubah Tindakan", description: "Mengubah status, progres, dan prioritas tindakan", admin: true, facilitator: true, client: true },
+  { id: "action:delete", label: "Hapus Tindakan", description: "Menghapus tindakan", admin: true, facilitator: false, client: false },
   { id: "participant:read", label: "Lihat Partisipan", description: "Melihat data partisipan", admin: true, facilitator: true, client: false },
   { id: "participant:update", label: "Kelola Partisipan", description: "Menambah/menghapus partisipan", admin: true, facilitator: false, client: false },
   { id: "facilitator:read", label: "Lihat Fasilitator", description: "Melihat daftar fasilitator", admin: true, facilitator: false, client: false },
-  { id: "facilitator:assign", label: "Atur Fasilitator", description: "Menugaskan fasilitator ke engagement", admin: true, facilitator: false, client: false },
-  { id: "report:create", label: "Buat Report", description: "Membuat laporan engagement", admin: true, facilitator: true, client: false },
-  { id: "report:read", label: "Lihat Report", description: "Melihat laporan", admin: true, facilitator: true, client: true },
-  { id: "admin:access", label: "Akses Admin", description: "Mengakses panel admin", admin: true, facilitator: false, client: false },
-  { id: "rbac:view", label: "Lihat RBAC", description: "Melihat matriks izin ini", admin: true, facilitator: false, client: false },
+  { id: "facilitator:assign", label: "Atur Fasilitator", description: "Menugaskan fasilitator ke program", admin: true, facilitator: false, client: false },
+  { id: "report:create", label: "Buat Laporan", description: "Membuat laporan program", admin: true, facilitator: true, client: false },
+  { id: "report:read", label: "Lihat Laporan", description: "Melihat laporan", admin: true, facilitator: true, client: true },
+  { id: "admin:access", label: "Akses Administrasi", description: "Mengakses ruang kerja administrator", admin: true, facilitator: false, client: false },
+  { id: "rbac:view", label: "Lihat Izin Akses", description: "Melihat matriks izin ini", admin: true, facilitator: false, client: false },
 ];
 
 const ROLE_CONFIG = {
-  admin: { label: "Admin", icon: <UserCog size={14} />, tone: "text-indigo-600" },
-  facilitator: { label: "Facilitator", icon: <Users size={14} />, tone: "text-amber-600" },
-  client: { label: "Client", icon: <User size={14} />, tone: "text-emerald-600" },
+  admin: { label: "Administrator", icon: <UserCog size={14} />, tone: "text-indigo-600" },
+  facilitator: { label: "Fasilitator", icon: <Users size={14} />, tone: "text-amber-600" },
+  client: { label: "Klien", icon: <User size={14} />, tone: "text-emerald-600" },
 };
 
 function RoleHeader({ role }: { role: keyof typeof ROLE_CONFIG }) {
@@ -59,12 +60,11 @@ export default function RBACPage() {
   return (
     <AdminAuthGate>
       <ErrorBoundary>
-        <main className="min-h-screen bg-[#F5F7FA] px-4 py-8 text-[#0B2C6B] sm:px-6 sm:py-10">
+        <AppShell role="admin" title="Matriks Izin" eyebrow="Manajemen Akses">
+        <div className="text-[#0B2C6B]">
           <div className="mx-auto max-w-5xl">
-            <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-[#D9A441]">Kontrol Peran & Akses</div>
-            <h1 className="text-3xl font-light tracking-[-0.04em]">Matriks Izin</h1>
-          <p className="mt-2 text-sm text-[#4A4C54]/70">
-            Setiap role memiliki izin yang berbeda. Izin ditentukan oleh role pengguna dan tidak dapat diubah secara manual — mengikuti prinsip <strong>derived capability</strong>.
+          <p className="text-sm leading-6 text-[#4A4C54]/70">
+            Ringkasan ini membantu administrator memastikan setiap peran hanya melihat dan mengelola area kerja yang sesuai tanggung jawabnya.
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -81,8 +81,9 @@ export default function RBACPage() {
             })}
           </div>
 
-          <div className="mt-8 overflow-x-auto rounded-xl border border-[#0B2C6B]/10 bg-white shadow-[0_18px_52px_-42px_rgba(11,44,107,0.38)]">
-            <table className="w-full text-sm">
+          <div className="mt-8 overflow-x-auto rounded-xl border border-[#0B2C6B]/10 bg-white shadow-[0_18px_52px_-42px_rgba(11,44,107,0.38)]" tabIndex={0} aria-label="Matriks izin akses; geser secara horizontal pada layar kecil">
+            <table className="min-w-[760px] w-full text-sm">
+              <caption className="sr-only">Daftar izin untuk peran Admin, Fasilitator, dan Klien</caption>
               <thead>
                 <tr className="border-b border-[#0B2C6B]/10">
                   <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-[#4A4C54]/50">Izin</th>
@@ -95,35 +96,30 @@ export default function RBACPage() {
               <tbody>
                 {PERMISSIONS.map((perm) => (
                   <tr key={perm.id} className="border-b border-[#0B2C6B]/5 last:border-0 hover:bg-[#F5F7FA]/50">
-                    <td className="px-3 py-3">
-                      <code className="rounded bg-[#F5F7FA] px-1.5 py-0.5 text-[11px] font-medium text-[#0B2C6B]">{perm.id}</code>
-                    </td>
+                    <th scope="row" className="px-3 py-3 text-left text-xs font-semibold text-[#0B2C6B]">{perm.label}</th>
                     <td className="px-3 py-3 text-xs text-[#4A4C54]/70">{perm.description}</td>
-                    <td className={`px-3 py-3 text-center ${perm.admin ? "text-emerald-500" : "text-red-300"}`}>{perm.admin ? <ShieldCheck size={16} className="mx-auto" /> : <ShieldX size={16} className="mx-auto" />}</td>
-                    <td className={`px-3 py-3 text-center ${perm.facilitator ? "text-emerald-500" : "text-red-300"}`}>{perm.facilitator ? <ShieldCheck size={16} className="mx-auto" /> : <ShieldX size={16} className="mx-auto" />}</td>
-                    <td className={`px-3 py-3 text-center ${perm.client ? "text-emerald-500" : "text-red-300"}`}>{perm.client ? <ShieldCheck size={16} className="mx-auto" /> : <ShieldX size={16} className="mx-auto" />}</td>
+                    <PermissionCell allowed={perm.admin} />
+                    <PermissionCell allowed={perm.facilitator} />
+                    <PermissionCell allowed={perm.client} />
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <section className="mt-8 rounded-xl border border-[#0B2C6B]/10 bg-white p-6 shadow-[0_18px_52px_-42px_rgba(11,44,107,0.38)]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#D9A441]">Arsitektur RBAC</p>
-            <h3 className="mt-2 text-base font-semibold">Bagaimana akses ditentukan</h3>
-            <div className="mt-4 space-y-3 text-sm text-[#4A4C54]/80">
-              <p><strong className="text-[#0B2C6B]">1. Role otoritatif disimpan di profil</strong> — API membaca `profiles.role`; `app_metadata.role` hanya dipakai saat bootstrap sebelum profil tersedia.</p>
-              <p><strong className="text-[#0B2C6B]">2. Auth Gate memeriksa endpoint role</strong> — setiap halaman dilindungi `AdminAuthGate`, `FacilitatorAuthGate`, `PesertaAuthGate`, atau `ClientAuthGate` yang memanggil `/api/auth/role`.</p>
-              <p><strong className="text-[#0B2C6B]">3. PermissionGate untuk UI granular</strong> — `PermissionGate` memungkinkan render kondisional komponen berdasarkan role pengguna saat ini.</p>
-              <p><strong className="text-[#0B2C6B]">4. API Server memvalidasi via middleware</strong> — endpoint server menggunakan `requireAdmin()` / `requireFacilitator()` untuk memastikan hanya akses yang sah.</p>
-              <p className="mt-4 rounded-lg bg-[#F5F7FA] p-3 text-xs">
-                <strong>Prinsip:</strong> Capability adalah derived, bukan manual. Izin tidak pernah disetel secara langsung — selalu berasal dari role pengguna yang terautentikasi.
-              </p>
-            </div>
-          </section>
         </div>
-      </main>
+      </div>
+      </AppShell>
       </ErrorBoundary>
     </AdminAuthGate>
+  );
+}
+
+function PermissionCell({ allowed }: { allowed: boolean }) {
+  return (
+    <td className={`px-3 py-3 text-center ${allowed ? "text-emerald-600" : "text-red-400"}`}>
+      <span className="sr-only">{allowed ? "Diizinkan" : "Tidak diizinkan"}</span>
+      {allowed ? <ShieldCheck size={16} className="mx-auto" aria-hidden="true" /> : <ShieldX size={16} className="mx-auto" aria-hidden="true" />}
+    </td>
   );
 }

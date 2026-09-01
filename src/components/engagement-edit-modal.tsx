@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { X, Loader2, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import type { Engagement, EngagementType, EngagementStatus } from "@/lib/transformation-types";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 const TYPE_OPTIONS: EngagementType[] = ["assessment", "coaching", "training", "transformation"];
 const STATUS_OPTIONS: EngagementStatus[] = ["draft", "active", "in_progress", "review", "completed", "archived"];
@@ -43,18 +44,7 @@ export function EngagementEditModal({
   const [participantLimit, setParticipantLimit] = useState(engagement.participant_limit || 100);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [onClose]);
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose, loading);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,21 +81,21 @@ export function EngagementEditModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="edit-engagement-title">
-      <div className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (!loading && event.currentTarget === event.target) onClose(); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="edit-engagement-title" aria-busy={loading} className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-black/[0.06] bg-white px-6 py-4">
           <div className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-[#0B2C6B]" />
             <h3 id="edit-engagement-title" className="text-base font-bold text-[#0B2C6B]">Kelola Program</h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-black/[0.04] text-[#4A4C54]" aria-label="Tutup">
+          <button type="button" onClick={onClose} disabled={loading} className="rounded-lg p-1 text-[#4A4C54] hover:bg-black/[0.04] disabled:opacity-50" aria-label="Tutup">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+            <div role="alert" aria-live="assertive" className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
               {error}
             </div>
           )}
@@ -122,6 +112,7 @@ export function EngagementEditModal({
             </label>
             <input
               type="text"
+              data-autofocus
               required
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}

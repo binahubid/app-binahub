@@ -24,7 +24,7 @@ export function Overview({ data }: { data: DashboardData }) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <Panel title="Skor Rata-rata per Dimensi" action="Radar-style view">
+        <Panel title="Skor Rata-rata per Dimensi" action="Ringkasan dimensi">
           <div className="grid gap-3">
             {data.dimensionStats.map((item) => (
               <MetricBar key={item.dimension} label={item.dimension} value={item.average} />
@@ -48,7 +48,7 @@ export function Overview({ data }: { data: DashboardData }) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Panel title="Skor berdasarkan Ukuran Perusahaan" action="Company size">
+        <Panel title="Skor berdasarkan Ukuran Perusahaan" action="Segmentasi perusahaan">
           <div className="space-y-3">
             {data.employeeStats.map((item) => (
               <MetricBar key={item.range} label={`${item.range} (${item.count})`} value={item.avgOverall} />
@@ -56,7 +56,7 @@ export function Overview({ data }: { data: DashboardData }) {
           </div>
         </Panel>
 
-        <Panel title="Layanan Paling Sering Direkomendasikan" action="Demand signal">
+        <Panel title="Layanan Paling Sering Direkomendasikan" action="Tren kebutuhan">
           <div className="space-y-2.5">
             {data.topRecommendations.slice(0, 8).map((item) => (
               <div key={item.service} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-2.5">

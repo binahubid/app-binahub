@@ -24,6 +24,7 @@ import { StatCard, EmptyState, FilterTabs, ConfirmDialog } from "@/components/ui
 import { TbosProgramSelector } from "@/components/tbos-program-selector";
 import { supabase } from "@/lib/supabase";
 import { BarChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Bar, Cell, LabelList } from "@/components/lazy-charts";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 interface LepSpeaker {
   id: string;
@@ -97,6 +98,7 @@ function AdminLepContent() {
   const [deletingSpeaker, setDeletingSpeaker] = useState<LepSpeaker | null>(null);
   const [mutationError, setMutationError] = useState("");
   const [mutating, setMutating] = useState(false);
+  const speakerDialogRef = useDialogFocus<HTMLDivElement>(() => setShowSpeakerModal(false), mutating, showSpeakerModal);
 
   // Open text filter
   const [openTextTab, setOpenTextTab] = useState<OpenTextTab>("halTerpenting");
@@ -525,13 +527,13 @@ function AdminLepContent() {
 
       {/* Add / edit speaker modal */}
       {showSpeakerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="add-speaker-title">
+        <div ref={speakerDialogRef} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="add-speaker-title">
           <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-black/[0.06] px-5 py-4">
               <h2 id="add-speaker-title" className="font-bold text-[#0B2C6B]">
                 {editingSpeaker ? "Ubah Pemateri" : "Tambah Pemateri"}
               </h2>
-              <button type="button" onClick={() => setShowSpeakerModal(false)} aria-label="Tutup" className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-slate-100">
+              <button type="button" data-autofocus onClick={() => setShowSpeakerModal(false)} aria-label="Tutup" className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-slate-100">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>

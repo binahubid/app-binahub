@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   ArrowRight,
   Bell,
@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ConfirmAction } from "../_lib/types";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 export function AdminSearch({
   value,
@@ -30,9 +31,11 @@ export function AdminSearch({
     <div className="relative">
       <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30" />
       <input
+        type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder}
         className="h-12 w-full rounded-[12px] border border-black/10 bg-white pl-11 pr-4 text-sm outline-none focus:border-[#D9A441]"
       />
     </div>
@@ -65,17 +68,21 @@ export function CollapsibleModule({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const contentId = useId();
 
   return (
     <div className="rounded-[12px] border border-black/[0.05] bg-[#FCFCFB]">
       <button
+        type="button"
         onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-controls={contentId}
         className="flex w-full items-center justify-between px-4 py-4 text-left text-sm font-semibold text-[#0B2C6B]"
       >
         {title}
         <ChevronDown size={16} className={`transition ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="border-t border-black/[0.05] p-4">{children}</div>}
+      {open && <div id={contentId} className="border-t border-black/[0.05] p-4">{children}</div>}
     </div>
   );
 }
@@ -100,6 +107,7 @@ export function HrmItem({
         </div>
         {onDelete && (
           <button
+            type="button"
             onClick={onDelete}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-[9px] border border-red-100 bg-red-50 text-red-600"
             aria-label={`Hapus ${title}`}
@@ -208,17 +216,20 @@ export function AdminTextarea({
 }
 
 export function HelpTooltip({ content }: { content: string }) {
+  const tooltipId = useId();
   return (
     <span className="group relative inline-flex">
       <span
         tabIndex={0}
+        role="img"
         title={content}
+        aria-describedby={tooltipId}
+        aria-label="Bantuan kolom"
         className="grid h-4 w-4 cursor-help place-items-center rounded-full text-black/34 outline-none transition hover:text-[#0B2C6B] focus:text-[#0B2C6B]"
-        aria-label={content}
       >
-        <HelpCircle size={13} />
+        <HelpCircle size={13} aria-hidden="true" />
       </span>
-      <span className="pointer-events-none absolute left-1/2 top-6 z-40 hidden w-64 -translate-x-1/2 rounded-[10px] border border-black/10 bg-[#071B3D] px-3 py-2 text-[11px] font-medium normal-case leading-relaxed tracking-normal text-white shadow-[0_18px_45px_-22px_rgba(7,27,61,0.75)] group-hover:block group-focus-within:block">
+      <span id={tooltipId} role="tooltip" className="pointer-events-none absolute left-1/2 top-6 z-40 hidden w-64 -translate-x-1/2 rounded-[10px] border border-black/10 bg-[#071B3D] px-3 py-2 text-[11px] font-medium normal-case leading-relaxed tracking-normal text-white shadow-[0_18px_45px_-22px_rgba(7,27,61,0.75)] group-hover:block group-focus-within:block">
         {content}
       </span>
     </span>
@@ -427,6 +438,9 @@ export function EmptyState({
 
 export function ConfirmDialog({ action, onClose }: { action: ConfirmAction; onClose: () => void }) {
   const [submitting, setSubmitting] = useState(false);
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose, submitting);
+  const titleId = useId();
+  const descriptionId = useId();
   const buttonClass =
     action.tone === "danger"
       ? "bg-red-600 text-white"
@@ -447,13 +461,15 @@ export function ConfirmDialog({ action, onClose }: { action: ConfirmAction; onCl
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-[#071B3D]/58 px-4 py-6 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-[16px] bg-white p-6 shadow-[0_36px_90px_-38px_rgba(7,27,61,0.65)]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} aria-busy={submitting} className="w-full max-w-lg rounded-[16px] bg-white p-6 shadow-[0_36px_90px_-38px_rgba(7,27,61,0.65)]">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D9A441]">Review Aksi</p>
-            <h3 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-[#0B2C6B]">{action.title}</h3>
+            <h2 id={titleId} className="mt-2 text-xl font-semibold tracking-[-0.03em] text-[#0B2C6B]">{action.title}</h2>
           </div>
           <button
+            type="button"
+            data-autofocus
             onClick={onClose}
             disabled={submitting}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border border-black/10 text-[#0B2C6B] disabled:opacity-50"
@@ -462,7 +478,7 @@ export function ConfirmDialog({ action, onClose }: { action: ConfirmAction; onCl
             <X size={16} />
           </button>
         </div>
-        <p className="text-sm leading-relaxed text-black/58">{action.description}</p>
+        <p id={descriptionId} className="text-sm leading-relaxed text-black/58">{action.description}</p>
         {action.details?.length ? (
           <div className="mt-4 rounded-[12px] border border-black/[0.06] bg-[#F8FAFC] p-4">
             <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-black/36">Yang akan diproses</p>
@@ -475,6 +491,7 @@ export function ConfirmDialog({ action, onClose }: { action: ConfirmAction; onCl
         ) : null}
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
+            type="button"
             onClick={onClose}
             disabled={submitting}
             className="h-11 rounded-[10px] border border-black/10 px-4 text-xs font-bold uppercase tracking-[0.12em] text-[#0B2C6B] disabled:opacity-50"
@@ -482,6 +499,7 @@ export function ConfirmDialog({ action, onClose }: { action: ConfirmAction; onCl
             Batal
           </button>
           <button
+            type="button"
             onClick={handleConfirm}
             disabled={submitting}
             className={`h-11 rounded-[10px] px-4 text-xs font-bold uppercase tracking-[0.12em] disabled:opacity-50 ${buttonClass}`}
@@ -496,7 +514,7 @@ export function ConfirmDialog({ action, onClose }: { action: ConfirmAction; onCl
 
 export function AdminNotice({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-5 rounded-[10px] border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <div role="status" aria-live="polite" className="mb-5 rounded-[10px] border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
       {children}
     </div>
   );
@@ -515,16 +533,19 @@ export function AdminModal({
   onClose: () => void;
   maxWidth?: string;
 }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>(onClose);
+  const titleId = useId();
   return (
     <div className="fixed inset-0 z-[55] bg-[#071B3D]/55 px-4 py-6 backdrop-blur-sm">
-      <div className={`mx-auto flex h-full w-full ${maxWidth} flex-col overflow-hidden rounded-[16px] bg-white shadow-[0_36px_90px_-38px_rgba(7,27,61,0.65)]`}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`mx-auto flex h-full w-full ${maxWidth} flex-col overflow-hidden rounded-[16px] bg-white shadow-[0_36px_90px_-38px_rgba(7,27,61,0.65)]`}>
         <div className="flex items-start justify-between gap-4 border-b border-black/[0.06] bg-[#FAFAF8] px-5 py-4">
           <div>
             {eyebrow && <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D9A441]">{eyebrow}</p>}
-            <h3 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#0B2C6B]">{title}</h3>
+            <h2 id={titleId} className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#0B2C6B]">{title}</h2>
           </div>
           <button
             type="button"
+            data-autofocus
             onClick={onClose}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border border-black/10 bg-white text-[#0B2C6B]"
             aria-label="Tutup modal"
@@ -557,7 +578,7 @@ export function MetricBar({ label, value }: { label: string; value: number }) {
         <span className="font-medium text-[#0B2C6B]/76">{label}</span>
         <span className="font-semibold text-[#0B2C6B]">{value}%</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-[#EDF1F6]">
+      <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(Math.max(value, 0), 100)} className="h-2 overflow-hidden rounded-full bg-[#EDF1F6]">
         <div className="h-full rounded-full bg-[#0B2C6B]" style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }} />
       </div>
     </div>
@@ -566,7 +587,8 @@ export function MetricBar({ label, value }: { label: string; value: number }) {
 
 export function DashboardSkeleton() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div role="status" aria-live="polite" aria-label="Memuat dashboard admin" className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <span className="sr-only">Memuat dashboard admin...</span>
       {Array.from({ length: 8 }).map((_, index) => (
         <div key={index} className="h-40 animate-pulse rounded-[8px] bg-white" />
       ))}

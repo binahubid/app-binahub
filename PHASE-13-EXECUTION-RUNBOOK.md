@@ -9,8 +9,8 @@ Fase 13 mengubah engineering evidence Fase 1–12 menjadi bukti operasional manu
 
 ## Baseline Production
 
-- Migration production tersedia sampai `0037`.
-- API dan app `0.16.1` sudah dideploy; website `0.2.21` sudah mengarahkan CTA Insight ke assessment publik.
+- Migration production tersedia sampai `0038`.
+- API `0.16.2` dan app `0.16.2` sudah dideploy; website `0.2.21` sudah mengarahkan CTA Insight ke assessment publik.
 - Smoke Phase 12 lulus 11/11.
 - Seluruh tabel yang dilaporkan memiliki RLS aktif, anonymous blocked, dan authenticated direct-write blocked.
 - Lima workflow n8n lokal tersedia tepat satu kali dan semuanya inactive.
@@ -33,7 +33,7 @@ Output readiness yang disalin pada awal Fase 13 hanya memuat result set RLS. Seb
 
 Snapshot awal: `21cd22e8-9a12-4f86-8d99-8aef1cdde0eb`. Validasi evidence kit kemudian menghasilkan snapshot `14016ae1-1b92-4efa-9e34-c5d2ef1bc138`. Keduanya `is_mock=true` dan belum terikat release, sehingga bukan snapshot final untuk acceptance.
 
-## UAT Evidence — 31 Agustus 2026
+## UAT Evidence — 31 Agustus–1 September 2026
 
 Skenario `public_assessment_pdf_email` sudah dicatat **passed** pada environment production dengan owner/tester `admin@binahub.id`.
 
@@ -51,13 +51,21 @@ Skenario `admin_role_boundaries` sudah dicatat **passed** pada production tangga
 
 Audit data Cal.com menemukan masing-masing satu event `BOOKING_CREATED`, `BOOKING_RESCHEDULED`, dan `BOOKING_CANCELLED` berstatus `processed`. Booking awal tersimpan `rescheduled`, booking pengganti `cancelled` dengan cancellation reason, dan lead terkait berada pada opportunity stage `consultation`. Pada 31 Agustus 2026, runner `npm run test:phase13:calcom` melengkapi bukti no-show dengan webhook bertanda tangan valid untuk data `example.invalid`: 11/11 pemeriksaan lulus untuk no-show, idempotensi, lineage, pause outreach, dan opportunity activity audit. Skenario `calcom_booking_lifecycle` sekarang **passed**. Runner tidak membuat booking pada vendor dan tidak mengirim email.
 
-Skenario `resend_delivery_webhook` sudah **passed**. Runner `npm run test:phase13:resend` memverifikasi delivery event, bounce, idempotensi, dan suppression menggunakan alamat `example.invalid` tanpa outbound. Skenario `email_suppression_stop_rules` sudah **in_progress**: pause outreach, pause inquiry, suppression, dan audit bounce lulus, sedangkan pembuktian terakhir bahwa Follow-up Scheduler mengabaikan contact tersebut harus diulang pada business window.
+Skenario `resend_delivery_webhook` dan `email_suppression_stop_rules` sudah **passed**. Runner `npm run test:phase13:resend` memverifikasi delivery event, bounce, idempotensi, dan suppression menggunakan alamat `example.invalid` tanpa outbound. Pada 1 September 2026 pukul 09.47 WIB, runner suppression membuktikan pause outreach, pause inquiry, suppression, audit bounce, serta bahwa Follow-up Scheduler dalam business window mengabaikan inquiry suppressed dalam mode dry-run.
+
+Skenario `mobile_accessibility_core_flow` sudah **passed** setelah deployment app `0.16.2`. Audit production dengan cache-busting pada viewport 390×844 membuktikan alur assessment tidak memiliki horizontal overflow, skip link memiliki target, lima label data perusahaan terhubung ke input melalui `for/id`, dan pemilih jumlah karyawan mengekspos hubungan label serta listbox. Human UAT pada admin production kemudian membuktikan sidebar/navigation dapat digunakan, accordion berfungsi, tidak ada horizontal overflow, navigasi keyboard berfungsi, dan focus indicator terlihat. Dropdown navigasi panjang dicatat sebagai improvement UX non-blocking.
+
+Skenario `proposal_human_gate` sudah **passed** pada 1 September 2026. Runner production membentuk draft sintetis pada assessment `25cacf08-5c80-4c2f-9002-feb39ac6ca11`, membuktikan `MODULE_NOT_READY`, `DISCOUNT_LIMIT_EXCEEDED`, dan `INCOMPLETE_DATA` menahan approval, serta membuktikan aksi kirim ditolak tanpa proposal/email terkirim.
+
+Defect kompatibilitas `projects.source_id` pada handoff `won → client` telah ditutup melalui migration `0038_client_handoff_source_id_compatibility.sql` dan deployment API `0.16.2`. Runner `npm run test:phase13:client-lifecycle` kemudian lulus 24/24 dan mencatat `won_to_client_handoff`, `delivery_risk_human_tasks`, serta `retention_repeat_loop` sebagai **passed**. Runner `npm run test:phase13:end-to-end` lulus 26/26 dan mencatat `end_to_end_traceability` sebagai **passed**. Handoff idempoten, audit lifecycle lengkap, repeat opportunity tetap berada di human gate, dan seluruh fixture memakai `example.invalid` tanpa outbound. Campaign/source UAT juga ditutup dan dipause setelah evidence selesai.
+
+Skenario `automation_dry_run_audit` sudah **passed** pada 1 September 2026. Empat runtime control tetap `dry_run`; Follow-up Scheduler menghasilkan delapan kandidat dengan `sent=[]`; Transformation Worker tidak memproses event live; Client Operations dan Acquisition membuktikan idempotensi serta failed-run retry memakai run ID yang sama. Snapshot `458b252a-57ee-4ce0-9fbe-027860c05aed` berstatus `healthy`, seluruh workflow memiliki failure count nol, `activationLocked=true`, dan `outboundTriggered=false`. Snapshot masih `is_mock=true` dan belum terikat release sehingga belum menjadi snapshot acceptance final.
 
 ## Kondisi Awal yang Belum Boleh Ditandai Lulus
 
-- Pada baseline awal, seluruh 12 skenario UAT masih `not_started`; per 31 Agustus 2026, empat skenario sudah `passed`, dua skenario `in_progress`, dan enam skenario masih `not_started`.
-- Empat monitoring policy masih `is_mock=true` dan belum memiliki owner.
-- Delapan belas outreach template tersedia, tetapi belum ada yang `approved` dan non-mock.
+- Pada baseline awal, seluruh 12 skenario UAT masih `not_started`; per 1 September 2026 pukul 09.47 WIB, seluruh **12/12 skenario sudah passed** dengan evidence production.
+- Empat monitoring policy sudah enabled, non-mock, dan dimiliki `admin@binahub.id`; empat runtime control juga memiliki technical owner yang sama dan tetap `dry_run` tanpa release binding.
+- Delapan belas outreach template versi `v1.0-review` sudah non-mock, berstatus `draft`, dan dimiliki `admin@binahub.id`; approval tetap 0/18 menunggu CEO.
 - Business Rules `v1.0-approved-partial` masih draft dan memiliki sembilan activation blocker.
 - Belum ada pilot release plan non-mock.
 - Belum ada production rehearsal atau acceptance certification.
@@ -110,6 +118,7 @@ Sebelum release dapat di-approve:
 4. Tetapkan lawful basis, sumber data, retention, privacy notice, dan deletion process untuk outbound/acquisition.
 
 Bagian ini membutuhkan keputusan manusia dan tidak boleh diisi otomatis oleh engineering.
+Paket keputusan ringkas untuk CEO tersedia di `PHASE-13-CEO-DECISION-PACK.md`.
 
 ### Gate 13.3 — Automation evidence
 
@@ -143,11 +152,62 @@ Remove-Item Env:PHASE13_RUN_LABEL
 
 Status lulus membutuhkan baris `[PASS] Scheduler dry-run mengabaikan inquiry yang sudah suppressed`; apabila muncul `[PENDING]`, ulangi pada hari kerja pukul 08.00–17.00 WIB.
 
+Untuk menutup evidence handoff klien, delivery risk, dan retain/repeat tanpa outbound, jalankan:
+
+```powershell
+Set-Location "C:\Users\USER\OneDrive\Documents\Dokumen Binahub\binahub-api"
+$env:PHASE13_API_URL="https://api.binahub.id"
+$env:PHASE13_CONFIRM_CLIENT_LIFECYCLE_TEST="true"
+$env:PHASE13_ADMIN_EMAIL="admin@binahub.id"
+$env:PHASE13_ADMIN_PASSWORD="<PASSWORD ADMIN>"
+npm run test:phase13:client-lifecycle
+Remove-Item Env:PHASE13_API_URL
+Remove-Item Env:PHASE13_CONFIRM_CLIENT_LIFECYCLE_TEST
+Remove-Item Env:PHASE13_ADMIN_EMAIL
+Remove-Item Env:PHASE13_ADMIN_PASSWORD
+```
+
+Runner membuat fixture `example.invalid`, menguji handoff lead won yang idempoten, stakeholder, owner/risk project, satu human task sintetis yang tidak dapat diduplikasi dan hanya selesai dengan catatan resolusi, account health, repeat opportunity yang tetap menunggu human gate, dan audit trail. Setelah seluruh pemeriksaan lulus, runner mencatat `won_to_client_handoff`, `delivery_risk_human_tasks`, dan `retention_repeat_loop` sebagai passed. Runner tidak mengirim email dan tidak mengaktifkan automation.
+
+Untuk membuktikan proposal custom/hard-block tidak dapat melewati human gate, jalankan:
+
+```powershell
+Set-Location "C:\Users\USER\OneDrive\Documents\Dokumen Binahub\binahub-api"
+$env:PHASE13_API_URL="https://api.binahub.id"
+$env:PHASE13_CONFIRM_PROPOSAL_GATE_TEST="true"
+$env:PHASE13_ADMIN_EMAIL="admin@binahub.id"
+$env:PHASE13_ADMIN_PASSWORD="<PASSWORD ADMIN>"
+npm run test:phase13:proposal-gate
+Remove-Item Env:PHASE13_API_URL
+Remove-Item Env:PHASE13_CONFIRM_PROPOSAL_GATE_TEST
+Remove-Item Env:PHASE13_ADMIN_EMAIL
+Remove-Item Env:PHASE13_ADMIN_PASSWORD
+```
+
+Runner membuat draft pada fixture `example.invalid`, memverifikasi hard blocker tidak dapat di-approve, memastikan aksi kirim ditolak oleh gate, dan memastikan tidak ada email/proposal yang terkirim. Setelah seluruh pemeriksaan lulus, runner mencatat `proposal_human_gate` sebagai passed. Draft memanggil generator proposal production satu kali, tetapi tidak melakukan outbound ke penerima.
+
+Untuk menutup traceability satu ID dari acquisition sampai retain, jalankan:
+
+```powershell
+Set-Location "C:\Users\USER\OneDrive\Documents\Dokumen Binahub\binahub-api"
+$env:PHASE13_API_URL="https://api.binahub.id"
+$env:PHASE13_CONFIRM_END_TO_END_TEST="true"
+$env:PHASE13_ADMIN_EMAIL="admin@binahub.id"
+$env:PHASE13_ADMIN_PASSWORD="<PASSWORD ADMIN>"
+npm run test:phase13:end-to-end
+Remove-Item Env:PHASE13_API_URL
+Remove-Item Env:PHASE13_CONFIRM_END_TO_END_TEST
+Remove-Item Env:PHASE13_ADMIN_EMAIL
+Remove-Item Env:PHASE13_ADMIN_PASSWORD
+```
+
+Runner membuat source/campaign dan satu prospect `example.invalid`, menjalankan preview dry-run, mempromosikan hanya fixture tersebut menjadi lead, memindahkannya melalui stage opportunity sampai won, membuat client/project serta repeat opportunity, lalu memverifikasi seluruh ID dan audit event. Setelah lulus, campaign ditutup, source dipause, dan `end_to_end_traceability` dicatat passed. Tidak ada outreach atau email yang dikirim.
+
 Sesudah sign-in ke n8n melalui UI, jalankan workflow secara manual dari editor untuk memperoleh execution log n8n. Jangan mengubah toggle workflow menjadi active.
 
 ### Gate 13.4 — Monitoring policy dan release
 
-1. Ubah empat monitoring policy menjadi non-mock, tetap enabled, dengan owner riil.
+1. Empat monitoring policy sudah non-mock, tetap enabled, dan dimiliki `admin@binahub.id`.
 2. Buat pilot release plan non-mock lengkap dengan business, technical, dan monitoring owner.
 3. Isi cohort kecil, maximum participants, success criteria, rollback trigger, dan rollback plan.
 4. Release baru boleh di-approve setelah UAT, template, dan Business Rules lulus.
@@ -189,3 +249,5 @@ Setiap step wajib memiliki owner, hasil aktual, dan evidence. Rehearsal hanya bo
 - Tidak ada critical incident terbuka.
 - Acceptance dan keputusan go/no-go tercatat.
 - n8n masih inactive dan seluruh outbound tetap terkunci sampai Phase 14.
+
+Persiapan Phase 14 boleh dilakukan paralel menggunakan `PHASE-14-ENTRY-CHECKLIST.md`, tetapi activation tetap dilarang sampai seluruh exit criteria di atas terpenuhi.

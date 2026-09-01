@@ -11,6 +11,7 @@ import { Breadcrumb, ConfirmDialog, EmptyState, FilterTabs, ModuleChip, SearchIn
 import { ProgramShareCard } from "@/components/program-share-card";
 import type { Engagement } from "@/lib/transformation-types";
 import type { ProgramModuleKey } from "@/lib/program-modules";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 interface ProgramModuleRow {
   program_id: string;
@@ -24,6 +25,7 @@ function AdminProgramsPageContent() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [shareTarget, setShareTarget] = useState<Engagement | null>(null);
+  const shareDialogRef = useDialogFocus<HTMLDivElement>(() => setShareTarget(null), false, Boolean(shareTarget));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
 
@@ -96,8 +98,8 @@ function AdminProgramsPageContent() {
         <p className="mt-4 text-xs font-semibold text-slate-500">Menampilkan {filteredPrograms.length} program {statusFilter === "active" ? "aktif" : statusFilter === "completed" ? "selesai" : "arsip"}</p>
       </section>}
 
-      {loading ? <div className="py-20 text-center text-sm text-slate-500">Memuat...</div> : error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      {loading ? <div role="status" aria-live="polite" className="py-20 text-center text-sm text-slate-500">Memuat program...</div> : error ? (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
       ) : engagements.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white"><EmptyState title="Belum ada program" description="Buat program pertama lalu pilih modul BinaInsight, LEP, dan/atau T-BOS." action={<Link href="/admin/engagements/new" className="mt-2 inline-flex items-center gap-2 rounded-xl bg-blue-900 px-5 py-2.5 text-sm font-semibold text-white"><Plus size={18} /> Buat Program</Link>} /></div>
       ) : filteredPrograms.length === 0 ? (
@@ -140,9 +142,9 @@ function AdminProgramsPageContent() {
       <ConfirmDialog open={Boolean(deleteTarget)} onClose={() => { if (!deleting) setDeleteTarget(null); }} onConfirm={deleteProgram} title="Hapus Program?" description={deleteTarget ? `Program "${deleteTarget.title}" beserta tim kosongnya akan dihapus permanen. Program yang memiliki histori observasi atau LEP harus diarsipkan.` : undefined} confirmLabel="Ya, Hapus" variant="danger" loading={deleting} />
 
       {shareTarget?.code && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-[#071B3D]/55 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={`Bagikan ${shareTarget.title}`} onMouseDown={(event) => { if (event.currentTarget === event.target) setShareTarget(null); }}>
+        <div ref={shareDialogRef} className="fixed inset-0 z-[80] flex items-end justify-center bg-[#071B3D]/55 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={`Bagikan ${shareTarget.title}`} onMouseDown={(event) => { if (event.currentTarget === event.target) setShareTarget(null); }}>
           <div className="relative max-h-[92dvh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-[#F7F8FA] p-4 shadow-2xl sm:rounded-3xl sm:p-5">
-            <button type="button" onClick={() => setShareTarget(null)} aria-label="Tutup" className="absolute right-6 top-6 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#0B2C6B] shadow-sm"><X size={17} /></button>
+            <button type="button" data-autofocus onClick={() => setShareTarget(null)} aria-label="Tutup" className="absolute right-6 top-6 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#0B2C6B] shadow-sm"><X size={17} /></button>
             <ProgramShareCard programId={shareTarget.id} code={shareTarget.code} title={shareTarget.title} status={shareTarget.status} />
           </div>
         </div>

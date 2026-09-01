@@ -7,6 +7,7 @@ import { Mail, FileText, Award, Users, BarChart3 } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { StatusPill, Breadcrumb, EmptyState, Skeleton } from "@/components/ui";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/lib/supabase";
 
 interface ParticipantDetail {
@@ -192,7 +193,7 @@ function ParticipantDetailContent() {
       />
 
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-[#0B2C6B]">{participant.name}</h1>
+        <h2 className="text-2xl font-semibold text-[#0B2C6B]">{participant.name}</h2>
         {participant.email && (
           <p className="mt-1 flex items-center gap-2 text-sm text-[#4A4C54]/60">
             <Mail size={14} />
@@ -365,9 +366,11 @@ export default function AdminClientDetailPage() {
   return (
     <AdminAuthGate>
       <ErrorBoundary>
-        <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-[#0B2C6B]">Memuat...</div>}>
-          <ParticipantDetailContent />
-        </Suspense>
+        <AppShell role="admin" title="Detail Peserta" eyebrow="Data Peserta">
+          <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-64 items-center justify-center text-sm text-[#0B2C6B]">Memuat detail peserta...</div>}>
+            <ParticipantDetailContent />
+          </Suspense>
+        </AppShell>
       </ErrorBoundary>
     </AdminAuthGate>
   );

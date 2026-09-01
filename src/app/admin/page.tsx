@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ChevronDown, LogOut, RefreshCw } from "lucide-react";
+import { ArrowRight, ChevronDown, LogOut, Menu, RefreshCw, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AssessmentPanel } from "./_components/assessment-panel";
@@ -23,6 +23,20 @@ import { TAB_META, tabs } from "./_lib/constants";
 import type { DashboardData } from "./_lib/types";
 
 type AdminTab = (typeof tabs)[number];
+
+const ADMIN_TAB_LABELS: Partial<Record<AdminTab, string>> = {
+  Overview: "Ringkasan",
+  "Acquisition Control": "Kontrol Akuisisi",
+  "Sales Pipeline": "Pipeline Penjualan",
+  Assessment: "Assessment",
+  Meeting: "Konsultasi",
+  "Client & Delivery": "Klien & Pelaksanaan",
+  "Operations Control": "Kontrol Operasional",
+  "Automation Center": "Pusat Otomasi",
+  "Katalog & Rules": "Katalog & Aturan",
+};
+
+const tabLabel = (tab: AdminTab) => ADMIN_TAB_LABELS[tab] || tab;
 
 const ADMIN_TAB_GROUPS = [
   { id: "overview", label: "Ringkasan", tabs: ["Overview"] },
@@ -44,9 +58,9 @@ const ADMIN_LINK_GROUPS = [
     id: "governance",
     label: "Manajemen & Tata Kelola",
     links: [
-      { href: "/admin/users", label: "Manajemen User & Role" },
-      { href: "/admin/engagements", label: "Program Engagements" },
-      { href: "/admin/rbac", label: "Matriks Izin RBAC" },
+      { href: "/admin/users", label: "Pengguna & Peran" },
+      { href: "/admin/engagements", label: "Program" },
+      { href: "/admin/rbac", label: "Izin Akses" },
     ],
   },
   {
@@ -61,7 +75,136 @@ const ADMIN_LINK_GROUPS = [
   },
 ] as const;
 
-const VISIBLE_ADMIN_TABS = ADMIN_TAB_GROUPS.flatMap((group) => group.tabs);
+function MobileAdminMenu({
+  activeTab,
+  onTabChange,
+  newAssessmentCount,
+  newInquiryCount,
+}: {
+  activeTab: AdminTab;
+  onTabChange: (tab: AdminTab) => void;
+  newAssessmentCount: number;
+  newInquiryCount: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const trigger = triggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.setTimeout(() => closeRef.current?.focus(), 0);
+
+    const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const elements = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
+      if (!elements.length) return;
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus();
+    };
+  }, [open]);
+
+  const selectTab = (tab: AdminTab) => {
+    onTabChange(tab);
+    setOpen(false);
+  };
+
+  return (
+    <div className="lg:hidden">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        className="inline-flex min-h-11 max-w-[15rem] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 shadow-xs"
+      >
+        <Menu size={15} aria-hidden="true" />
+        <span className="truncate">Menu: {tabLabel(activeTab)}</span>
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-[80] bg-[#071B3D]/55 backdrop-blur-sm">
+          <button type="button" onClick={() => setOpen(false)} aria-label="Tutup menu admin" className="absolute inset-0 cursor-default" />
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="mobile-admin-menu-title" className="absolute inset-y-0 right-0 flex w-[min(22rem,calc(100%-2rem))] flex-col bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#C79A3C]">Admin workspace</p>
+                <h2 id="mobile-admin-menu-title" className="mt-1 text-lg font-bold text-slate-900">Pilih area kerja</h2>
+              </div>
+              <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label="Tutup menu admin" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <nav className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-5" aria-label="Menu area kerja admin">
+              {ADMIN_TAB_GROUPS.map((group) => (
+                <section key={group.id} aria-labelledby={`mobile-admin-group-${group.id}`}>
+                  <h3 id={`mobile-admin-group-${group.id}`} className="px-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{group.label}</h3>
+                  <div className="mt-2 space-y-1">
+                    {group.tabs.map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => selectTab(tab)}
+                        aria-pressed={activeTab === tab}
+                        className={`flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left text-sm font-semibold transition-colors ${activeTab === tab ? "bg-[#0B2C6B] text-white" : "text-slate-700 hover:bg-slate-100"}`}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="truncate">{tabLabel(tab)}</span>
+                          {tab === "Assessment" && newAssessmentCount > 0 && <NotificationBadge count={newAssessmentCount} />}
+                          {tab === "Inquiry Masuk" && newInquiryCount > 0 && <NotificationBadge count={newInquiryCount} />}
+                        </span>
+                        {activeTab === tab && <ArrowRight size={15} className="shrink-0 text-[#D9A441]" aria-hidden="true" />}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ))}
+
+              {ADMIN_LINK_GROUPS.map((group) => (
+                <section key={group.id} aria-labelledby={`mobile-admin-group-${group.id}`}>
+                  <h3 id={`mobile-admin-group-${group.id}`} className="px-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{group.label}</h3>
+                  <div className="mt-2 space-y-1">
+                    {group.links.map((item) => (
+                      <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminDashboardPage() {
   return (
@@ -271,13 +414,16 @@ function AdminDashboardContent() {
   const activeMeta = TAB_META[activeTab];
   return (
     <>
-      <main className="admin-root min-h-screen bg-[#FAF8F4] text-slate-900 font-sans selection:bg-[#C79A3C]/20 selection:text-[#0B2C6B]">
+      <a href="#admin-main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-[#0B2C6B] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white">
+        Langsung ke konten utama
+      </a>
+      <main id="admin-main-content" className="admin-root min-h-screen bg-[#FAF8F4] text-slate-900 font-sans selection:bg-[#C79A3C]/20 selection:text-[#0B2C6B]">
         {/* Sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-800/60 bg-[#071B3D] px-5 py-6 text-white lg:flex">
           <div className="shrink-0">
             {/* Genuine Logo */}
             <div className="mb-5 px-2">
-              <Link href="/home" className="inline-block transition-opacity hover:opacity-90">
+              <Link href="/admin" className="inline-block transition-opacity hover:opacity-90">
                 <Image
                   src="/binahub_logo.webp"
                   alt="BinaHub Logo"
@@ -320,6 +466,7 @@ function AdminDashboardContent() {
                             key={tab}
                             type="button"
                             onClick={() => handleTabChange(tab)}
+                            aria-pressed={activeTab === tab}
                             className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2 text-left text-xs font-semibold transition-all ${
                               activeTab === tab
                                 ? "bg-white text-[#0B2C6B] shadow-sm shadow-black/10"
@@ -327,7 +474,7 @@ function AdminDashboardContent() {
                             }`}
                           >
                             <span className="flex items-center gap-2">
-                              {tab}
+                              {tabLabel(tab)}
                               {tab === "Assessment" && newAssessmentCount > 0 && <NotificationBadge count={newAssessmentCount} />}
                               {tab === "Inquiry Masuk" && newInquiryCount > 0 && <NotificationBadge count={newInquiryCount} />}
                             </span>
@@ -398,21 +545,16 @@ function AdminDashboardContent() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={activeTab}
-                  onChange={(event) => handleTabChange(event.target.value as AdminTab)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-xs lg:hidden"
-                >
-                  {VISIBLE_ADMIN_TABS.map((tab) => (
-                    <option key={tab}>{tab}</option>
-                  ))}
-                </select>
+                <MobileAdminMenu activeTab={activeTab} onTabChange={handleTabChange} newAssessmentCount={newAssessmentCount} newInquiryCount={newInquiryCount} />
                 <button
+                  type="button"
                   onClick={fetchDashboard}
+                  disabled={loading}
+                  aria-label={loading ? "Sedang memperbarui dashboard" : "Perbarui dashboard"}
                   className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors"
                 >
                   <RefreshCw size={13} className={loading ? "animate-spin text-[#C79A3C]" : "text-slate-500"} />
-                  Refresh
+                  Perbarui
                 </button>
                 <button
                   type="button"
@@ -428,7 +570,7 @@ function AdminDashboardContent() {
 
           <div className="p-5 md:p-8">
             {error && (
-              <div className="mb-6 rounded-[12px] border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <div role="alert" aria-live="assertive" className="mb-6 rounded-[12px] border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                 {error}
               </div>
             )}

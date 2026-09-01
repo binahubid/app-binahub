@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef, useState } from "react";
+import { useEffect, useCallback, useId, useRef, useState } from "react";
 import { AlertCircle, AlertTriangle, Info, Loader2 } from "lucide-react";
 
 export function ConfirmDialog({
@@ -26,20 +26,52 @@ export function ConfirmDialog({
 }) {
   const [internalLoading, setInternalLoading] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const descriptionId = useId();
   const busy = loading || internalLoading;
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape" && !busy) onClose();
-  }, [busy, onClose]);
+  const busyRef = useRef(busy);
+  const onCloseRef = useRef(onClose);
 
   useEffect(() => {
-    if (open) {
-      document.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden";
-      window.setTimeout(() => cancelRef.current?.focus(), 0);
+    busyRef.current = busy;
+    onCloseRef.current = onClose;
+  }, [busy, onClose]);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape" && !busyRef.current) {
+      e.preventDefault();
+      onCloseRef.current();
+      return;
     }
+    if (e.key !== "Tab") return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const elements = Array.from(dialog.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+    if (!elements.length) return;
+    const first = elements[0];
+    const last = elements[elements.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    window.setTimeout(() => cancelRef.current?.focus(), 0);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus();
     };
   }, [open, handleKeyDown]);
 
@@ -71,15 +103,15 @@ export function ConfirmDialog({
   const Icon = iconStyles[variant].Icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 backdrop-blur-sm sm:items-center" onClick={() => { if (!busy) onClose(); }} role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" aria-describedby={description ? "confirm-dialog-description" : undefined}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl border border-[#0B2C6B]/10 bg-white p-5 shadow-2xl sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 backdrop-blur-sm sm:items-center" onClick={() => { if (!busy) onClose(); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} aria-busy={busy} onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl border border-[#0B2C6B]/10 bg-white p-5 shadow-2xl sm:p-6">
         <div className="flex items-center gap-3">
           <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconStyles[variant].wrapper}`}>
             <Icon size={20} className={iconStyles[variant].icon} aria-hidden="true" />
           </div>
           <div>
-            <h3 id="confirm-dialog-title" className="text-base font-semibold text-[#0B2C6B]">{title}</h3>
-            {description && <p id="confirm-dialog-description" className="mt-1 text-sm leading-5 text-[#4A4C54]/70">{description}</p>}
+            <h2 id={titleId} className="text-base font-semibold text-[#0B2C6B]">{title}</h2>
+            {description && <p id={descriptionId} className="mt-1 text-sm leading-5 text-[#4A4C54]/70">{description}</p>}
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">

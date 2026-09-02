@@ -7,7 +7,7 @@ import { ArrowLeft, Ban, CheckCircle2, Copy, KeyRound, Loader2, RotateCcw, Shiel
 import { toast } from "sonner";
 import { useDialogFocus } from "@/hooks/use-dialog-focus";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { Breadcrumb, ConfirmDialog, EmptyState, StatusPill } from "@/components/ui";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { supabase } from "@/lib/supabase";
@@ -113,5 +113,5 @@ function AccessCodesContent() {
 }
 
 export default function AccessCodesPage() {
-  return <AdminAuthGate><AppShell role="admin" title="Kode Peserta" eyebrow="Keamanan Program"><ErrorBoundary><Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-64 items-center justify-center gap-2 text-sm font-semibold text-slate-500"><Loader2 className="h-6 w-6 animate-spin text-blue-900" aria-hidden="true" /> Memuat kode peserta...</div>}><AccessCodesContent /></Suspense></ErrorBoundary></AppShell></AdminAuthGate>;
+  return <AdminAuthGate><AdminShell title="Kode Peserta" eyebrow="Keamanan Program" description="Terbitkan, rotasi, dan nonaktifkan kode akses peserta secara aman."><ErrorBoundary><Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-64 items-center justify-center gap-2 text-sm font-semibold text-slate-500"><Loader2 className="h-6 w-6 animate-spin text-blue-900" aria-hidden="true" /> Memuat kode peserta...</div>}><AccessCodesContent /></Suspense></ErrorBoundary></AdminShell></AdminAuthGate>;
 }

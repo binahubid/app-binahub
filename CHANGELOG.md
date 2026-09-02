@@ -5,6 +5,30 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-02
+
+### Changed — Unified Application Journey & Admin Workspace
+
+- Menetapkan `/admin/dashboard` sebagai satu-satunya beranda administrator dan mengubah `/admin` menjadi redirect kompatibilitas.
+- Mengganti monolit tab di `/admin` dengan URL kanonis untuk dashboard, acquisition, pipeline, assessment, konsultasi, kontak, inquiry, klien, operasional, dan otomasi.
+- Menyatukan seluruh halaman administrator non-T-BOS ke satu shell, satu struktur navigasi, dan satu bahasa visual production.
+- Mendesain ulang sidebar desktop menjadi kelompok accordion yang dapat dicari dan digulir serta navigasi mobile menjadi drawer yang aksesibel.
+- Menambahkan breadcrumb kontekstual, state loading, error, dan not-found yang konsisten tanpa menggandakan judul halaman.
+- Menghapus menu evidence pengujian dan kontrol fase internal dari kontrak antarmuka pengguna; data dan prosedur operasionalnya tetap berada di backend dan dokumen developer.
+- Menyederhanakan `/home` menjadi resolver role agar pengguna langsung tiba di ruang kerja yang sesuai setelah login.
+- Menyatukan beranda klien ke `/client/program` dan mengarahkan rute fasilitator lama ke `/fasilitator/tbos`.
+- Mendokumentasikan arsitektur informasi, peta rute, redirect kompatibilitas, dan aturan penambahan halaman admin.
+
+### Accessibility
+
+- Menambahkan skip link, focus indicator, focus trap drawer, penutupan melalui Escape, pengembalian fokus, serta body scroll lock pada navigasi mobile.
+- Memastikan shell admin tidak menghasilkan horizontal overflow pada viewport desktop maupun mobile.
+
+### Safety
+
+- T-BOS sengaja tidak diubah pada fase ini; shell, navigasi, dan UI T-BOS tetap memakai implementasi sebelumnya.
+- Redesign tidak mengubah endpoint bisnis, skema database, status dry-run, runtime control, atau keputusan persetujuan manusia.
+
 ## [0.17.0] - 2026-09-01
 
 ### Added — Configurable Commercial & Learning Operations

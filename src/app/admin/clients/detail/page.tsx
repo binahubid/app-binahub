@@ -7,7 +7,7 @@ import { Mail, FileText, Award, Users, BarChart3 } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { StatusPill, Breadcrumb, EmptyState, Skeleton } from "@/components/ui";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { supabase } from "@/lib/supabase";
 
 interface ParticipantDetail {
@@ -173,7 +173,7 @@ function ParticipantDetailContent() {
           title="Peserta tidak ditemukan"
           description={error || "Data peserta tidak tersedia."}
           action={
-            <Link href="/admin" className="text-sm font-semibold text-[#0B2C6B] hover:text-[#D9A441]">
+            <Link href="/admin/clients" className="text-sm font-semibold text-[#0B2C6B] hover:text-[#D9A441]">
               Kembali ke Dashboard
             </Link>
           }
@@ -366,11 +366,11 @@ export default function AdminClientDetailPage() {
   return (
     <AdminAuthGate>
       <ErrorBoundary>
-        <AppShell role="admin" title="Detail Peserta" eyebrow="Data Peserta">
+        <AdminShell title="Detail Peserta" eyebrow="Klien & Delivery" description="Tinjau profil, progres, dan jejak aktivitas peserta dalam konteks programnya.">
           <Suspense fallback={<div role="status" aria-live="polite" className="flex min-h-64 items-center justify-center text-sm text-[#0B2C6B]">Memuat detail peserta...</div>}>
             <ParticipantDetailContent />
           </Suspense>
-        </AppShell>
+        </AdminShell>
       </ErrorBoundary>
     </AdminAuthGate>
   );

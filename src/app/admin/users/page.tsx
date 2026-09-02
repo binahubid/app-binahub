@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { Breadcrumb, EmptyState, SearchInput, ConfirmDialog } from "@/components/ui";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { supabase } from "@/lib/supabase";
 
 interface UserRecord {
@@ -381,9 +381,9 @@ export default function AdminUsersPage() {
   return (
     <AdminAuthGate>
       <ErrorBoundary>
-        <AppShell role="admin" title="Pengguna" eyebrow="Manajemen Akses">
+        <AdminShell title="Pengguna & Peran" eyebrow="Manajemen Akses" description="Kelola akun, peran, dan status akses seluruh pengguna platform.">
           <UserManagementContent />
-        </AppShell>
+        </AdminShell>
       </ErrorBoundary>
     </AdminAuthGate>
   );

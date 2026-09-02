@@ -4,7 +4,7 @@ export type Role = (typeof roles)[number];
 
 export const roleHome: Record<Role, string> = {
   admin: "/admin/dashboard",
-  client: "/client/dashboard",
+  client: "/client/program",
   facilitator: "/fasilitator/tbos",
   peserta: "/peserta/dashboard",
 };

@@ -40,7 +40,7 @@ function AuthCallbackContent() {
           if (session) {
             router.replace(next);
           } else {
-            router.replace("/home");
+            router.replace("/?mode=signin");
           }
         }
       } catch (err) {

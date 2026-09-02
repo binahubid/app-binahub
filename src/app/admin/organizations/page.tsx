@@ -1,5 +1,2 @@
 import { redirect } from "next/navigation";
-
-export default function AdminOrganizationsRedirectPage() {
-  redirect("/admin");
-}
+export default function LegacyAdminOrganizationsPage() { redirect("/admin/clients"); }

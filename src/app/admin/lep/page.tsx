@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { StatCard, EmptyState, FilterTabs, ConfirmDialog } from "@/components/ui";
 import { TbosProgramSelector } from "@/components/tbos-program-selector";
 import { supabase } from "@/lib/supabase";
@@ -77,9 +77,9 @@ const OPEN_TEXT_TABS: { key: OpenTextTab; label: string }[] = [
 export default function AdminLepPage() {
   return (
     <AdminAuthGate>
-      <AppShell role="admin" title="LEP — Evaluasi Program" eyebrow="Lembar Evaluasi Program">
+      <AdminShell title="Evaluasi Program" eyebrow="Lembar Evaluasi Program" description="Kelola instrumen evaluasi, respons peserta, dan ringkasan pembelajaran program.">
         <AdminLepContent />
-      </AppShell>
+      </AdminShell>
     </AdminAuthGate>
   );
 }

@@ -58,3 +58,79 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Admin v2 is intentionally scoped so the T-BOS workspace keeps its established UI. */
+.admin-route-layout:has(.admin-ui-v2) {
+  padding-bottom: 0;
+}
+
+.admin-ui-v2 {
+  --admin-navy: #071b3d;
+  --admin-blue: #0b2c6b;
+  --admin-gold: #c58d27;
+  min-width: 0;
+}
+
+.admin-ui-v2 :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-radius: 0.75rem;
+  border-color: #d9e0e8;
+  background-color: #fff;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.admin-ui-v2 :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):hover {
+  border-color: #bac5d2;
+}
+
+.admin-ui-v2 :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+  border-color: #9a6a16;
+  box-shadow: 0 0 0 3px rgb(197 141 39 / 12%);
+}
+
+.admin-ui-v2 :where(section, article).border.bg-white {
+  border-color: rgb(203 213 225 / 72%);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%), 0 16px 40px -34px rgb(15 23 42 / 28%);
+}
+
+.admin-ui-v2 table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-ui-v2 :where(th) {
+  color: #64748b;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-ui-v2 :where(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-ui-v2 :where(button):not(:disabled) {
+  cursor: pointer;
+}
+
+.admin-ui-v2 ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.admin-ui-v2 ::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgb(100 116 139 / 36%);
+  background-clip: padding-box;
+}
+
+@media (max-width: 639px) {
+  .admin-ui-v2 .admin-workspace-content {
+    min-width: 0;
+  }
+
+  .admin-ui-v2 :where(table) {
+    font-size: 0.75rem;
+  }
+}

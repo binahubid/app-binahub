@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, BarChart3, Check, FileUp, Loader2, Pencil, Plus, Save, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { supabase } from "@/lib/supabase";
 
 type Kind = "pre_test" | "post_test";
@@ -283,5 +283,5 @@ function TestManagerContent() {
 }
 
 export default function AdminProgramTestsPage() {
-  return <AdminAuthGate><AppShell role="admin" eyebrow="Learning Measurement" title="Kelola Pre-test & Post-test"><Suspense fallback={<div className="flex min-h-[24rem] items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-blue-900" /></div>}><TestManagerContent /></Suspense></AppShell></AdminAuthGate>;
+  return <AdminAuthGate><AdminShell eyebrow="Pengukuran Pembelajaran" title="Pre-test & Post-test" description="Susun pertanyaan per program, impor dokumen, dan baca statistik respons peserta."><Suspense fallback={<div className="flex min-h-[24rem] items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-blue-900" /></div>}><TestManagerContent /></Suspense></AdminShell></AdminAuthGate>;
 }

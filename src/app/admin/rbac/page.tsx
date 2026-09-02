@@ -3,7 +3,7 @@
 import { ShieldCheck, ShieldX, User, Users, UserCog } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 
 type Permission = {
   id: string;
@@ -60,7 +60,7 @@ export default function RBACPage() {
   return (
     <AdminAuthGate>
       <ErrorBoundary>
-        <AppShell role="admin" title="Matriks Izin" eyebrow="Manajemen Akses">
+        <AdminShell title="Matriks Izin" eyebrow="Manajemen Akses" description="Tinjau kewenangan setiap peran sebelum memberikan akses ke data dan tindakan sensitif.">
         <div className="text-[#0B2C6B]">
           <div className="mx-auto max-w-5xl">
           <p className="text-sm leading-6 text-[#4A4C54]/70">
@@ -109,7 +109,7 @@ export default function RBACPage() {
 
         </div>
       </div>
-      </AppShell>
+        </AdminShell>
       </ErrorBoundary>
     </AdminAuthGate>
   );

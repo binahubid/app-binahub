@@ -11,7 +11,7 @@ import { StatusPill, Breadcrumb, ConfirmDialog } from "@/components/ui";
 import { EngagementEditModal } from "@/components/engagement-edit-modal";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { supabase } from "@/lib/supabase";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { ProgramShareCard } from "@/components/program-share-card";
 import { programAccessPath } from "@/lib/program-access-link";
 import { PROGRAM_MODULE_KEYS, PROGRAM_MODULE_META, type ProgramModuleKey } from "@/lib/program-modules";
@@ -463,13 +463,13 @@ function ManageEngagementContent() {
 export default function ManageEngagementPage() {
   return (
     <AdminAuthGate>
-      <AppShell role="admin" title="Kelola Program" eyebrow="Program & Modul">
+      <AdminShell title="Kelola Program" eyebrow="Program & Produk" description="Atur modul, peserta, jadwal, dan akses untuk program yang dipilih.">
         <ErrorBoundary>
           <Suspense fallback={<div role="status" aria-live="polite" className="py-20 text-center text-sm text-[#4A4C54]/60">Memuat...</div>}>
             <ManageEngagementContent />
           </Suspense>
         </ErrorBoundary>
-      </AppShell>
+      </AdminShell>
     </AdminAuthGate>
   );
 }

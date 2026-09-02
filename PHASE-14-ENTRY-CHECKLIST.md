@@ -1,4 +1,6 @@
-# Fase 14 — Entry Checklist Controlled Pilot Activation
+# Arsip Persiapan — Controlled Pilot Activation
+
+> Dokumen ini dibuat sebelum penomoran ulang. Implementasi konfigurasi komersial telah memakai nama Fase 14. Controlled pilot safety sekarang dilanjutkan sebagai Fase 15 pada `PHASE-15-CONTROLLED-PILOT-SAFETY.md`, sedangkan acceptance dan pekerjaan yang belum selesai dicatat pada `PHASE-16-FINISHING-BACKLOG.md`.
 
 Tanggal disiapkan: 31 Agustus 2026  
 Status: **preparation only; activation locked**

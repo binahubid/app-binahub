@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AlertCircle, ArrowLeft, CheckCircle2, MapPin } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { ProgramShareCard } from "@/components/program-share-card";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { PROGRAM_MODULE_KEYS, PROGRAM_MODULE_META, type ProgramModuleKey } from "@/lib/program-modules";
 
 const ENGAGEMENT_TYPES = ["assessment", "coaching", "training", "transformation"] as const;
@@ -199,9 +199,9 @@ function CreateEngagementContent() {
 export default function CreateEngagementPage() {
   return (
     <AdminAuthGate>
-      <AppShell role="admin" title="Buat Program" eyebrow="Program & Modul">
+      <AdminShell title="Buat Program" eyebrow="Program & Produk" description="Siapkan identitas, periode, modul, dan akses program melalui alur yang terarah.">
         <CreateEngagementContent />
-      </AppShell>
+      </AdminShell>
     </AdminAuthGate>
   );
 }

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, BadgeDollarSign, FileText, Loader2, Save, ShieldCheck, UserRoundCog, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { supabase } from "@/lib/supabase";
 
 type Tab = "commercial" | "owners" | "approvals" | "sla" | "documents";
@@ -93,4 +93,4 @@ function NumberInput({ label, value, onChange }: { label: string; value: number 
 function UserSelect({ label, value, users, onChange }: { label: string; value: string | null; users: User[]; onChange: (value: string | null) => void }) { return <label className="mt-3 block text-xs font-bold text-slate-700">{label}<select value={value || ""} onChange={(event) => onChange(event.target.value || null)} className="mt-2 min-h-11 w-full border border-slate-300 px-3 text-sm font-normal"><option value="">Belum ditetapkan</option>{users.map((user) => <option key={user.id} value={user.id}>{user.full_name || user.email} — {user.email}</option>)}</select></label>; }
 function SaveButton({ saving, onClick }: { saving: boolean; onClick: () => void }) { return <button type="button" disabled={saving} onClick={onClick} className="mt-5 inline-flex min-h-11 items-center gap-2 bg-blue-900 px-5 text-xs font-bold text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Simpan perubahan</button>; }
 
-export default function AdminSettingsPage() { return <AdminAuthGate><AppShell role="admin" eyebrow="Governance System" title="Pengaturan Bisnis"><SettingsContent /></AppShell></AdminAuthGate>; }
+export default function AdminSettingsPage() { return <AdminAuthGate><AdminShell eyebrow="Tata Kelola" title="Pengaturan Bisnis" description="Atur kebijakan komersial, owner, approval, SLA, dan template dokumen dari satu sumber kebenaran."><SettingsContent /></AdminShell></AdminAuthGate>; }

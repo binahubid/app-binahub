@@ -22,7 +22,7 @@ function isActive(pathname: string, href: string) {
 
 export function AdminMobileNav() {
   const pathname = usePathname();
-  if (pathname === "/admin/login") return null;
+  if (!pathname.startsWith("/admin/tbos")) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden" aria-label="Navigasi admin">

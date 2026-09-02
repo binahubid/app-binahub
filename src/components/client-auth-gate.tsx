@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { fetchAuthenticatedRole } from "@/lib/authenticated-role";
+import { isRole, roleHome } from "@/lib/roles";
 
 export function ClientAuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -24,7 +25,7 @@ export function ClientAuthGate({ children }: { children: React.ReactNode }) {
         const role = result.ok ? result.role : null;
 
         if (role !== "client") {
-          if (alive) router.replace(role === "admin" ? "/admin/programs" : role === "facilitator" ? "/facilitator/tbos" : "/client/access");
+          if (alive) router.replace(isRole(role) ? roleHome[role] : "/client/access");
           return;
         }
 

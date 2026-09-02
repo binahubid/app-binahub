@@ -6,7 +6,7 @@ import { Building2, CalendarDays, MapPin, Plus, Send, Settings, Trash2, X } from
 import { toast } from "sonner";
 import { useEngagements } from "@/hooks/use-transformation-data";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { Breadcrumb, ConfirmDialog, EmptyState, FilterTabs, ModuleChip, SearchInput, StatusPill } from "@/components/ui";
 import { ProgramShareCard } from "@/components/program-share-card";
 import type { Engagement } from "@/lib/transformation-types";
@@ -154,5 +154,5 @@ function AdminProgramsPageContent() {
 }
 
 export default function AdminProgramsPage() {
-  return <AdminAuthGate><AppShell role="admin" title="Program" eyebrow="Program & Modul"><AdminProgramsPageContent /></AppShell></AdminAuthGate>;
+  return <AdminAuthGate><AdminShell title="Program" eyebrow="Program & Produk" description="Buat program, kelola peserta, dan buka alat operasional program dari satu tempat."><AdminProgramsPageContent /></AdminShell></AdminAuthGate>;
 }

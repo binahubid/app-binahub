@@ -1,77 +1,89 @@
-# Audit UI/UX Production — Dashboard Administrator
+# Audit UI/UX Production — Workspace Administrator
 
-Tanggal: 1 September 2026  
-Versi kandidat: `app-binahub v0.16.3`
+Tanggal: 2 September 2026  
+Versi kandidat: `app-binahub v0.18.0`
 
 ## Tujuan
 
-Audit ini memastikan area administrator mudah dipahami, nyaman digunakan pada desktop dan perangkat seluler, memiliki perilaku interaksi yang konsisten, serta tidak menampilkan instruksi pengujian atau rincian implementasi yang hanya relevan bagi developer.
+Audit Fase 16 memastikan administrator memiliki satu struktur navigasi berbasis URL, satu bahasa visual, dan satu pola interaksi. Pengguna tidak lagi harus memilih antara dashboard tab di `/admin` dan halaman terpisah di `/admin/*`.
 
-## Cakupan halaman
+## Keputusan arsitektur
 
-| Halaman | Fokus audit | Status kode |
+- `/admin/dashboard` menjadi beranda kanonis; `/admin` hanya redirect kompatibilitas.
+- Setiap area kerja utama memiliki URL sendiri dan dapat dipulihkan setelah refresh.
+- Semua halaman administrator non-T-BOS memakai `AdminShell` dan sumber navigasi di `src/lib/admin-navigation.ts`.
+- `/home` hanya menyelesaikan role lalu mengarahkan pengguna ke beranda role; tidak ada hub kedua yang mengulang menu.
+- Launch Control, UAT/Pilot Gate, Pilot Operations, Operational Assurance, dan Pilot Certification bukan menu produk. Evidence dan prosedurnya tetap berada di backend serta dokumen developer.
+- T-BOS dikecualikan dari redesign ini dan tetap menggunakan shell sebelumnya.
+
+Peta URL lengkap tersedia di `ADMIN-INFORMATION-ARCHITECTURE.md`.
+
+## Cakupan halaman admin
+
+| Area | Rute | Status kode |
 | --- | --- | --- |
-| `/admin` | Navigasi, ringkasan, seluruh panel operasional, loading/error/empty state | Siap |
-| `/admin/programs` | Pencarian, filter, kartu program, berbagi, hapus | Siap |
-| `/admin/engagements/new` | Pembuatan program, validasi, hierarki form | Siap |
-| `/admin/engagements/manage` | Tahapan status, modul, catatan, tindakan sensitif | Siap |
-| `/admin/engagements/access-codes` | Kode peserta, keamanan, dialog satu-kali-lihat | Siap |
-| `/admin/users` | Daftar pengguna desktop, kartu mobile, undangan, role | Siap |
-| `/admin/rbac` | Ringkasan peran, istilah bisnis, matriks izin mobile | Siap |
-| `/admin/tbos` | Ringkasan, form, tabel, modal, laporan | Siap |
-| `/admin/lep` | Evaluasi, modal, loading/error | Siap |
-| `/admin/clients/detail` | Detail peserta, loading/error, struktur heading | Siap |
-| Route legacy `/admin/dashboard`, `/admin/assessments`, `/admin/organizations`, `/admin/engagements`, `/admin/login` | Redirect tanpa halaman perantara yang membingungkan | Siap |
+| Ringkasan | `/admin/dashboard` | Siap |
+| Akuisisi | `/admin/acquisition` | Siap |
+| Pipeline | `/admin/pipeline` | Siap |
+| Assessment | `/admin/assessments` | Siap |
+| Konsultasi | `/admin/meetings` | Siap |
+| Kontak | `/admin/contacts` | Siap |
+| Inquiry | `/admin/inquiries` | Siap |
+| Klien & delivery | `/admin/clients` | Siap |
+| Operasional | `/admin/operations` | Siap |
+| Otomasi | `/admin/automation` | Siap |
+| Program | `/admin/programs` dan detail `/admin/engagements/*` | Siap |
+| Katalog | `/admin/catalog` | Siap |
+| Pre-test/Post-test | `/admin/programs/tests` | Siap |
+| Evaluasi program | `/admin/lep` | Siap |
+| Pengguna | `/admin/users` | Siap |
+| Izin akses | `/admin/rbac` | Siap |
+| Pengaturan bisnis | `/admin/settings` | Siap |
+| T-BOS | `/admin/tbos` | Tidak diubah pada Fase 16 |
 
-## Hasil perbaikan
+## Hasil visual dan interaksi
 
-### Navigasi dan arsitektur informasi
+### Desktop
 
-- Sidebar desktop dibagi menurut tugas: Ringkasan, Akuisisi & Penjualan, Delivery & Otomasi, Modul, Manajemen & Tata Kelola, dan Operasional Lapangan.
-- Kelompok menggunakan accordion dan area navigasi memiliki scroll independen.
-- Mobile menggunakan drawer penuh dengan hierarki yang sama; menu tidak lagi berupa daftar pilihan kecil yang sulit dipindai.
-- Label teknis diterjemahkan menjadi bahasa tugas, misalnya Program, Catatan, Tindakan, Klien, dan Izin Akses.
+- Sidebar 288 px mempunyai kelompok accordion, pencarian menu, penanda halaman aktif, dan scroll independen.
+- Header sticky hanya menampilkan breadcrumb dan aksi kontekstual; judul utama tidak digandakan.
+- Lebar konten dibatasi 1680 px agar tabel dan board tetap lega pada layar besar.
+- Bahasa visual memakai navy, slate, dan gold secara fungsional dengan border serta shadow halus.
 
-### Kejelasan dan estetika
+### Mobile
 
-- Bahasa campuran dan jargon implementasi diubah menjadi instruksi bisnis singkat.
-- Informasi teknis seperti hash database, ID penyedia email, webhook, migrasi, serta status mentah tidak ditampilkan dalam alur kerja harian.
-- Kartu penugasan tidak lagi memakai efek balik/hover tersembunyi; seluruh informasi penting langsung terlihat pada desktop, keyboard, dan layar sentuh.
-- Empty state menjelaskan apa yang belum tersedia dan tindakan wajar berikutnya.
+- Sidebar berubah menjadi drawer modal yang dapat digulir.
+- Drawer mengunci scroll latar, menahan fokus, dapat ditutup melalui Escape, dan mengembalikan fokus ke tombol pembuka.
+- Konten tidak memiliki horizontal overflow pada viewport 390 × 844.
+- Tombol utama dan kontrol navigasi memenuhi target sentuh minimum 44 px.
 
-### Responsive dan aksesibilitas
+### Aksesibilitas dan state
 
-- Pengguna mobile memperoleh kartu khusus; tabel tidak dipaksa mengecil.
-- Matriks izin mempertahankan ukuran baca dan dapat digeser secara horizontal tanpa membuat seluruh halaman overflow.
-- Skip link, focus indicator, `aria-live`, `role="status"`, `role="alert"`, caption tabel, dan label kontrol telah diterapkan.
-- Modal dan konfirmasi mengunci fokus di dalam dialog, dapat ditutup dengan Escape, mengembalikan fokus ke pemicu, dan mengunci scroll latar.
-- Animasi non-esensial dihentikan ketika pengguna memilih reduced motion.
+- Skip link menuju konten utama tersedia.
+- Focus indicator terlihat pada keyboard navigation.
+- Loading, error, dan not-found memiliki state khusus administrator.
+- `aria-current`, `aria-expanded`, `aria-controls`, dialog semantics, dan label kontrol digunakan pada navigasi.
+- Preferensi reduced motion tetap dihormati secara global.
 
-### Keamanan interaksi
-
-- Tindakan destruktif memakai dialog konfirmasi dengan deskripsi dampak.
-- Tombol yang sedang memproses memiliki status disabled/loading.
-- Perubahan UI tidak membuka akses baru dan tetap berada di balik pemeriksaan role administrator.
-
-## Verifikasi otomatis
+## Verifikasi
 
 - ESLint: lulus.
-- TypeScript type-check: lulus.
-- Vitest: 11 file, 47 tes lulus.
-- Production build: wajib lulus sebelum rilis ditandai selesai.
+- TypeScript: lulus.
+- Vitest: 14 file, 58 tes lulus.
+- Production build Next.js: lulus; 80 halaman statis dihasilkan.
+- Browser desktop: tidak ada horizontal overflow.
+- Browser mobile 390 × 844: tidak ada horizontal overflow.
+- Drawer keyboard: focus trap, Escape, body scroll lock, dan focus return lulus.
 
-## Verifikasi visual setelah deployment
+## Acceptance setelah deployment
 
-Sesi browser audit tidak memiliki autentikasi administrator production, sehingga pemeriksaan visual live yang memerlukan login harus dilakukan setelah `v0.16.3` dideploy. Pemeriksaan akhir cukup mencakup:
+Pemeriksaan berikut memerlukan sesi administrator production dan belum boleh dianggap lulus hanya dari build lokal:
 
-1. desktop 1366×768 dan 1920×1080;
-2. mobile 390×844;
-3. membuka setiap kelompok menu dan berpindah ke setiap area kerja;
-4. membuka satu modal dan satu dialog konfirmasi dengan keyboard;
-5. memastikan tidak ada teks terpotong, overlay menutupi tombol, atau scroll horizontal pada halaman.
+1. buka seluruh 18 menu admin dari sidebar dan pencarian;
+2. refresh URL detail program/klien dan pastikan konteks tidak hilang;
+3. jalankan satu create/edit/confirm/destructive flow per modul yang memiliki mutasi;
+4. uji empty state dan error state menggunakan data production yang aman;
+5. ulangi pemeriksaan pada desktop, tablet, dan mobile nyata;
+6. pastikan T-BOS tetap identik dengan versi sebelum `v0.18.0`.
 
-Status saat ini: **siap secara kode; menunggu satu putaran visual authenticated pada deployment production**.
-
-## Batas fase
-
-Audit UI/UX ini tidak mengaktifkan Fase 14. Aktivasi tetap menunggu keputusan bisnis CEO, persetujuan template yang diwajibkan, release production, rehearsal, dan acceptance sesuai gate yang berlaku.
+Status: **routing dan shell siap deploy; acceptance authenticated production masih harus dijalankan setelah deployment**.

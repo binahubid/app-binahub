@@ -22,6 +22,7 @@ import {
   ClipboardPenLine,
   PackageSearch,
   Settings,
+  Sparkles,
 } from "lucide-react";
 
 import type { Role } from "@/lib/roles";
@@ -58,6 +59,23 @@ const navByRole: Record<Role, { href: string; label: string; icon: React.ReactNo
     { href: "/fasilitator/tbos/results", label: "Hasil & Statistik", icon: <BarChart3 size={16} /> },
   ],
 };
+
+const facilitatorWorkspaceNavigation = [
+  { href: "/facilitator/engagements", label: "Program Saya", icon: <ClipboardCheck size={16} /> },
+  { href: "/facilitator/participants", label: "Peserta", icon: <UsersRound size={16} /> },
+  { href: "/facilitator/reviews", label: "Antrian Penilaian", icon: <ClipboardPenLine size={16} /> },
+  { href: "/facilitator/reports", label: "Laporan", icon: <BarChart3 size={16} /> },
+  { href: "/facilitator/insights", label: "Insight", icon: <Sparkles size={16} /> },
+  { href: "/facilitator/events", label: "Kejadian", icon: <Eye size={16} /> },
+  { href: "/facilitator/statistics", label: "Statistik", icon: <Trophy size={16} /> },
+  { href: "/fasilitator/tbos", label: "Buka T-BOS", icon: <ArrowUpRight size={16} /> },
+];
+
+const facilitatorWorkspaceMobileNavigation = [
+  { href: "/facilitator/engagements", label: "Program", icon: <ClipboardCheck size={20} /> },
+  { href: "/facilitator/reviews", label: "Penilaian", icon: <ClipboardPenLine size={20} /> },
+  { href: "/facilitator/participants", label: "Peserta", icon: <UsersRound size={20} /> },
+];
 
 const mobileNavByRole: Partial<Record<Role, { href: string; label: string; icon: React.ReactNode }[]>> = {
   peserta: [
@@ -118,11 +136,11 @@ export function AppShell({
   const [moduleAvailability, setModuleAvailability] = useState<ModuleAvailability | null>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const tipsPanelRef = useRef<HTMLDivElement>(null);
-  const rawNavigationItems = navByRole[role];
-  const rawMobileItems = role === "admin" ? [] : mobileNavByRole[role] || [];
+  const rawNavigationItems: { href: string; label: string; icon: React.ReactNode }[] = role === "facilitator" && navigation === "default" ? facilitatorWorkspaceNavigation : navByRole[role];
+  const rawMobileItems: { href: string; label: string; icon: React.ReactNode }[] = role === "admin" ? [] : role === "facilitator" && navigation === "default" ? facilitatorWorkspaceMobileNavigation : mobileNavByRole[role] || [];
   const navigationItems = role === "admin" ? rawNavigationItems : filterModuleNavigation(rawNavigationItems, moduleAvailability);
   const mobileItems = filterModuleNavigation(rawMobileItems, moduleAvailability);
-  const roleHomeHref = role === "facilitator" ? "/home" : role === "admin" ? "/admin" : role === "client" ? "/client/program" : `/${role}/dashboard`;
+  const roleHomeHref = role === "facilitator" ? "/fasilitator/tbos" : role === "admin" ? "/admin/dashboard" : role === "client" ? "/client/program" : `/${role}/dashboard`;
   const showBackLink = pathname !== roleHomeHref && pathname !== "/facilitator/dashboard";
 
   const logout = useCallback(async () => {

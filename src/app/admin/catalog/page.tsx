@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Archive, Eye, Loader2, PackagePlus, Pencil, Plus, Save, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { supabase } from "@/lib/supabase";
 
 type Product = { id: string; product_key: string; slug: string; name: string; status: string; objective: string | null; notes: string | null; short_description: string | null; public_description: string | null; cover_image_url: string | null; public_visible: boolean; featured: boolean; display_order: number };
@@ -75,4 +75,4 @@ function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) { return <label className="flex min-h-11 items-center gap-3 border border-slate-200 px-3 text-xs font-bold"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /> {label}</label>; }
 function DialogActions({ saving, onCancel, onSave }: { saving: boolean; onCancel: () => void; onSave: () => void }) { return <div className="flex justify-end gap-2 border-t border-slate-200 pt-5"><button type="button" onClick={onCancel} className="min-h-11 px-5 text-xs font-bold text-slate-600">Batal</button><button type="button" disabled={saving} onClick={onSave} className="inline-flex min-h-11 items-center gap-2 bg-blue-900 px-5 text-xs font-bold text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Simpan</button></div>; }
 
-export default function AdminCatalogPage() { return <AdminAuthGate><AppShell role="admin" eyebrow="Commercial System" title="Kelola Katalog"><CatalogContent /></AppShell></AdminAuthGate>; }
+export default function AdminCatalogPage() { return <AdminAuthGate><AdminShell eyebrow="Program & Produk" title="Katalog Produk" description="Kelola produk, modul, harga, kesiapan, dan visibilitas publik secara terpusat."><CatalogContent /></AdminShell></AdminAuthGate>; }

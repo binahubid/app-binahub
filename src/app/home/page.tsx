@@ -1,297 +1,57 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  Loader2,
-  LogOut,
-  ArrowUpRight,
-  LayoutDashboard,
-  Trophy,
-  Building2,
-  FileCheck2,
-  ClipboardList,
-  Sparkles,
-  UsersRound,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { ServiceMegaGrid } from "@/components/service-mega-grid";
+import { isRole, roleHome } from "@/lib/roles";
 
-export default function HomePage() {
+export default function WorkspaceResolverPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("");
-  const [role, setRole] = useState("");
+  const [error, setError] = useState("");
 
-  const checkAuth = useCallback(async () => {
+  const resolveWorkspace = useCallback(async () => {
+    setError("");
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        router.replace("/");
+      const session = sessionData.session;
+      if (!session) {
+        router.replace("/?mode=signin");
         return;
       }
-
-      const session = sessionData.session;
-      const email = session.user?.email || "";
-      let fullName = session.user?.user_metadata?.full_name || "";
-
-      const res = await fetch("/api/auth/role", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const data = await res.json();
-      const authoritativeRole = data.role as string | undefined;
-      if (
-        !res.ok ||
-        !data.success ||
-        !authoritativeRole ||
-        !["admin", "facilitator", "client", "peserta"].includes(authoritativeRole)
-      ) {
-        throw new Error(data.error || "Role pengguna tidak valid.");
-      }
-
-      fullName = data.fullName || fullName;
-      setRole(authoritativeRole);
-      setUserName(fullName || email.split("@")[0]);
-    } catch {
-      router.replace("/");
-      return;
-    } finally {
-      setLoading(false);
+      const response = await fetch("/api/auth/role", { headers: { Authorization: `Bearer ${session.access_token}` } });
+      const result = await response.json().catch(() => ({}));
+      const resolvedRole = typeof result.role === "string" ? result.role : null;
+      if (!response.ok || !result.success || !isRole(resolvedRole)) throw new Error(result.error || "Role akun belum dapat ditentukan.");
+      router.replace(roleHome[resolvedRole]);
+      router.refresh();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Workspace belum dapat dibuka.");
     }
   }, [router]);
 
-  useEffect(() => {
-    void Promise.resolve().then(checkAuth);
-  }, [checkAuth]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.replace("/");
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF8F4]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C79A3C]" />
-      </div>
-    );
-  }
-
-  const roleBadgeConfig: Record<string, { label: string; bg: string; text: string }> = {
-    admin: { label: "Administrator", bg: "bg-[#0B2C6B]/10", text: "text-[#0B2C6B]" },
-    facilitator: { label: "Fasilitator", bg: "bg-[#C79A3C]/15", text: "text-[#9E7520]" },
-    client: { label: "Client", bg: "bg-emerald-100", text: "text-emerald-800" },
-    peserta: { label: "Peserta", bg: "bg-slate-100", text: "text-slate-700" },
-  };
-
-  const currentBadge = roleBadgeConfig[role] || roleBadgeConfig.peserta;
-
-  // Curated, non-redundant workspace shortcuts per role
-  const quickLinks: Record<string, { href: string; label: string; desc: string; icon: LucideIcon }[]> = {
-    admin: [
-      {
-        href: "/admin/tbos",
-        label: "T-BOS",
-        desc: "Radar chart, heatmap, ranking tim & laporan eksekutif.",
-        icon: Trophy,
-      },
-      {
-        href: "/admin",
-        label: "Intelligence Hub",
-        desc: "Pipeline assessment, kontak klien, dan inquiry masuk.",
-        icon: LayoutDashboard,
-      },
-      {
-        href: "/admin/engagements",
-        label: "Program Engagements",
-        desc: "Kelola batch transformasi, sesi workshop, dan kode akses klien.",
-        icon: UsersRound,
-      },
-      {
-        href: "/admin/users",
-        label: "Manajemen User & Role",
-        desc: "Kelola akun pengguna, hak akses, dan role.",
-        icon: Building2,
-      },
-    ],
-    facilitator: [
-      {
-        href: "/fasilitator/tbos",
-        label: "Form Observasi T-BOS",
-        desc: "Input observasi 8 dimensi perilaku tim secara real-time.",
-        icon: ClipboardList,
-      },
-      {
-        href: "/fasilitator/tbos/observations",
-        label: "Riwayat & Kunci Observasi",
-        desc: "Review catatan observasi, revisi, dan kunci evaluasi tim.",
-        icon: FileCheck2,
-      },
-    ],
-    peserta: [
-      {
-        href: "/peserta/dashboard",
-        label: "Dashboard Peserta",
-        desc: "Lihat hasil observasi tim, 8 dimensi perilaku, dan peringkat.",
-        icon: Trophy,
-      },
-    ],
-    client: [
-      {
-        href: "/client/dashboard",
-        label: "Dashboard Klien",
-        desc: "Pantau progres program transformasi organisasi Anda.",
-        icon: LayoutDashboard,
-      },
-    ],
-  };
-
-  const userQuickLinks = quickLinks[role] || quickLinks.peserta;
+  useEffect(() => { void Promise.resolve().then(() => resolveWorkspace()); }, [resolveWorkspace]);
 
   return (
-    <div className="min-h-screen bg-[#FAF8F4] text-slate-900 font-sans selection:bg-[#C79A3C]/20 selection:text-[#0B2C6B]">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 h-16 flex items-center justify-between">
-          <Link href="/home" className="flex items-center gap-3 transition-opacity hover:opacity-90">
-            <Image
-              src="/binahub_logo.webp"
-              alt="BinaHub Logo"
-              width={1574}
-              height={448}
-              loading="eager"
-              sizes="150px"
-              className="h-auto w-[150px] object-contain"
-            />
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60">
-              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#0B2C6B] to-[#C79A3C] flex items-center justify-center text-white text-xs font-bold">
-                {userName.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-xs font-semibold text-slate-800 max-w-[130px] sm:max-w-[200px] truncate">
-                {userName}
-              </span>
-              <span
-                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${currentBadge.bg} ${currentBadge.text}`}
-              >
-                {currentBadge.label}
-              </span>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs font-semibold hover:border-red-200 hover:bg-red-50/50 hover:text-red-600 transition-all"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Keluar</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-8 space-y-8">
-        {/* Welcome Header */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 sm:p-8 shadow-sm backdrop-blur">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#C79A3C] mb-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>BinaHub Workspace</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                Selamat Datang, {userName}
-              </h1>
-              <p className="mt-1 text-sm text-slate-500 max-w-2xl leading-relaxed">
-                Kelola observasi tim, asesmen, dan program transformasi organisasi secara terpusat.
-              </p>
-            </div>
-
-            {role === "admin" && (
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/admin/tbos"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-[#0B2C6B] to-[#071B3D] text-white text-xs font-semibold shadow-md shadow-[#0B2C6B]/20 hover:brightness-110 transition-all"
-                >
-                  <Trophy className="w-3.5 h-3.5 text-[#D9A441]" />
-                  Buka T-BOS
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Launch Cards */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">
-              Akses Cepat Workspace
-            </h2>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {userQuickLinks.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs hover:border-[#C79A3C]/60 hover:shadow-md hover:shadow-slate-200/50 transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="h-10 w-10 rounded-xl bg-slate-100 group-hover:bg-[#C79A3C]/10 text-[#0B2C6B] group-hover:text-[#C79A3C] flex items-center justify-center transition-colors mb-3.5">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#0B2C6B] transition-colors">
-                      {item.label}
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#0B2C6B] group-hover:text-[#C79A3C]">
-                    <span>Buka modul</span>
-                    <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* BinaHub Ecosystem Mega Grid */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">
-          <div className="mb-6">
-            <h2 className="text-base font-bold text-slate-900">Ekosistem Layanan BinaHub</h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Pilih platform atau modul spesifik untuk memulai proses transformasi manusia dan organisasi.
-            </p>
-          </div>
-          <ServiceMegaGrid />
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="mt-16 border-t border-slate-200/80 bg-white py-6">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <p>© 2026 BinaHub Ecosystem. Human-Centered Transformation Partner.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/help" className="hover:text-[#C79A3C] transition-colors">
-              Pusat Bantuan
-            </Link>
-            <span>•</span>
-            <Link href="/help" className="hover:text-[#C79A3C] transition-colors">
-              Privasi &amp; Keamanan
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+    <main className="grid min-h-screen place-items-center bg-[#F4F6F8] px-5 py-12">
+      <section role={error ? "alert" : "status"} aria-live="polite" className="w-full max-w-md border border-slate-200 bg-white p-7 text-center shadow-sm sm:p-9">
+        <Image src="/binahub_logo.webp" alt="BinaHub" width={1574} height={448} priority sizes="150px" className="mx-auto h-auto w-[150px] object-contain" />
+        {error ? (
+          <>
+            <AlertCircle className="mx-auto mt-7 h-7 w-7 text-red-600" aria-hidden="true" />
+            <h1 className="mt-3 text-lg font-bold text-slate-950">Workspace belum dapat dibuka</h1>
+            <p className="mt-2 text-sm leading-6 text-red-700">{error}</p>
+            <button type="button" onClick={() => void resolveWorkspace()} className="mt-6 min-h-11 rounded-xl bg-[#071B3D] px-5 text-sm font-semibold text-white hover:bg-[#0B2C6B]">Coba lagi</button>
+          </>
+        ) : (
+          <>
+            <Loader2 className="mx-auto mt-8 h-6 w-6 animate-spin text-amber-600" aria-hidden="true" />
+            <h1 className="mt-4 text-lg font-bold text-slate-950">Menyiapkan workspace Anda</h1>
+            <p className="mt-2 text-sm text-slate-500">Anda akan diarahkan ke halaman kerja yang sesuai dengan peran akun.</p>
+          </>
+        )}
+      </section>
+    </main>
   );
 }

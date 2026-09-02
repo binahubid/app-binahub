@@ -1,4 +1,4 @@
-export const tabs = ["Overview", "Launch Control", "UAT & Pilot Gate", "Pilot Operations", "Operational Assurance", "Pilot Certification", "Acquisition Control", "Sales Pipeline", "Client & Delivery", "Operations Control", "Automation Center", "Assessment", "Katalog & Rules", "Meeting", "Kontak & Leads", "Inquiry Masuk", "T-BOS"] as const;
+export const tabs = ["Overview", "Acquisition Control", "Sales Pipeline", "Client & Delivery", "Operations Control", "Automation Center", "Assessment", "Meeting", "Kontak & Leads", "Inquiry Masuk"] as const;
 
 export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: string; description: string }> = {
   Overview: {
@@ -15,31 +15,6 @@ export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: s
     eyebrow: "Informasi klien",
     title: "Tinjau assessment dan tindak lanjut komersial",
     description: "Buka detail klien, periksa hasil, siapkan proposal, dan pastikan tindak lanjut tidak terlewat.",
-  },
-  "Launch Control": {
-    eyebrow: "Go-live governance",
-    title: "Nilai kesiapan sebelum automation diaktifkan",
-    description: "Satukan konfigurasi, keputusan bisnis, dan bukti dry-run; activation tetap membutuhkan persetujuan manusia dan rollback plan.",
-  },
-  "UAT & Pilot Gate": {
-    eyebrow: "Human validation",
-    title: "Buktikan alur end-to-end sebelum pilot",
-    description: "Tetapkan owner, jalankan skenario wajib, simpan bukti, dan selesaikan blocker; kelulusan UAT tetap membutuhkan keputusan manusia sebelum aktivasi.",
-  },
-  "Pilot Operations": {
-    eyebrow: "Controlled pilot",
-    title: "Rencanakan pilot, batas eksekusi, dan kill switch",
-    description: "Kelola release terkontrol dan effective mode setiap worker tanpa melewati UAT, approval manusia, rollback plan, atau environment dry-run.",
-  },
-  "Operational Assurance": {
-    eyebrow: "Operational assurance",
-    title: "Pantau kesehatan automation dan keputusan pilot",
-    description: "Tinjau execution evidence, policy monitoring, incident response, serta catatan go/no-go tanpa mengaktifkan workflow.",
-  },
-  "Pilot Certification": {
-    eyebrow: "Pilot acceptance",
-    title: "Kunci rehearsal dan evidence sebelum go/no-go",
-    description: "Jalankan delapan pemeriksaan dry-run produksi, ikat hasilnya ke snapshot monitoring, dan catat acceptance manusia tanpa mengaktifkan workflow.",
   },
   "Acquisition Control": {
     eyebrow: "Tata kelola pertumbuhan",
@@ -61,11 +36,6 @@ export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: s
     title: "Kendalikan tugas, tenggat, dan proses otomatis",
     description: "Pantau tugas yang perlu ditangani, tetapkan penanggung jawab, selesaikan eskalasi, dan periksa riwayat proses.",
   },
-  "Katalog & Rules": {
-    eyebrow: "Tata kelola komersial",
-    title: "Kelola modul, harga, dan status kesiapan",
-    description: "Pastikan proposal memakai harga resmi dari katalog dan memperoleh persetujuan yang sesuai.",
-  },
   Meeting: {
     eyebrow: "Jadwal konsultasi",
     title: "Pantau booking dan perubahan jadwal",
@@ -80,11 +50,6 @@ export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: s
     eyebrow: "Pertanyaan masuk",
     title: "Tindak lanjuti pertanyaan dengan konteks yang jelas",
     description: "Prioritaskan pertanyaan baru, kirim tindak lanjut bertahap, dan perbarui status seiring perkembangan percakapan.",
-  },
-  "T-BOS": {
-    eyebrow: "Team Behavioral Observation",
-    title: "Dashboard observasi perilaku tim",
-    description: "Pantau skor 8 dimensi perilaku tim lintas mission: radar chart, heatmap, ranking, batch comparison, dan executive summary.",
   },
 };
 

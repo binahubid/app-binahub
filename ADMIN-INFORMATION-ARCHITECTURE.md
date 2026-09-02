@@ -10,7 +10,7 @@ Dokumen ini menetapkan rute kanonis dan pola navigasi production setelah penyede
 4. Navigasi utama selalu mencerminkan URL aktif; halaman admin tidak lagi dikendalikan tab lokal di `/admin`.
 5. Rute lama tetap diarahkan ke tujuan baru agar bookmark tidak rusak.
 6. Evidence pengujian, status fase, dan prosedur developer tidak menjadi menu produk.
-7. Area T-BOS tetap memakai shell dan pola navigasi yang sudah ada sampai audit khusus T-BOS dijadwalkan.
+7. Semua halaman administrator, termasuk T-BOS, memakai shell dan navigasi global yang sama; modul tetap boleh mempertahankan bahasa visual internalnya.
 
 ## Beranda per role
 
@@ -62,12 +62,12 @@ Dokumen ini menetapkan rute kanonis dan pola navigasi production setelah penyede
 - Mobile memakai drawer modal dengan focus trap, tombol Escape, pengembalian fokus, dan body scroll lock.
 - Header menyediakan breadcrumb kontekstual, aksi halaman, bantuan, dan keluar sesi tanpa menggandakan judul konten.
 - Loading, error, dan not-found mempunyai state khusus area admin.
-- Style production diterapkan melalui scope `.admin-ui-v2`; halaman T-BOS tidak menerima override ini.
+- Style shell production diterapkan melalui scope `.admin-ui-v2`; konten internal T-BOS tetap mempertahankan komponen visual modulnya.
 
 ## Aturan pengembangan selanjutnya
 
 - Tambahkan halaman admin baru ke `src/lib/admin-navigation.ts` dan buat route page yang nyata; jangan menambah tab baru ke `/admin`.
-- Gunakan `AdminShell` untuk halaman administrator non-T-BOS.
+- Gunakan `AdminShell` untuk seluruh halaman administrator, termasuk modul yang mempertahankan style konten internalnya.
 - Gunakan `findAdminNavigation()` untuk breadcrumb dan active state agar tidak membuat peta menu kedua.
 - Jangan menampilkan checklist deployment, smoke test, evidence UAT, atau status fase sebagai navigasi pengguna.
 - Rute detail boleh berada di bawah rute kanonis dan harus memetakan active state ke menu induknya.

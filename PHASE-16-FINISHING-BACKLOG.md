@@ -8,13 +8,13 @@ Selesai pada aplikasi:
 
 - Menetapkan satu beranda administrator di `/admin/dashboard`; `/admin` sekarang hanya redirect kompatibilitas.
 - Memecah workspace tab lama menjadi URL kanonis untuk dashboard, acquisition, pipeline, assessment, meeting, kontak, inquiry, klien, operasional, dan otomasi.
-- Menyatukan seluruh halaman administrator non-T-BOS ke `AdminShell` dan satu sumber konfigurasi navigasi.
+- Menyatukan seluruh halaman administrator ke `AdminShell` dan satu sumber konfigurasi navigasi.
 - Mengganti sidebar desktop dengan kelompok accordion yang dapat dicari dan digulir.
 - Mengganti navigasi mobile menjadi drawer aksesibel dengan focus trap, Escape, body scroll lock, dan focus return.
 - Menambahkan breadcrumb, state loading, error, dan not-found yang konsisten.
 - Menghapus Launch Control, UAT/Pilot Gate, Pilot Operations, Operational Assurance, dan Pilot Certification dari kontrak navigasi produk. Artefaknya tetap tersedia untuk kebutuhan developer/backend.
 - Menjadikan `/home` resolver role tanpa menampilkan hub tambahan; admin, klien, fasilitator, dan peserta langsung menuju beranda role.
-- Mengarahkan rute klien dan fasilitator lama ke URL kanonis tanpa mengubah halaman T-BOS.
+- Mengarahkan rute klien dan fasilitator lama ke URL kanonis serta menyatukan shell T-BOS tanpa mengubah desain internal modulnya.
 - Menguji desktop dan mobile tanpa horizontal overflow serta menguji keyboard, focus indicator, drawer, Escape, dan focus return.
 
 Peta rute dan aturan pengembangan selanjutnya dicatat di `ADMIN-INFORMATION-ARCHITECTURE.md`.
@@ -32,13 +32,13 @@ Peta rute dan aturan pengembangan selanjutnya dicatat di `ADMIN-INFORMATION-ARCH
 
 ## UI/UX production finishing
 
-- [x] Audit dan satukan shell seluruh halaman dashboard admin non-T-BOS pada desktop dan mobile.
+- [x] Audit dan satukan shell seluruh halaman dashboard admin, termasuk T-BOS, pada desktop dan mobile.
 - [x] Pastikan navigasi operasional tidak menampilkan instruksi developer, status fase, atau prosedur pengujian internal.
 - [x] Tutup masalah hierarchy global, overflow, focus, keyboard navigation, loading, error, not-found, dan responsive shell.
 - [ ] Jalankan acceptance isi, empty state, confirmation, dan destructive action dengan data production pada setiap modul bisnis.
 - Selesaikan penyempurnaan visual assessment publik, laporan PDF, katalog publik, dan halaman program berdasarkan hasil penggunaan nyata.
 
-Catatan: T-BOS sengaja dikecualikan dari redesign Fase 16 dan membutuhkan audit terpisah.
+Catatan: redesign visual internal T-BOS tetap berada di luar cakupan; yang disatukan adalah routing, sidebar, header, dan perilaku responsif global.
 
 ## Keputusan manusia yang belum boleh diasumsikan
 

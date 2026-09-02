@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, BarChart3, Check, FileUp, Loader2, Pencil, Plus, Save, Send, Trash2, X } from "lucide-react";
@@ -84,9 +84,13 @@ async function token() {
 }
 
 function TestManagerContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const programId = searchParams.get("programId") || "";
   const [program, setProgram] = useState<{ id: string; code: string; title: string } | null>(null);
+  const [programs, setPrograms] = useState<Array<{ id: string; code: string | null; title: string; status: string }>>([]);
+  const [programsLoading, setProgramsLoading] = useState(true);
+  const [programsError, setProgramsError] = useState("");
   const [questionnaires, setQuestionnaires] = useState<Questionnaire[]>([]);
   const [kind, setKind] = useState<Kind>("pre_test");
   const [loading, setLoading] = useState(true);
@@ -99,8 +103,33 @@ function TestManagerContent() {
   const [importMeta, setImportMeta] = useState({ filename: "", sourceType: "" });
   const fileRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    let activeRequest = true;
+    void (async () => {
+      setProgramsLoading(true);
+      setProgramsError("");
+      try {
+        const response = await fetch("/api/engagements", { headers: { Authorization: `Bearer ${await token()}` } });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || !body.success) throw new Error(body.error || "Daftar program tidak dapat dimuat.");
+        if (activeRequest) setPrograms((body.engagements || []).filter((item: { status?: string }) => item.status !== "archived"));
+      } catch (failure) {
+        if (activeRequest) setProgramsError(failure instanceof Error ? failure.message : "Daftar program tidak dapat dimuat.");
+      } finally {
+        if (activeRequest) setProgramsLoading(false);
+      }
+    })();
+    return () => { activeRequest = false; };
+  }, []);
+
   const load = useCallback(async () => {
-    if (!programId) { setError("Program tidak dipilih."); setLoading(false); return; }
+    if (!programId) {
+      setProgram(null);
+      setQuestionnaires([]);
+      setError("");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -244,16 +273,38 @@ function TestManagerContent() {
     finally { setSaving(false); }
   };
 
-  if (loading) return <div className="flex min-h-[24rem] items-center justify-center gap-3 text-sm font-semibold text-blue-900"><Loader2 className="h-5 w-5 animate-spin" /> Memuat editor test...</div>;
-  if (error || !program) return <div className="border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error || "Program tidak ditemukan."}</div>;
+  const selectProgram = (nextProgramId: string) => {
+    router.replace(nextProgramId ? `/admin/programs/tests?programId=${encodeURIComponent(nextProgramId)}` : "/admin/programs/tests", { scroll: false });
+  };
+
+  const programPicker = (
+    <section className="border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <label className="block min-w-0 flex-1 text-xs font-bold text-slate-700">
+          Program yang dikelola
+          <select value={programId} onChange={(event) => selectProgram(event.target.value)} disabled={programsLoading || Boolean(programsError) || programs.length === 0} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 text-sm font-semibold text-[#0B2C6B] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 lg:max-w-xl">
+            <option value="">{programsLoading ? "Memuat program..." : programs.length === 0 ? "Belum ada program tersedia" : "Pilih program"}</option>
+            {programs.map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} · ` : ""}{item.title}</option>)}
+          </select>
+        </label>
+        {program && <div className="min-w-0 lg:max-w-md lg:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-600">{program.code || "Tanpa kode"}</p><p className="mt-1 truncate text-sm font-bold text-slate-900">{program.title}</p></div>}
+      </div>
+      {programsError && <p role="alert" className="mt-3 text-xs text-red-700">{programsError}</p>}
+      {!programsLoading && !programsError && programs.length === 0 && <p className="mt-3 text-xs text-slate-500">Buat program aktif terlebih dahulu sebelum menyusun Pre-test atau Post-test.</p>}
+    </section>
+  );
+
+  if (!programId) return <div className="mx-auto max-w-[1500px] space-y-6">{programPicker}<section className="border border-dashed border-slate-300 bg-white px-6 py-14 text-center"><h2 className="text-base font-bold text-[#0B2C6B]">Pilih program untuk mulai</h2><p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">Pertanyaan, publikasi, dan statistik selalu dikelola per program agar hasil peserta tidak tercampur.</p></section></div>;
+  if (loading) return <div className="mx-auto max-w-[1500px] space-y-6">{programPicker}<div className="flex min-h-[20rem] items-center justify-center gap-3 text-sm font-semibold text-blue-900"><Loader2 className="h-5 w-5 animate-spin" /> Memuat editor test...</div></div>;
+  if (error || !program) return <div className="mx-auto max-w-[1500px] space-y-6">{programPicker}<div className="border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error || "Program tidak ditemukan."}</div></div>;
 
   const statistics = active?.statistics;
   return (
     <div className="mx-auto max-w-[1500px]">
-      <Link href={`/admin/engagements/manage?id=${program.id}`} className="inline-flex min-h-10 items-center gap-2 text-xs font-bold text-blue-900"><ArrowLeft className="h-4 w-4" /> Kembali ke program</Link>
-      <div className="mt-3 flex flex-col justify-between gap-4 border-b border-slate-200 pb-6 lg:flex-row lg:items-end"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600">{program.code}</p><h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Pre-test & Post-test</h2><p className="mt-2 text-sm text-slate-600">Susun pertanyaan khusus untuk {program.title}, publikasikan, lalu pantau kualitas hasilnya.</p></div><div className="inline-flex self-start border border-slate-200 bg-white p-1">{(["pre_test", "post_test"] as Kind[]).map((item) => <button key={item} type="button" onClick={() => setKind(item)} className={`min-h-10 px-5 text-xs font-bold ${kind === item ? "bg-blue-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{item === "pre_test" ? "Pre-test" : "Post-test"}</button>)}</div></div>
+      {programPicker}
+      <div className="mt-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><Link href={`/admin/engagements/manage?id=${program.id}`} className="inline-flex min-h-10 items-center gap-2 text-xs font-bold text-blue-900"><ArrowLeft className="h-4 w-4" /> Kembali ke program</Link><div className="inline-flex self-start border border-slate-200 bg-white p-1">{(["pre_test", "post_test"] as Kind[]).map((item) => <button key={item} type="button" onClick={() => setKind(item)} className={`min-h-10 px-5 text-xs font-bold ${kind === item ? "bg-blue-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{item === "pre_test" ? "Pre-test" : "Post-test"}</button>)}</div></div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
+      <div className="mt-4 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
         <div className="space-y-6">
           <section className="border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Konfigurasi</p><h3 className="mt-1 text-lg font-bold text-slate-950">Identitas dan aturan test</h3></div>{active && <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${active.status === "published" ? "bg-emerald-100 text-emerald-800" : active.status === "archived" ? "bg-slate-200 text-slate-600" : "bg-amber-100 text-amber-800"}`}>{active.status}</span>}</div>

@@ -27,7 +27,7 @@ import {
   Settings2,
 } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { ConfirmDialog } from "@/components/ui";
 import { toast } from "sonner";
 import { downloadBlob } from "@/lib/download";
@@ -58,9 +58,13 @@ const TABS: { key: Tab; label: string }[] = [
 export default function TbosDashboardPage() {
   return (
     <AdminAuthGate>
-      <AppShell role="admin" navigation="tbos" compactHeader title="Dashboard T-BOS" eyebrow="Observasi Perilaku Tim">
+      <AdminShell
+        eyebrow="Observasi Perilaku Tim"
+        title="Dashboard T-BOS"
+        description="Pantau kualitas observasi, kekuatan tim, dan area pengembangan dari satu ruang kerja."
+      >
         <TbosDashboardContent />
-      </AppShell>
+      </AdminShell>
     </AdminAuthGate>
   );
 }
@@ -434,12 +438,8 @@ function TbosDashboardContent() {
   if (!dashboardData || dashboardData.teams.length === 0) {
     return (
       <div>
-        {/* Band 1 — page header */}
-        <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Observasi perilaku tim</p>
-            <h1 className="mt-1 text-xl font-bold tracking-[-0.02em] text-[#0B2C6B]">Dashboard T-BOS</h1>
-          </div>
+        {/* Contextual actions stay inside the T-BOS workspace. */}
+        <header className="flex flex-col items-end gap-3 border-b border-slate-200 pb-4">
           <div className="flex items-center gap-2">
             {lastUpdated && <span className="hidden text-[11px] text-slate-400 sm:inline">Diperbarui {lastUpdated.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>}
             <button
@@ -539,14 +539,8 @@ function TbosDashboardContent() {
 
   return (
     <div className="space-y-0">
-      {/* Band 1 — Page header */}
-      <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Observasi perilaku tim</p>
-          <h1 className="mt-1 text-xl font-bold tracking-[-0.02em] text-[#0B2C6B]">
-            Dashboard T-BOS{selectedBatch ? <span className="font-semibold text-[#4A4C54]"> · {selectedBatch}</span> : null}
-          </h1>
-        </div>
+      {/* Contextual actions stay inside the T-BOS workspace. */}
+      <header className="flex flex-col items-end gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-2">
           {lastUpdated && <span className="hidden text-[11px] text-slate-400 sm:inline">Diperbarui {lastUpdated.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>}
           <button

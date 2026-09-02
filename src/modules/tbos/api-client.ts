@@ -299,10 +299,16 @@ export interface TbosProgram {
 }
 
 export async function fetchTbosPrograms(moduleKey: "tbos" | "lep" = "tbos"): Promise<TbosProgram[]> {
-  const res = await fetch(`/api/programs/available?moduleKey=${encodeURIComponent(moduleKey)}`);
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.success) throw new Error(data.error || "Gagal memuat program.");
-  return data.programs || [];
+  const { supabase } = await import("@/lib/supabase");
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error("Sesi tidak tersedia. Silakan login ulang.");
+  const res = await fetch(`/api/programs/available?moduleKey=${encodeURIComponent(moduleKey)}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || !body.success) throw new Error(body.error || "Gagal memuat program.");
+  return body.programs || [];
 }
 
 export interface TbosBatch {

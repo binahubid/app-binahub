@@ -5,6 +5,16 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-09-02
+
+### Fixed — Admin Navigation & Program Context
+
+- Menghapus header internal yang menggandakan judul shell dan menyamakan hierarki semua halaman admin: eyebrow gold, judul navy, lalu deskripsi kontekstual.
+- Menambahkan pemilih program pada halaman Pre-test & Post-test; pilihan tersimpan di URL sehingga konteks tetap aman setelah refresh atau dibagikan.
+- Memperbaiki pemuatan program Evaluasi Program dengan token sesi eksplisit serta state memuat, gagal, dan kosong yang dapat dibedakan.
+- Memindahkan T-BOS ke `AdminShell` dan navigasi admin terpadu tanpa mengubah desain, grafik, tabel, atau alur kerja internal T-BOS.
+- Menghapus bottom navigation lama yang sebelumnya dapat muncul bersamaan dengan navigasi admin pada T-BOS mobile.
+
 ## [0.18.0] - 2026-09-02
 
 ### Changed — Unified Application Journey & Admin Workspace
@@ -26,7 +36,7 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ### Safety
 
-- T-BOS sengaja tidak diubah pada fase ini; shell, navigasi, dan UI T-BOS tetap memakai implementasi sebelumnya.
+- Visual dan alur kerja internal T-BOS tidak diubah pada fase ini.
 - Redesign tidak mengubah endpoint bisnis, skema database, status dry-run, runtime control, atau keputusan persetujuan manusia.
 
 ## [0.17.0] - 2026-09-01

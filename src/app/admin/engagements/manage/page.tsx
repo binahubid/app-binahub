@@ -3,11 +3,11 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, BarChart3, CalendarPlus, Check, ExternalLink, Eye, KeyRound, MessageSquare, Send, StickyNote, Trash2, Archive, Pencil, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BarChart3, CalendarPlus, Check, ExternalLink, Eye, KeyRound, MessageSquare, Send, StickyNote, Trash2, Archive, Pencil, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { useEngagements, useEvidence } from "@/hooks/use-transformation-data";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { StatusPill, Breadcrumb, ConfirmDialog } from "@/components/ui";
+import { StatusPill, ConfirmDialog } from "@/components/ui";
 import { EngagementEditModal } from "@/components/engagement-edit-modal";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { supabase } from "@/lib/supabase";
@@ -250,10 +250,7 @@ function ManageEngagementContent() {
   if (engagementsError || !engagement) {
     return (
       <div>
-        <Breadcrumb items={[
-          { label: "Program", href: "/admin/programs" },
-          { label: "Tidak Ditemukan" },
-        ]} />
+        <Link href="/admin/programs" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-blue-900"><ArrowLeft className="h-4 w-4" /> Kembali ke Program</Link>
         <div role="alert" className="py-20 text-center text-sm text-[#4A4C54]/60">{engagementsError || "Program tidak ditemukan."}</div>
       </div>
     );
@@ -261,12 +258,9 @@ function ManageEngagementContent() {
 
   return (
     <div>
-      <Breadcrumb items={[
-        { label: "Program", href: "/admin/programs" },
-        { label: engagement.title },
-      ]} />
+      <Link href="/admin/programs" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-blue-900"><ArrowLeft className="h-4 w-4" /> Kembali ke Program</Link>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+      <div className="mt-4 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
         <div className="space-y-6">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">

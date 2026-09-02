@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Users, Mail, Plus, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { Breadcrumb, EmptyState, SearchInput, ConfirmDialog } from "@/components/ui";
+import { EmptyState, SearchInput, ConfirmDialog } from "@/components/ui";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AdminShell } from "@/components/admin-shell";
 import { supabase } from "@/lib/supabase";
@@ -201,9 +201,7 @@ function UserManagementContent() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
-      <Breadcrumb items={[{ label: "Admin", href: "/admin" }, { label: "Pengguna" }]} />
-
+    <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-[#4A4C54]/70">{users.length} pengguna terdaftar. Cari akun, ubah peran, atau kirim undangan baru.</p>
         <button

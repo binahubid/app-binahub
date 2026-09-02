@@ -1,7 +1,7 @@
 # Audit UI/UX Production — Workspace Administrator
 
 Tanggal: 2 September 2026  
-Versi kandidat: `app-binahub v0.18.0`
+Versi kandidat: `app-binahub v0.18.1`
 
 ## Tujuan
 
@@ -11,10 +11,10 @@ Audit Fase 16 memastikan administrator memiliki satu struktur navigasi berbasis 
 
 - `/admin/dashboard` menjadi beranda kanonis; `/admin` hanya redirect kompatibilitas.
 - Setiap area kerja utama memiliki URL sendiri dan dapat dipulihkan setelah refresh.
-- Semua halaman administrator non-T-BOS memakai `AdminShell` dan sumber navigasi di `src/lib/admin-navigation.ts`.
+- Semua halaman administrator memakai `AdminShell` dan sumber navigasi di `src/lib/admin-navigation.ts`.
 - `/home` hanya menyelesaikan role lalu mengarahkan pengguna ke beranda role; tidak ada hub kedua yang mengulang menu.
 - Launch Control, UAT/Pilot Gate, Pilot Operations, Operational Assurance, dan Pilot Certification bukan menu produk. Evidence dan prosedurnya tetap berada di backend serta dokumen developer.
-- T-BOS dikecualikan dari redesign ini dan tetap menggunakan shell sebelumnya.
+- T-BOS memakai shell global yang sama, sementara grafik, tabel, warna, dan workflow internalnya tidak didesain ulang.
 
 Peta URL lengkap tersedia di `ADMIN-INFORMATION-ARCHITECTURE.md`.
 
@@ -39,7 +39,7 @@ Peta URL lengkap tersedia di `ADMIN-INFORMATION-ARCHITECTURE.md`.
 | Pengguna | `/admin/users` | Siap |
 | Izin akses | `/admin/rbac` | Siap |
 | Pengaturan bisnis | `/admin/settings` | Siap |
-| T-BOS | `/admin/tbos` | Tidak diubah pada Fase 16 |
+| T-BOS | `/admin/tbos` | Shell terpadu; konten modul dipertahankan |
 
 ## Hasil visual dan interaksi
 
@@ -69,7 +69,7 @@ Peta URL lengkap tersedia di `ADMIN-INFORMATION-ARCHITECTURE.md`.
 
 - ESLint: lulus.
 - TypeScript: lulus.
-- Vitest: 14 file, 58 tes lulus.
+- Vitest: 14 file, 60 tes lulus.
 - Production build Next.js: lulus; 80 halaman statis dihasilkan.
 - Browser desktop: tidak ada horizontal overflow.
 - Browser mobile 390 × 844: tidak ada horizontal overflow.
@@ -84,6 +84,6 @@ Pemeriksaan berikut memerlukan sesi administrator production dan belum boleh dia
 3. jalankan satu create/edit/confirm/destructive flow per modul yang memiliki mutasi;
 4. uji empty state dan error state menggunakan data production yang aman;
 5. ulangi pemeriksaan pada desktop, tablet, dan mobile nyata;
-6. pastikan T-BOS tetap identik dengan versi sebelum `v0.18.0`.
+6. pastikan T-BOS memakai navigasi global tanpa regresi pada grafik, tabel, filter, dan mutasi internalnya.
 
 Status: **routing dan shell siap deploy; acceptance authenticated production masih harus dijalankan setelah deployment**.

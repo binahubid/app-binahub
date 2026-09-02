@@ -252,7 +252,6 @@ export function AdminShell({
               <p className="mt-1 truncate text-sm font-bold text-slate-950 lg:hidden">{current.item.shortLabel}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {actions}
               <Link href="/help/admin" aria-label="Bantuan admin" className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-blue-950 sm:inline-flex">
                 <CircleHelp className="h-4 w-4" aria-hidden="true" /> Bantuan
               </Link>
@@ -265,10 +264,13 @@ export function AdminShell({
 
         <main id="admin-page-content" className="mx-auto max-w-[1680px] px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pt-8">
           <section className="mb-6 border-b border-slate-200 pb-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">{eyebrow}</p>
-            <div className="mt-2 flex flex-col justify-between gap-3 md:flex-row md:items-end">
-              <h2 className="max-w-3xl text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-[2rem]">{title}</h2>
-              {description && <p className="max-w-2xl text-sm leading-6 text-slate-500 md:text-right">{description}</p>}
+            <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#C58D27]">{eyebrow}</p>
+                <h1 className="mt-2 max-w-4xl text-2xl font-semibold tracking-[-0.035em] text-[#0B2C6B] sm:text-[2rem]">{title}</h1>
+                {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">{description}</p>}
+              </div>
+              {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
             </div>
           </section>
           {children}

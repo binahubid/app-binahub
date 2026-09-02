@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useEngagements } from "@/hooks/use-transformation-data";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AdminShell } from "@/components/admin-shell";
-import { Breadcrumb, ConfirmDialog, EmptyState, FilterTabs, ModuleChip, SearchInput, StatusPill } from "@/components/ui";
+import { ConfirmDialog, EmptyState, FilterTabs, ModuleChip, SearchInput, StatusPill } from "@/components/ui";
 import { ProgramShareCard } from "@/components/program-share-card";
 import type { Engagement } from "@/lib/transformation-types";
 import type { ProgramModuleKey } from "@/lib/program-modules";
@@ -74,18 +74,6 @@ function AdminProgramsPageContent() {
 
   return (
     <div>
-      <Breadcrumb items={[{ label: "Admin" }, { label: "Program" }]} />
-      <div className="mb-6 mt-4 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#D9A441]">Program & Modul</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-[#0B2C6B]">Program</h1>
-          <p className="mt-1 text-sm text-[#4A4C54]/65">Kode program wajib dan menjadi pintu masuk peserta tanpa login.</p>
-        </div>
-        <Link href="/admin/engagements/new" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#0B2C6B] px-5 text-sm font-semibold text-white hover:bg-[#0A255A]">
-          <Plus size={18} /> Buat Program
-        </Link>
-      </div>
-
       {!loading && !error && engagements.length > 0 && <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <SearchInput value={search} onChange={setSearch} placeholder="Cari nama atau kode program" className="w-full lg:max-w-md" />
@@ -154,5 +142,6 @@ function AdminProgramsPageContent() {
 }
 
 export default function AdminProgramsPage() {
-  return <AdminAuthGate><AdminShell title="Program" eyebrow="Program & Produk" description="Buat program, kelola peserta, dan buka alat operasional program dari satu tempat."><AdminProgramsPageContent /></AdminShell></AdminAuthGate>;
+  const createAction = <Link href="/admin/engagements/new" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#0B2C6B] px-5 text-sm font-semibold text-white hover:bg-[#0A255A]"><Plus size={18} /> Buat Program</Link>;
+  return <AdminAuthGate><AdminShell title="Program" eyebrow="Program & Modul" description="Buat program, kelola peserta, dan gunakan kode program sebagai pintu masuk peserta." actions={createAction}><AdminProgramsPageContent /></AdminShell></AdminAuthGate>;
 }

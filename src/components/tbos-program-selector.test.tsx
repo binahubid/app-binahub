@@ -1,5 +1,5 @@
 import { render, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TbosProgramSelector } from "./tbos-program-selector";
 
 const mocks = vi.hoisted(() => ({
@@ -11,6 +11,10 @@ vi.mock("@/modules/tbos/api-client", () => ({
 }));
 
 describe("TbosProgramSelector", () => {
+  beforeEach(() => {
+    mocks.fetchPrograms.mockReset();
+  });
+
   it("loads the program list once and does not refetch after selection", async () => {
     mocks.fetchPrograms.mockResolvedValue([
       { id: "program-1", code: "TBOS-1", title: "Program T-BOS" },
@@ -23,5 +27,24 @@ describe("TbosProgramSelector", () => {
 
     view.rerender(<TbosProgramSelector value="program-1" onChange={onChange} />);
     await waitFor(() => expect(mocks.fetchPrograms).toHaveBeenCalledTimes(1));
+  });
+
+  it("shows the loading failure instead of disguising it as an empty program list", async () => {
+    mocks.fetchPrograms.mockRejectedValue(new Error("Sesi tidak tersedia. Silakan login ulang."));
+    const { findByRole } = render(<TbosProgramSelector value="" onChange={vi.fn()} moduleKey="lep" />);
+
+    expect(await findByRole("alert")).toHaveTextContent("Sesi tidak tersedia");
+  });
+
+  it("requests and selects an available LEP program", async () => {
+    mocks.fetchPrograms.mockResolvedValue([
+      { id: "lep-1", code: "LEP-2026", title: "Program LEP" },
+    ]);
+    const onChange = vi.fn();
+
+    render(<TbosProgramSelector value="" onChange={onChange} moduleKey="lep" />);
+
+    await waitFor(() => expect(mocks.fetchPrograms).toHaveBeenCalledWith("lep"));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith("lep-1"));
   });
 });

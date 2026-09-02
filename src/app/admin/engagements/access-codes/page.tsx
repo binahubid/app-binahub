@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useDialogFocus } from "@/hooks/use-dialog-focus";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AdminShell } from "@/components/admin-shell";
-import { Breadcrumb, ConfirmDialog, EmptyState, StatusPill } from "@/components/ui";
+import { ConfirmDialog, EmptyState, StatusPill } from "@/components/ui";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { supabase } from "@/lib/supabase";
 
@@ -31,7 +31,6 @@ type MutationAction = "regenerate" | "deactivate" | "resolve_review";
 function AccessCodesContent() {
   const searchParams = useSearchParams();
   const engagementId = searchParams.get("engagement_id") || "";
-  const engagementTitle = searchParams.get("title") || "Program";
   const [codes, setCodes] = useState<AccessCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [mutationTarget, setMutationTarget] = useState<{ access: AccessCode; action: MutationAction } | null>(null);
@@ -89,11 +88,8 @@ function AccessCodesContent() {
   if (!engagementId) return <div className="rounded-2xl border border-slate-200 bg-white"><EmptyState icon={KeyRound} title="Program belum dipilih" description="Buka halaman Kelola Program lalu pilih Kode Peserta." /></div>;
 
   return <div>
-    <Breadcrumb items={[{ label: "Program", href: "/admin/programs" }, { label: engagementTitle, href: `/admin/engagements/manage?id=${engagementId}` }, { label: "Kode Peserta" }]} />
-    <Link href={`/admin/engagements/manage?id=${engagementId}`} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl text-sm font-bold text-blue-900"><ArrowLeft className="h-4 w-4" /> Kembali ke Kelola Program</Link>
-
-    <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-      <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-600">Keamanan Peserta</p><h2 className="mt-1 text-2xl font-bold text-slate-900">Kode Peserta</h2><p className="mt-1 text-sm text-slate-600">Kode hanya tampil saat dibuat atau diperbarui. Setelah dialog ditutup, kode tidak dapat dilihat kembali.</p></div>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Link href={`/admin/engagements/manage?id=${engagementId}`} className="inline-flex min-h-10 items-center gap-2 rounded-xl text-sm font-bold text-blue-900"><ArrowLeft className="h-4 w-4" /> Kembali ke Kelola Program</Link>
       <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-900">{codes.length} peserta</span>
     </div>
 

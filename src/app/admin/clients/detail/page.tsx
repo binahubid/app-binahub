@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, FileText, Award, Users, BarChart3 } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
-import { StatusPill, Breadcrumb, EmptyState, Skeleton } from "@/components/ui";
+import { StatusPill, EmptyState, Skeleton } from "@/components/ui";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AdminShell } from "@/components/admin-shell";
 import { supabase } from "@/lib/supabase";
@@ -183,15 +183,7 @@ function ParticipantDetailContent() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
-      <Breadcrumb
-        items={[
-          { label: "Admin", href: "/admin" },
-          { label: "Peserta", href: "/admin" },
-          { label: participant.name },
-        ]}
-      />
-
+    <div>
       <div className="mb-8">
         <h2 className="text-2xl font-semibold text-[#0B2C6B]">{participant.name}</h2>
         {participant.email && (

@@ -5,6 +5,18 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-09-03
+
+### Changed — Professional Pre-test & Post-test Builder
+
+- Merombak editor menjadi tiga ruang kerja yang jelas: Pertanyaan, Respons, dan Pengaturan, dengan status draf/publikasi serta indikator perubahan yang belum disimpan.
+- Menambahkan editor tujuh tipe jawaban dengan pilihan jawaban terstruktur, kunci jawaban visual, poin, required state, label skala, dan validasi sebelum penyimpanan.
+- Menambahkan duplikasi serta pengurutan naik/turun untuk pertanyaan, sekaligus mempertahankan audit lock setelah respons pertama masuk.
+- Menambahkan pratinjau peserta interaktif untuk ukuran desktop dan mobile yang menggunakan renderer form yang sama dengan halaman peserta production, termasuk progres jawaban langsung tanpa menyimpan data.
+- Menambahkan checklist kesiapan publikasi, buka/tutup penerimaan respons, impor dokumen yang lebih terarah, dan ekspor respons CSV.
+- Memperbaiki pemetaan statistik agar sesuai dengan kontrak backend (`overall` dan `perQuestion`), termasuk distribusi skor dan ringkasan numerik per pertanyaan.
+- Menampilkan label kedua ujung skala serta error pertanyaan wajib secara konsisten pada halaman peserta.
+
 ## [0.18.1] - 2026-09-02
 
 ### Fixed — Admin Navigation & Program Context

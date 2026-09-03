@@ -1,7 +1,8 @@
 # Audit UI/UX Production — Workspace Administrator
 
-Tanggal: 2 September 2026  
-Versi kandidat: `app-binahub v0.18.1`
+Tanggal: 3 September 2026
+
+Versi kandidat: `app-binahub v0.18.2`
 
 ## Tujuan
 
@@ -34,7 +35,7 @@ Peta URL lengkap tersedia di `ADMIN-INFORMATION-ARCHITECTURE.md`.
 | Otomasi | `/admin/automation` | Siap |
 | Program | `/admin/programs` dan detail `/admin/engagements/*` | Siap |
 | Katalog | `/admin/catalog` | Siap |
-| Pre-test/Post-test | `/admin/programs/tests` | Siap |
+| Pre-test/Post-test | `/admin/programs/tests` | Siap; editor, preview, respons, dan pengaturan terpadu |
 | Evaluasi program | `/admin/lep` | Siap |
 | Pengguna | `/admin/users` | Siap |
 | Izin akses | `/admin/rbac` | Siap |
@@ -65,11 +66,20 @@ Peta URL lengkap tersedia di `ADMIN-INFORMATION-ARCHITECTURE.md`.
 - `aria-current`, `aria-expanded`, `aria-controls`, dialog semantics, dan label kontrol digunakan pada navigasi.
 - Preferensi reduced motion tetap dihormati secara global.
 
+### Pre-test dan Post-test
+
+- Editor dibagi menjadi Pertanyaan, Respons, dan Pengaturan agar alur penyusunan tidak bercampur dengan analitik.
+- Tujuh tipe pertanyaan tersedia: pilihan tunggal, pilihan ganda, ya/tidak, skala, jawaban singkat, paragraf, dan angka.
+- Pilihan jawaban dikelola sebagai item terstruktur; kunci jawaban, poin, wajib diisi, label skala, duplikasi, dan urutan dapat diatur tanpa menulis format teknis.
+- Pratinjau desktop dan mobile memakai komponen form yang sama dengan halaman peserta sehingga hasil review merepresentasikan pengalaman pengguna sebenarnya.
+- Respons menampilkan ringkasan skor dan statistik per pertanyaan serta dapat diekspor ke CSV.
+- Struktur pertanyaan dikunci setelah respons pertama untuk menjaga konsistensi dan auditabilitas hasil.
+
 ## Verifikasi
 
 - ESLint: lulus.
 - TypeScript: lulus.
-- Vitest: 14 file, 60 tes lulus.
+- Vitest: 16 file, 66 tes lulus.
 - Production build Next.js: lulus; 80 halaman statis dihasilkan.
 - Browser desktop: tidak ada horizontal overflow.
 - Browser mobile 390 × 844: tidak ada horizontal overflow.

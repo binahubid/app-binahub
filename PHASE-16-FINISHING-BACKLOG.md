@@ -12,6 +12,7 @@ Selesai pada aplikasi:
 - Mengganti sidebar desktop dengan kelompok accordion yang dapat dicari dan digulir.
 - Mengganti navigasi mobile menjadi drawer aksesibel dengan focus trap, Escape, body scroll lock, dan focus return.
 - Menambahkan breadcrumb, state loading, error, dan not-found yang konsisten.
+- Merombak editor Pre-test/Post-test menjadi builder terstruktur dengan preview peserta, pengurutan, duplikasi, validasi, analitik, dan ekspor respons.
 - Menghapus Launch Control, UAT/Pilot Gate, Pilot Operations, Operational Assurance, dan Pilot Certification dari kontrak navigasi produk. Artefaknya tetap tersedia untuk kebutuhan developer/backend.
 - Menjadikan `/home` resolver role tanpa menampilkan hub tambahan; admin, klien, fasilitator, dan peserta langsung menuju beranda role.
 - Mengarahkan rute klien dan fasilitator lama ke URL kanonis serta menyatukan shell T-BOS tanpa mengubah desain internal modulnya.
@@ -35,6 +36,7 @@ Peta rute dan aturan pengembangan selanjutnya dicatat di `ADMIN-INFORMATION-ARCH
 - [x] Audit dan satukan shell seluruh halaman dashboard admin, termasuk T-BOS, pada desktop dan mobile.
 - [x] Pastikan navigasi operasional tidak menampilkan instruksi developer, status fase, atau prosedur pengujian internal.
 - [x] Tutup masalah hierarchy global, overflow, focus, keyboard navigation, loading, error, not-found, dan responsive shell.
+- [x] Kurasi editor Pre-test/Post-test dan gunakan renderer yang sama untuk preview admin serta halaman peserta.
 - [ ] Jalankan acceptance isi, empty state, confirmation, dan destructive action dengan data production pada setiap modul bisnis.
 - Selesaikan penyempurnaan visual assessment publik, laporan PDF, katalog publik, dan halaman program berdasarkan hasil penggunaan nyata.
 

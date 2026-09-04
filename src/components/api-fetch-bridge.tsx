@@ -6,11 +6,10 @@ import { supabase } from "@/lib/supabase";
 
 async function withApiAuth(init?: RequestInit) {
   const headers = new Headers(init?.headers);
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-
-  if (token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
+  if (!headers.has("Authorization")) {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token) headers.set("Authorization", `Bearer ${token}`);
   }
 
   return {

@@ -5,6 +5,27 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
+## [0.18.3] - 2026-09-04
+
+### Changed — Acceptance UX and Admin Responsiveness
+
+- Menambahkan panel `Cara kerja` kontekstual pada seluruh halaman admin yang menjelaskan tujuan halaman, arti kontrol, dan urutan kerja tanpa menampilkan prosedur developer/UAT.
+- Memindahkan seluruh perubahan status manual ke pintasan pada kartu Program dengan pilihan transisi yang aman dan dialog konfirmasi; editor Kelola tidak lagi menggandakan kontrol status.
+- Menjelaskan bahwa status program mengikuti tanggal dan menampilkan pintasan manual hanya untuk pengecualian operasional.
+- Mendesain ulang distribusi jawaban Assessment mobile menjadi rentang tujuh soal dengan label, persentase jawaban 4–5, jumlah respons, dan bar horizontal yang terbaca.
+- Menjadikan header admin fixed pada seluruh viewport agar navigasi Klien & Pelaksanaan dan halaman lain tetap tersedia saat konten digulir.
+
+### Performance
+
+- Mempertahankan verifikasi admin pada layout selama navigasi internal sehingga role tidak diminta ulang pada setiap perpindahan halaman.
+- Menambahkan cache dashboard per-user selama 45 detik, deduplikasi request bersamaan, refresh paksa setelah mutasi, dan prefetch per kelompok menu.
+- Menghindari pembacaan sesi Supabase kedua ketika request API sudah membawa bearer token.
+
+### Documentation
+
+- Mencatat Gate A lulus dan Gate B lulus dengan temuan pada runbook acceptance Fase 16.
+- Memperjelas Gate C–F dengan perbedaan produk/modul, contoh nilai setiap field, batas aman pengaturan bisnis, data program UAT, serta urutan pengujian peserta.
+
 ## [0.18.2] - 2026-09-03
 
 ### Changed — Professional Pre-test & Post-test Builder

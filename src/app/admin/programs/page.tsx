@@ -9,9 +9,10 @@ import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AdminShell } from "@/components/admin-shell";
 import { ConfirmDialog, EmptyState, FilterTabs, ModuleChip, SearchInput, StatusPill } from "@/components/ui";
 import { ProgramShareCard } from "@/components/program-share-card";
-import type { Engagement } from "@/lib/transformation-types";
+import type { Engagement, EngagementStatus } from "@/lib/transformation-types";
 import type { ProgramModuleKey } from "@/lib/program-modules";
 import { useDialogFocus } from "@/hooks/use-dialog-focus";
+import { programStatusChoices, PROGRAM_STATUS_LABELS } from "@/lib/program-status";
 
 interface ProgramModuleRow {
   program_id: string;
@@ -20,7 +21,7 @@ interface ProgramModuleRow {
 }
 
 function AdminProgramsPageContent() {
-  const { engagements, loading, error } = useEngagements();
+  const { engagements, loading, error, refetch } = useEngagements();
   const [modulesByProgram, setModulesByProgram] = useState<Record<string, ProgramModuleRow[]>>({});
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -28,6 +29,8 @@ function AdminProgramsPageContent() {
   const shareDialogRef = useDialogFocus<HTMLDivElement>(() => setShareTarget(null), false, Boolean(shareTarget));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
+  const [statusTarget, setStatusTarget] = useState<{ program: Engagement; status: EngagementStatus } | null>(null);
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   useEffect(() => {
     void fetch("/api/program-modules")
@@ -72,6 +75,27 @@ function AdminProgramsPageContent() {
     }
   };
 
+  const updateProgramStatus = async () => {
+    if (!statusTarget) return;
+    setStatusUpdating(true);
+    try {
+      const response = await fetch(`/api/engagements/${statusTarget.program.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: statusTarget.status }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) throw new Error(result.error || "Status program tidak dapat diperbarui.");
+      toast.success(`Status ${statusTarget.program.title} menjadi ${PROGRAM_STATUS_LABELS[statusTarget.status]}.`);
+      setStatusTarget(null);
+      await refetch();
+    } catch (failure) {
+      toast.error(failure instanceof Error ? failure.message : "Status program tidak dapat diperbarui.");
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
   return (
     <div>
       {!loading && !error && engagements.length > 0 && <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -83,7 +107,10 @@ function AdminProgramsPageContent() {
             { key: "archived", label: "Arsip", count: engagements.filter((program) => program.status === "archived").length },
           ]} />
         </div>
-        <p className="mt-4 text-xs font-semibold text-slate-500">Menampilkan {filteredPrograms.length} program {statusFilter === "active" ? "aktif" : statusFilter === "completed" ? "selesai" : "arsip"}</p>
+        <div className="mt-4 flex flex-col gap-1 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-semibold">Menampilkan {filteredPrograms.length} program {statusFilter === "active" ? "aktif" : statusFilter === "completed" ? "selesai" : "arsip"}</p>
+          <p>Status mengikuti tanggal program; pintasan manual tersedia pada setiap kartu.</p>
+        </div>
       </section>}
 
       {loading ? <div role="status" aria-live="polite" className="py-20 text-center text-sm text-slate-500">Memuat program...</div> : error ? (
@@ -115,6 +142,18 @@ function AdminProgramsPageContent() {
                       {program.location && <div className="flex items-center gap-2"><MapPin size={14} className="shrink-0 text-[#D9A441]" /><dt className="sr-only">Lokasi</dt><dd className="truncate">{program.location}</dd></div>}
                       {(program.start_date || program.end_date) && <div className="flex items-center gap-2"><CalendarDays size={14} className="shrink-0 text-[#D9A441]" /><dt className="sr-only">Periode</dt><dd>{program.start_date ? new Date(program.start_date).toLocaleDateString("id-ID") : "–"} – {program.end_date ? new Date(program.end_date).toLocaleDateString("id-ID") : "–"}</dd></div>}
                     </dl>
+                    <label className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-600">
+                      Pintasan status
+                      <select
+                        value={program.status}
+                        onChange={(event) => setStatusTarget({ program, status: event.target.value as EngagementStatus })}
+                        disabled={programStatusChoices(program.status).length === 1}
+                        className="min-h-10 min-w-32 border border-slate-200 bg-white px-3 text-xs font-semibold text-blue-950 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                        aria-label={`Ubah status ${program.title}`}
+                      >
+                        {programStatusChoices(program.status).map((status) => <option key={status} value={status}>{PROGRAM_STATUS_LABELS[status]}</option>)}
+                      </select>
+                    </label>
                     <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
                       <Link href={`/admin/engagements/manage?id=${program.id}`} className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-900 px-3 text-xs font-semibold text-white"><Settings size={13} /> Kelola</Link>
                       <button type="button" onClick={() => setShareTarget(program)} disabled={!program.code} className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-blue-900 disabled:cursor-not-allowed disabled:opacity-45"><Send size={13} /> Bagikan</button>
@@ -128,6 +167,16 @@ function AdminProgramsPageContent() {
       )}
 
       <ConfirmDialog open={Boolean(deleteTarget)} onClose={() => { if (!deleting) setDeleteTarget(null); }} onConfirm={deleteProgram} title="Hapus Program?" description={deleteTarget ? `Program "${deleteTarget.title}" beserta tim kosongnya akan dihapus permanen. Program yang memiliki histori observasi atau LEP harus diarsipkan.` : undefined} confirmLabel="Ya, Hapus" variant="danger" loading={deleting} />
+
+      <ConfirmDialog
+        open={Boolean(statusTarget)}
+        onClose={() => { if (!statusUpdating) setStatusTarget(null); }}
+        onConfirm={updateProgramStatus}
+        title="Ubah status program?"
+        description={statusTarget ? `Ubah “${statusTarget.program.title}” dari ${PROGRAM_STATUS_LABELS[statusTarget.program.status]} menjadi ${PROGRAM_STATUS_LABELS[statusTarget.status]}? Gunakan pintasan ini hanya jika status otomatis berdasarkan tanggal perlu dikoreksi.` : undefined}
+        confirmLabel="Ya, ubah status"
+        loading={statusUpdating}
+      />
 
       {shareTarget?.code && (
         <div ref={shareDialogRef} className="fixed inset-0 z-[80] flex items-end justify-center bg-[#071B3D]/55 p-0 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={`Bagikan ${shareTarget.title}`} onMouseDown={(event) => { if (event.currentTarget === event.target) setShareTarget(null); }}>

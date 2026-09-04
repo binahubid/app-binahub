@@ -18,6 +18,10 @@ Selesai pada aplikasi:
 - Mengarahkan rute klien dan fasilitator lama ke URL kanonis serta menyatukan shell T-BOS tanpa mengubah desain internal modulnya.
 - Menguji desktop dan mobile tanpa horizontal overflow serta menguji keyboard, focus indicator, drawer, Escape, dan focus return.
 
+Deployment `app-binahub v0.18.2` dikonfirmasi selesai oleh operator pada 3 September 2026. Pekerjaan berlanjut ke Fase 16B — Production Acceptance menggunakan `PHASE-16-PRODUCTION-ACCEPTANCE-RUNBOOK.md`.
+
+Gate A lulus dan Gate B lulus dengan temuan pada 4 September 2026. Remediasi temuan disiapkan pada `app-binahub v0.18.3` dan `binahub-api v0.18.1`: panduan kontekstual, status program terjadwal, pintasan status, percepatan navigasi, distribusi assessment mobile, dan header admin fixed. Deployment serta verifikasi ulang masih diperlukan sebelum Gate C.
+
 Peta rute dan aturan pengembangan selanjutnya dicatat di `ADMIN-INFORMATION-ARCHITECTURE.md`.
 
 ## Acceptance fitur Fase 14

@@ -1,17 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { fetchAuthenticatedRole } from "@/lib/authenticated-role";
 
 export type AppRole = "admin" | "facilitator" | "client" | "peserta";
 
+const AdminAccessContext = createContext(false);
+
 export function AdminAuthGate({ children }: { children: React.ReactNode }) {
+  const inheritedAccess = useContext(AdminAccessContext);
   const router = useRouter();
-  const [allowed, setAllowed] = useState(false);
+  const [allowed, setAllowed] = useState(inheritedAccess);
 
   useEffect(() => {
+    if (inheritedAccess) return;
     let alive = true;
 
     async function checkAccess() {
@@ -40,7 +44,9 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
 
     void checkAccess();
     return () => { alive = false; };
-  }, [router]);
+  }, [inheritedAccess, router]);
+
+  if (inheritedAccess) return <>{children}</>;
 
   if (!allowed) {
     return (
@@ -50,7 +56,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return <AdminAccessContext.Provider value>{children}</AdminAccessContext.Provider>;
 }
 
 interface PermissionGateProps {

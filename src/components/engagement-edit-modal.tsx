@@ -3,26 +3,16 @@
 import { useState } from "react";
 import { X, Loader2, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import type { Engagement, EngagementType, EngagementStatus } from "@/lib/transformation-types";
+import type { Engagement, EngagementType } from "@/lib/transformation-types";
 import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 const TYPE_OPTIONS: EngagementType[] = ["assessment", "coaching", "training", "transformation"];
-const STATUS_OPTIONS: EngagementStatus[] = ["draft", "active", "in_progress", "review", "completed", "archived"];
 
 const TYPE_LABELS: Record<EngagementType, string> = {
   assessment: "Assessment",
   coaching: "Coaching",
   training: "Training",
   transformation: "Transformation",
-};
-
-const STATUS_LABELS: Record<EngagementStatus, string> = {
-  draft: "Draft",
-  active: "Aktif",
-  in_progress: "Berjalan",
-  review: "Review",
-  completed: "Selesai",
-  archived: "Diarsipkan",
 };
 
 export function EngagementEditModal({
@@ -37,7 +27,6 @@ export function EngagementEditModal({
   const [code, setCode] = useState(engagement.code || "");
   const [title, setTitle] = useState(engagement.title);
   const [type, setType] = useState<EngagementType>(engagement.type);
-  const [status, setStatus] = useState<EngagementStatus>(engagement.status);
   const [startDate, setStartDate] = useState(engagement.start_date ? engagement.start_date.slice(0, 10) : "");
   const [endDate, setEndDate] = useState(engagement.end_date ? engagement.end_date.slice(0, 10) : "");
   const [location, setLocation] = useState(engagement.location || "");
@@ -62,7 +51,6 @@ export function EngagementEditModal({
           code: code.trim().toUpperCase(),
           title: title.trim(),
           type,
-          status,
           startDate: startDate || null,
           endDate: endDate || null,
           location: location.trim() || null,
@@ -136,7 +124,7 @@ export function EngagementEditModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div>
             <div>
               <label className="block text-xs font-semibold text-[#0B2C6B] uppercase mb-1.5">
                 Tipe
@@ -148,20 +136,6 @@ export function EngagementEditModal({
               >
                 {TYPE_OPTIONS.map((t) => (
                   <option key={t} value={t}>{TYPE_LABELS[t]}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[#0B2C6B] uppercase mb-1.5">
-                Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as EngagementStatus)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-black/10 text-sm bg-white focus:outline-none focus:border-[#0B2C6B]"
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                 ))}
               </select>
             </div>

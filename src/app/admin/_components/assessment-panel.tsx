@@ -58,6 +58,17 @@ function proposalGateLabel(status?: string) {
   return labels[status || "not_evaluated"] || status || labels.not_evaluated;
 }
 
+function answerSummary(item: Record<string, number | string>) {
+  const total = [1, 2, 3, 4, 5].reduce((sum, key) => sum + Number(item[String(key)] || 0), 0);
+  const positive = Number(item["4"] || 0) + Number(item["5"] || 0);
+  const rawQuestion = String(item.question || "-");
+  return {
+    label: /^q/i.test(rawQuestion) ? rawQuestion.toUpperCase() : `Q${rawQuestion}`,
+    total,
+    percent: total ? Math.round((positive / total) * 100) : 0,
+  };
+}
+
 const proposalContextFields = [
   ["organizationName", "Nama organisasi"],
   ["problemOrNeed", "Masalah / kebutuhan"],
@@ -128,6 +139,12 @@ export function AssessmentPanel({
   const [proposalNotes, setProposalNotes] = useState("");
   const [proposalContext, setProposalContext] = useState<ProposalContext>(emptyProposalContext);
   const [approvalNotes, setApprovalNotes] = useState<Record<string, string>>({});
+  const [distributionGroup, setDistributionGroup] = useState(0);
+  const distributionGroups = Array.from(
+    { length: Math.ceil(data.answerDistribution.length / 7) },
+    (_, index) => data.answerDistribution.slice(index * 7, index * 7 + 7),
+  );
+  const visibleDistribution = distributionGroups[distributionGroup] || distributionGroups[0] || [];
 
   const requestAssessmentDocument = async (record: AssessmentRecord, type: AssessmentDocumentType) => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -447,25 +464,56 @@ export function AssessmentPanel({
         ))}
       </div>
 
-      <Panel title="Distribusi Jawaban Q1-Q49" action="Likert 1-5">
-        <div className="grid grid-cols-7 gap-1 md:grid-cols-[repeat(14,minmax(0,1fr))] xl:grid-cols-[repeat(49,minmax(0,1fr))]">
-          {data.answerDistribution.map((item) => {
-            const total = [1, 2, 3, 4, 5].reduce((sum, key) => sum + Number(item[String(key)] || 0), 0);
-            const positive = Number(item["4"] || 0) + Number(item["5"] || 0);
-            const percent = total ? Math.round((positive / total) * 100) : 0;
-            return (
-              <div key={String(item.question)} className="h-20 rounded-[6px] bg-[#EDF1F6] p-1">
-                <div className="flex h-full items-end">
-                  <div
-                    className="w-full rounded-[4px] bg-[#0B2C6B]"
-                    style={{ height: `${Math.max(percent, 4)}%` }}
-                    title={`${item.question}: ${percent}% setuju/sangat setuju`}
-                  />
-                </div>
+      <Panel title="Distribusi jawaban" action="Persentase jawaban 4–5">
+        {data.answerDistribution.length === 0 ? (
+          <EmptyState title="Belum ada distribusi jawaban" description="Grafik akan muncul setelah assessment pertama berhasil disubmit." />
+        ) : (
+          <>
+            <div className="md:hidden">
+              <label className="block text-xs font-semibold text-slate-700">
+                Rentang pertanyaan
+                <select value={distributionGroup} onChange={(event) => setDistributionGroup(Number(event.target.value))} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 text-sm">
+                  {distributionGroups.map((group, index) => {
+                    const first = answerSummary(group[0]).label;
+                    const last = answerSummary(group[group.length - 1]).label;
+                    return <option key={first} value={index}>{first}–{last}</option>;
+                  })}
+                </select>
+              </label>
+              <div className="mt-4 divide-y divide-slate-100 border-y border-slate-200">
+                {visibleDistribution.map((item) => {
+                  const summary = answerSummary(item);
+                  return (
+                    <div key={String(item.question)} className="grid grid-cols-[2.5rem_minmax(0,1fr)_3.25rem] items-center gap-3 py-3">
+                      <span className="text-xs font-bold text-blue-950">{summary.label}</span>
+                      <div className="h-2.5 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${summary.label}: ${summary.percent}% menjawab 4 atau 5`}>
+                        <div className="h-full rounded-full bg-blue-900" style={{ width: `${summary.percent}%` }} />
+                      </div>
+                      <span className="text-right text-xs font-bold tabular-nums text-blue-950">{summary.percent}%</span>
+                      <span className="col-start-2 col-end-4 -mt-2 text-[10px] text-slate-500">{summary.total} respons</span>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">Pilih rentang lain untuk melihat seluruh Q1–Q49.</p>
+            </div>
+
+            <div className="hidden grid-cols-7 gap-2 md:grid xl:grid-cols-14">
+              {data.answerDistribution.map((item) => {
+                const summary = answerSummary(item);
+                return (
+                  <div key={String(item.question)} className="border border-slate-200 bg-slate-50 px-2 py-3 text-center">
+                    <div className="flex h-16 items-end rounded-md bg-slate-100 p-1" role="img" aria-label={`${summary.label}: ${summary.percent}% menjawab 4 atau 5`}>
+                      <div className="w-full rounded-sm bg-blue-900" style={{ height: `${Math.max(summary.percent, 3)}%` }} />
+                    </div>
+                    <p className="mt-2 text-[10px] font-bold text-slate-500">{summary.label}</p>
+                    <p className="mt-0.5 text-xs font-bold tabular-nums text-blue-950">{summary.percent}%</p>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </Panel>
 
       <div className="overflow-x-auto rounded-[8px] border border-black/[0.06] bg-white">

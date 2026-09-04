@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BarChart3, CalendarPlus, Check, ExternalLink, Eye, KeyRound, MessageSquare, Send, StickyNote, Trash2, Archive, Pencil, UserRound } from "lucide-react";
+import { ArrowLeft, BarChart3, CalendarPlus, Check, ExternalLink, Eye, KeyRound, MessageSquare, Send, StickyNote, Trash2, Pencil, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { useEngagements, useEvidence } from "@/hooks/use-transformation-data";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
@@ -16,20 +16,6 @@ import { ProgramShareCard } from "@/components/program-share-card";
 import { programAccessPath } from "@/lib/program-access-link";
 import { PROGRAM_MODULE_KEYS, PROGRAM_MODULE_META, type ProgramModuleKey } from "@/lib/program-modules";
 
-const STATUS_ORDER = ["draft", "active", "in_progress", "review", "completed", "archived"] as const;
-type ProgramStatus = typeof STATUS_ORDER[number];
-const STATUS_LABELS: Record<ProgramStatus, string> = {
-  draft: "Draf", active: "Aktif", in_progress: "Berjalan", review: "Ditinjau", completed: "Selesai", archived: "Diarsipkan",
-};
-const STATUS_FLOW: Record<ProgramStatus, ProgramStatus[]> = {
-  draft: ["active"],
-  active: ["in_progress"],
-  in_progress: ["review", "active"],
-  review: ["completed", "in_progress"],
-  completed: ["archived"],
-  archived: [],
-};
-
 function ManageEngagementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,23 +24,15 @@ function ManageEngagementContent() {
   const { evidence } = useEvidence(id ? { engagement_id: id } : {});
 
   const engagement = useMemo(() => engagements.find((e) => e.id === id) || null, [engagements, id]);
-  const [transitioning, setTransitioning] = useState(false);
-  const [confirmStatus, setConfirmStatus] = useState<ProgramStatus | null>(null);
   const [notes, setNotes] = useState<Array<{ id: string; content: string; author_id: string; created_at: string; author?: { email: string } }>>([]);
   const [newNote, setNewNote] = useState("");
   const [sendingNote, setSendingNote] = useState(false);
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [confirmArchive, setConfirmArchive] = useState(false);
-  const [archiving, setArchiving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletingProgram, setDeletingProgram] = useState(false);
   const [enabledModules, setEnabledModules] = useState<ProgramModuleKey[]>([]);
   const [savingModules, setSavingModules] = useState(false);
-
-  const programStatus = engagement?.status as ProgramStatus | undefined;
-  const currentIndex = programStatus ? STATUS_ORDER.indexOf(programStatus) : -1;
-  const nextStates = programStatus ? STATUS_FLOW[programStatus] || [] : [];
 
   const fetchNotes = useCallback(async () => {
     if (!id) return;
@@ -179,49 +157,9 @@ function ManageEngagementContent() {
     setDeletingNoteId(null);
   };
 
-  const handleStatusChange = async (newStatus: ProgramStatus) => {
-    if (!engagement) return;
-    setTransitioning(true);
-    try {
-      await fetch(`/api/engagements/${engagement.id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      toast.success("Status program diperbarui");
-      window.location.reload();
-    } catch {
-      toast.error("Gagal memperbarui status");
-      setTransitioning(false);
-    }
-  };
-
   const handleEditProgram = async () => {
     if (!engagement) return;
     setShowEditModal(true);
-  };
-
-  const handleArchiveProgram = async () => {
-    if (!engagement) return;
-    setArchiving(true);
-    try {
-      const response = await fetch(`/api/engagements/${engagement.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "archived" }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.success) {
-        toast.error(result.error || "Gagal mengarsipkan program.");
-        return;
-      }
-      toast.success("Program diarsipkan");
-      window.location.reload();
-    } catch {
-      toast.error("Gagal mengarsipkan program.");
-    } finally {
-      setArchiving(false);
-    }
   };
 
   const handleDeleteProgram = async () => {
@@ -270,11 +208,6 @@ function ManageEngagementContent() {
               </div>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => void handleEditProgram()} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700"><Pencil size={14} /> Kelola</button>
-                {engagement.status !== "archived" && (
-                  <button type="button" onClick={() => setConfirmArchive(true)} disabled={archiving} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50">
-                    <Archive size={14} /> Arsipkan
-                  </button>
-                )}
                 <button type="button" onClick={() => setConfirmDelete(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold text-red-700 hover:bg-red-50"><Trash2 size={14} /> Hapus</button>
                 <StatusPill status={engagement.status} />
               </div>
@@ -300,33 +233,6 @@ function ManageEngagementContent() {
               </Link>
             </fieldset>
 
-            <div className="mt-5">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#D9A441]">Transisi Status</p>
-              <ol className="mt-4 grid grid-cols-6" aria-label="Tahapan status program">
-                {STATUS_ORDER.map((status, index) => {
-                  const passed = index < currentIndex;
-                  const current = index === currentIndex;
-                  return <li key={status} className="relative flex min-w-0 flex-col items-center text-center">
-                    {index > 0 && <span className={`absolute right-1/2 top-4 h-0.5 w-full ${index <= currentIndex ? "bg-blue-900" : "bg-slate-200"}`} aria-hidden="true" />}
-                    <span className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${passed ? "bg-blue-900 text-white" : current ? "bg-amber-500 text-slate-900 ring-4 ring-amber-100" : "border-2 border-slate-300 bg-white text-slate-400"}`} aria-current={current ? "step" : undefined}>{passed ? <Check className="h-4 w-4" /> : index + 1}</span>
-                    <span className={`mt-3 max-w-full break-words text-[9px] leading-3 sm:text-[10px] ${current ? "font-bold text-amber-600" : passed ? "font-semibold text-blue-900" : "font-medium text-slate-400"}`}>{STATUS_LABELS[status]}</span>
-                  </li>;
-                })}
-              </ol>
-            </div>
-
-            {nextStates.length > 0 && (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {nextStates.map((ns) => (
-                  <button key={ns} type="button"
-                    onClick={() => ns === "archived" ? setConfirmStatus(ns) : handleStatusChange(ns)}
-                    disabled={transitioning}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B2C6B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0A255A] disabled:opacity-50">
-                    Pindah ke {STATUS_LABELS[ns]} <ArrowRight size={16} />
-                  </button>
-                ))}
-              </div>
-            )}
           </section>
 
         </div>
@@ -406,16 +312,6 @@ function ManageEngagementContent() {
       </div>
 
       <ConfirmDialog
-        open={!!confirmStatus}
-        onClose={() => setConfirmStatus(null)}
-        onConfirm={() => { if (confirmStatus) handleStatusChange(confirmStatus); }}
-        title="Arsipkan Program?"
-        description="Program yang diarsipkan tidak akan muncul di daftar aktif. Tindakan ini tidak dapat dibatalkan."
-        confirmLabel="Ya, Arsipkan"
-        variant="danger"
-      />
-
-      <ConfirmDialog
         open={!!deletingNoteId}
         onClose={() => setDeletingNoteId(null)}
         onConfirm={() => deletingNoteId && void handleDeleteNote(deletingNoteId)}
@@ -423,17 +319,6 @@ function ManageEngagementContent() {
         description="Catatan internal akan dihapus secara permanen."
         confirmLabel="Hapus"
         variant="danger"
-      />
-
-      <ConfirmDialog
-        open={confirmArchive}
-        onClose={() => setConfirmArchive(false)}
-        onConfirm={handleArchiveProgram}
-        title="Arsipkan Program?"
-        description="Program yang diarsipkan tidak muncul di daftar program aktif. Data observasi tetap dipertahankan."
-        confirmLabel="Ya, Arsipkan"
-        variant="warning"
-        loading={archiving}
       />
 
       <ConfirmDialog

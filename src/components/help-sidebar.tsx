@@ -78,24 +78,93 @@ const HELP_TIPS: Record<string, string[]> = {
     "Arsipkan program yang sudah selesai.",
   ],
   "/admin/programs": [
-    "Cari program menggunakan nama atau kode akses.",
-    "Gunakan filter status untuk memisahkan program aktif, selesai, dan arsip.",
-    "Bagikan tautan dan kode hanya kepada peserta program.",
+    "Gunakan Buat Program untuk menyiapkan identitas, periode, kapasitas, dan modul. Program draf belum dapat diakses peserta.",
+    "Status Aktif berubah otomatis menjadi Berjalan pada tanggal mulai, lalu menjadi Ditinjau setelah tanggal selesai.",
+    "Pintasan status pada kartu dipakai hanya untuk pengecualian; Kelola membuka detail, Bagikan menampilkan tautan dan QR, dan ikon hapus menghapus data yang belum memiliki histori.",
   ],
   "/admin/engagements/manage": [
     "Pastikan modul yang disepakati sudah aktif sebelum program dimulai.",
-    "Ubah status mengikuti urutan tahapan program.",
-    "Arsipkan program selesai untuk mempertahankan seluruh riwayat datanya.",
-  ],
-  "/admin/lep": [
-    "Tambahkan seluruh pemateri sebelum peserta mengisi evaluasi.",
-    "Skala grafik LEP selalu 1 sampai 4.",
-    "Gunakan export CSV untuk analisis lanjutan.",
+    "Kelola mengubah identitas, jadwal, lokasi, dan kapasitas; perubahan status tersedia sebagai pintasan pada daftar Program.",
+    "Gunakan halaman tes, kode peserta, dan tautan masuk sesuai kebutuhan program.",
   ],
   "/admin/rbac": [
     "Matriks izin menunjukkan akses per role.",
     "Role ditentukan oleh Supabase Auth metadata.",
     "Izin bersifat derived, tidak bisa diubah manual.",
+  ],
+  "/admin/dashboard": [
+    "Mulai dari kartu prioritas untuk melihat pekerjaan yang paling membutuhkan perhatian hari ini.",
+    "Klik kartu atau tautan rincian untuk berpindah ke area kerja terkait; tombol Perbarui mengambil data terbaru.",
+    "Angka pada dashboard adalah ringkasan, bukan tombol perubahan data.",
+  ],
+  "/admin/acquisition": [
+    "Source menentukan asal prospek, campaign mengatur aktivitas akuisisi, dan batch mengelompokkan data yang akan ditinjau.",
+    "Preview tidak mengubah lead. Promote membuat lead hanya setelah data lolos review dan approval.",
+    "Pause dipakai untuk menghentikan sumber atau campaign tanpa menghapus riwayat.",
+  ],
+  "/admin/pipeline": [
+    "Setiap kartu adalah satu peluang. Owner adalah penanggung jawab dan Next action adalah langkah konkret berikutnya.",
+    "Gunakan Edit untuk melengkapi owner, nilai, tenggat, dan tindakan; pindahkan tahap hanya setelah syarat tahap terpenuhi.",
+    "Label outreach dijeda berarti pesan otomatis tidak boleh dikirim sampai kondisi penghentian diselesaikan.",
+  ],
+  "/admin/assessments": [
+    "Ringkasan menunjukkan hasil diagnostik; klik baris klien untuk membuka skor dimensi, analisis, dokumen, dan tindak lanjut.",
+    "Kirim result mengirim ulang hasil, Minta proposal mencatat minat, Siapkan draft menyusun proposal, dan Kirim proposal tetap memerlukan human gate.",
+    "Filter dan kartu metrik mempersempit daftar; CSV mengunduh hasil yang sedang tampil.",
+  ],
+  "/admin/meetings": [
+    "Halaman ini membaca siklus booking Cal.com: dibuat, dijadwal ulang, dibatalkan, selesai, atau no-show.",
+    "Gunakan pencarian dan filter untuk menemukan booking; perubahan jadwal tetap dilakukan melalui Cal.com.",
+  ],
+  "/admin/contacts": [
+    "Kontak menggabungkan identitas orang dengan status hubungannya terhadap BinaHub.",
+    "Gunakan Edit untuk memperbaiki data dan status; jangan membuat kontak kedua untuk email yang sama.",
+  ],
+  "/admin/inquiries": [
+    "Inquiry adalah pertanyaan masuk yang belum tentu menjadi peluang penjualan.",
+    "Tetapkan owner dan tindakan berikutnya sebelum mengubah status agar inquiry tidak kehilangan tindak lanjut.",
+  ],
+  "/admin/clients": [
+    "Pilih klien di daftar, lalu kelola stakeholder, proyek, milestone, kesehatan akun, dan peluang lanjutan pada panel kanan.",
+    "Serahkan mengubah deal won menjadi akun klien dan proyek awal; Tinjau menyimpan health review; Tambah membuat item baru pada bagian terkait.",
+    "Status berisiko wajib memiliki alasan, owner, tindakan berikutnya, dan tenggat.",
+  ],
+  "/admin/operations": [
+    "Tugas operasional menampung pekerjaan manusia yang lahir dari risiko, keterlambatan, atau pengecualian sistem.",
+    "Assign menetapkan owner, Mulai mengubah ke dikerjakan, dan Selesaikan wajib disertai catatan resolusi.",
+  ],
+  "/admin/automation": [
+    "Halaman ini memantau antrean dan hasil otomasi; bukan tempat mengaktifkan production live secara langsung.",
+    "Retry hanya untuk run gagal yang aman diulang. Pause menghentikan proses baru tanpa menghapus audit sebelumnya.",
+  ],
+  "/admin/catalog": [
+    "Produk adalah paket komersial yang dilihat calon pembeli; modul adalah komponen layanan beserta scope, deliverable, dan harga.",
+    "Buat produk lebih dahulu, lalu tambahkan satu atau beberapa modul ke produk tersebut.",
+    "Tampil ke publik hanya diaktifkan untuk item siap, non-mock, dan sudah disetujui owner bisnis.",
+  ],
+  "/admin/programs/tests": [
+    "Pilih program dan jenis tes dahulu. Pertanyaan adalah editor soal, Respons berisi hasil peserta, dan Pengaturan mengatur publikasi serta aturan pengerjaan.",
+    "Pratinjau peserta tidak menyimpan jawaban. Publikasikan membuka tes, sedangkan Tutup respons menghentikan submission baru.",
+    "Setelah respons pertama masuk, struktur soal dikunci untuk menjaga integritas hasil.",
+  ],
+  "/admin/lep": [
+    "Pilih program untuk mengelola pemateri dan membaca evaluasi peserta pada konteks program yang benar.",
+    "Tambah pemateri dilakukan sebelum form dibagikan; CSV digunakan untuk analisis lanjutan.",
+    "Jika belum ada respons, bagikan tautan LEP kepada peserta setelah program selesai.",
+  ],
+  "/admin/users": [
+    "Daftar ini mengelola siapa yang dapat masuk dan peran utama mereka.",
+    "Mengubah role berdampak pada akses menu dan data; nonaktifkan akun untuk mencabut akses tanpa menghapus histori.",
+  ],
+  "/admin/settings": [
+    "Pengaturan Bisnis menyimpan batas transaksi, owner/backup, approver/delegasi, serta SLA risiko tanpa perubahan kode.",
+    "Simpan hanya bagian yang telah disetujui. Owner dan backup harus berbeda agar eskalasi tetap berfungsi.",
+    "Switch pilot/live dan aturan yang belum disetujui harus tetap nonaktif.",
+  ],
+  "/admin/tbos": [
+    "Pilih program dan batch sebelum membaca ringkasan observasi tim.",
+    "Tab mengubah sudut analisis, sedangkan PDF Grup dan Data CSV mengunduh hasil pada konteks yang sedang dipilih.",
+    "Tambah Tim dan Tugaskan Fasilitator menyiapkan struktur pelaksanaan sebelum observasi dimulai.",
   ],
 };
 

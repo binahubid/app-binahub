@@ -20,14 +20,31 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json();
 }
 
+function fetchEngagements() {
+  return apiFetch<{ success: boolean; engagements: Engagement[] }>("/api/engagements");
+}
+
 export function useEngagements() {
   const [engagements, setEngagements] = useState<Engagement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetchEngagements();
+      setEngagements(res.engagements || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load engagements");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let alive = true;
-    apiFetch<{ success: boolean; engagements: Engagement[] }>("/api/engagements")
+    fetchEngagements()
       .then((res) => {
         if (alive) {
           setEngagements(res.engagements || []);
@@ -43,7 +60,7 @@ export function useEngagements() {
     return () => { alive = false; };
   }, []);
 
-  return { engagements, loading, error };
+  return { engagements, loading, error, refetch };
 }
 
 export function useEngagement(id: string | null) {

@@ -22,6 +22,8 @@ Deployment `app-binahub v0.18.2` dikonfirmasi selesai oleh operator pada 3 Septe
 
 Gate A lulus dan Gate B lulus dengan temuan pada 4 September 2026. Remediasi temuan disiapkan pada `app-binahub v0.18.3` dan `binahub-api v0.18.1`: panduan kontekstual, status program terjadwal, pintasan status, percepatan navigasi, distribusi assessment mobile, dan header admin fixed. Deployment serta verifikasi ulang masih diperlukan sebelum Gate C.
 
+Gate C dikonfirmasi lulus oleh operator pada 4 September 2026, termasuk validasi owner dan backup tidak boleh sama. Mismatch kontrak modul Gate D sudah lulus setelah `binahub-api v0.18.2`. Temuan pengalaman peserta dan assessment dari 5 September ditangani pada `app-binahub v0.19.0`, `binahub-api v0.19.0`, dan migration `0040_program_assessment_finishing.sql`; Gate D langkah akses/QR dan Gate E perlu diverifikasi ulang setelah deployment.
+
 Peta rute dan aturan pengembangan selanjutnya dicatat di `ADMIN-INFORMATION-ARCHITECTURE.md`.
 
 ## Acceptance fitur Fase 14
@@ -41,6 +43,8 @@ Peta rute dan aturan pengembangan selanjutnya dicatat di `ADMIN-INFORMATION-ARCH
 - [x] Pastikan navigasi operasional tidak menampilkan instruksi developer, status fase, atau prosedur pengujian internal.
 - [x] Tutup masalah hierarchy global, overflow, focus, keyboard navigation, loading, error, not-found, dan responsive shell.
 - [x] Kurasi editor Pre-test/Post-test dan gunakan renderer yang sama untuk preview admin serta halaman peserta.
+- [ ] Deploy migration `0040`, API `v0.19.0`, dan app `v0.19.0`, lalu ulangi acceptance Gate D akses/QR dan seluruh Gate E.
+- [ ] Verifikasi dua format unduhan kode peserta, QR autofill, batch-save soal, completion satu-kali, nama/benar-salah respons, ekspor CSV/PDF, dan BinaInsight program terpisah.
 - [ ] Jalankan acceptance isi, empty state, confirmation, dan destructive action dengan data production pada setiap modul bisnis.
 - Selesaikan penyempurnaan visual assessment publik, laporan PDF, katalog publik, dan halaman program berdasarkan hasil penggunaan nyata.
 

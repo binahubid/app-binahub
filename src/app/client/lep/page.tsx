@@ -12,7 +12,7 @@ import { programAccessPath } from "@/lib/program-access-link";
 interface ProgramData {
   program: ClientProgramSummary;
   participant: { id: string; name: string };
-  modules: Array<{ key: "lep" | "tbos" | "binainsight"; enabled: boolean }>;
+  modules: Array<{ key: "lep" | "tbos" | "binainsight" | "pre_test" | "post_test"; enabled: boolean }>;
 }
 
 export default function ClientLepPage() {
@@ -21,7 +21,13 @@ export default function ClientLepPage() {
 
   useEffect(() => {
     let active = true;
-    void supabase.auth.getSession().then(async ({ data: sessionData }) => {
+    void Promise.resolve().then(() => {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem("binahub:client-program") || "null") as ProgramData | null;
+        if (cached?.modules.some((module) => module.key === "lep" && module.enabled)) setData(cached);
+      } catch { /* cache opsional */ }
+      return supabase.auth.getSession();
+    }).then(async ({ data: sessionData }) => {
       const token = sessionData.session?.access_token;
       if (!token) throw new Error("Sesi program tidak tersedia.");
       const response = await fetch("/api/client/program", { headers: { Authorization: `Bearer ${token}` } });
@@ -30,7 +36,10 @@ export default function ClientLepPage() {
       if (!result.modules?.some((module: { key: string; enabled: boolean }) => module.key === "lep" && module.enabled)) {
         throw new Error("Modul LEP tidak aktif untuk program ini.");
       }
-      if (active) setData(result);
+      if (active) {
+        setData(result);
+        sessionStorage.setItem("binahub:client-program", JSON.stringify(result));
+      }
     }).catch((failure) => {
       if (active) setError(failure instanceof Error ? failure.message : "Gagal memuat program.");
     });

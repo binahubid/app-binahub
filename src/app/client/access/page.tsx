@@ -15,7 +15,7 @@ interface ProgramPreview {
   status: string;
   startDate: string | null;
   endDate: string | null;
-  modules: Array<"tbos" | "lep" | "binainsight">;
+  modules: Array<"tbos" | "lep" | "binainsight" | "pre_test" | "post_test">;
   available: boolean;
 }
 
@@ -46,8 +46,11 @@ export default function ClientAccessPage() {
   useEffect(() => {
     let active = true;
     void Promise.resolve().then(() => {
-      const linkedProgramId = new URLSearchParams(window.location.search).get("program") || "";
+      const query = new URLSearchParams(window.location.search);
+      const linkedProgramId = query.get("program") || "";
+      const linkedCode = query.get("code")?.trim().toUpperCase() || "";
       setProgramId(linkedProgramId);
+      if (linkedCode) setCode(linkedCode);
 
       if (!linkedProgramId) {
         setPreviewLoading(false);
@@ -141,15 +144,63 @@ export default function ClientAccessPage() {
   const saveParticipantCodeFile = () => {
     if (!pendingRegistration?.participantCode) return;
     const blob = new Blob([
-      `Kode Peserta BinaHub\n\n${pendingRegistration.participantCode}\n\nSimpan kode ini seperti kata sandi. Gunakan menu Sudah Terdaftar untuk masuk kembali.`,
+      `Kode Peserta BinaHub\n\nPerusahaan: ${program?.companyName || "-"}\nProgram: ${program?.title || "-"}\nKode peserta: ${pendingRegistration.participantCode}\n\nSimpan kode ini seperti kata sandi. Gunakan menu Sudah Terdaftar untuk masuk kembali.`,
     ], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "kode-peserta-binahub.txt";
+    anchor.download = `kode-peserta-${(program?.title || "binahub").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48)}.txt`;
     anchor.click();
     URL.revokeObjectURL(url);
     setParticipantCodeSaved(true);
+  };
+
+  const saveParticipantCodeImage = () => {
+    if (!pendingRegistration?.participantCode) return;
+    const generatedCode = pendingRegistration.participantCode;
+    const logo = new window.Image();
+    logo.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1200;
+      canvas.height = 720;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.fillStyle = "#F4F6F9";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = "#FFFFFF";
+      context.fillRect(70, 70, 1060, 580);
+      context.fillStyle = "#0B2C6B";
+      context.fillRect(70, 70, 18, 580);
+      context.drawImage(logo, 130, 120, 220, 62);
+      context.fillStyle = "#B7791F";
+      context.font = "700 20px Arial, sans-serif";
+      context.fillText("AKSES PESERTA PROGRAM", 130, 235);
+      context.fillStyle = "#0F172A";
+      context.font = "700 34px Arial, sans-serif";
+      context.fillText((program?.companyName || "Perusahaan").slice(0, 48), 130, 292);
+      context.fillStyle = "#475569";
+      context.font = "500 25px Arial, sans-serif";
+      context.fillText((program?.title || "Program BinaHub").slice(0, 64), 130, 338);
+      context.fillStyle = "#E8EEF7";
+      context.fillRect(130, 392, 940, 132);
+      context.fillStyle = "#64748B";
+      context.font = "700 17px Arial, sans-serif";
+      context.fillText("KODE PESERTA", 170, 432);
+      context.fillStyle = "#0B2C6B";
+      context.font = "700 50px 'Courier New', monospace";
+      context.fillText(generatedCode, 170, 492);
+      context.fillStyle = "#64748B";
+      context.font = "400 18px Arial, sans-serif";
+      context.fillText("Simpan secara pribadi. Gunakan kode ini untuk masuk kembali ke program.", 130, 585);
+      const anchor = document.createElement("a");
+      anchor.href = canvas.toDataURL("image/png");
+      anchor.download = `kode-peserta-${(program?.title || "binahub").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48)}.png`;
+      anchor.click();
+      setParticipantCodeSaved(true);
+      toast.success("Gambar kode peserta diunduh.");
+    };
+    logo.onerror = () => toast.error("Logo belum dapat dimuat. Gunakan unduhan teks terlebih dahulu.");
+    logo.src = "/full-logo.png";
   };
 
   const copyParticipantCode = async () => {
@@ -197,6 +248,8 @@ export default function ClientAccessPage() {
                       {program.modules.includes("lep") && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold"><ClipboardCheck className="h-3.5 w-3.5 text-amber-400" /> LEP · Evaluasi Program</span>}
                       {program.modules.includes("tbos") && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold"><Gamepad2 className="h-3.5 w-3.5 text-amber-400" /> T-BOS · Observasi Perilaku</span>}
                       {program.modules.includes("binainsight") && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold"><BarChart3 className="h-3.5 w-3.5 text-amber-400" /> BinaInsight · Diagnostik Performa</span>}
+                      {program.modules.includes("pre_test") && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold"><ClipboardCheck className="h-3.5 w-3.5 text-amber-400" /> Pre-test</span>}
+                      {program.modules.includes("post_test") && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold"><ClipboardCheck className="h-3.5 w-3.5 text-amber-400" /> Post-test</span>}
                     </div>
                   </div>
                 )}
@@ -251,9 +304,10 @@ export default function ClientAccessPage() {
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700">Kode Peserta</p>
             <p className="mt-2 font-mono text-2xl font-black tracking-[0.12em] text-slate-900">{pendingRegistration.participantCode}</p>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <button type="button" onClick={() => { void copyParticipantCode(); }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 text-xs font-bold text-blue-900"><Copy className="h-4 w-4" /> Salin kode</button>
-            <button type="button" onClick={saveParticipantCodeFile} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 text-xs font-bold text-blue-900"><Download className="h-4 w-4" /> Unduh kode</button>
+            <button type="button" onClick={saveParticipantCodeFile} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 text-xs font-bold text-blue-900"><Download className="h-4 w-4" /> Unduh TXT</button>
+            <button type="button" onClick={saveParticipantCodeImage} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 text-xs font-bold text-blue-900"><Download className="h-4 w-4" /> Unduh PNG</button>
           </div>
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-700"><input type="checkbox" checked={participantCodeSaved} onChange={(event) => setParticipantCodeSaved(event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-900" /> Saya sudah menyimpan kode peserta ini.</label>
           <button type="button" disabled={!participantCodeSaved || loading} onClick={() => { setLoading(true); void finishAccess(pendingRegistration).catch((failure) => { const message = failure instanceof Error ? failure.message : "Gagal membuka program."; setError(message); toast.error(message); }).finally(() => setLoading(false)); }} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-900 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">Masuk ke program <ArrowRight className="h-4 w-4" /></button>

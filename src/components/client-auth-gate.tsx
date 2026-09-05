@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { fetchAuthenticatedRole } from "@/lib/authenticated-role";
 import { isRole, roleHome } from "@/lib/roles";
 
+let verifiedClient: { userId: string; expiresAt: number } | null = null;
+
 export function ClientAuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [allowed, setAllowed] = useState(false);
@@ -20,6 +22,11 @@ export function ClientAuthGate({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      if (verifiedClient?.userId === session.user.id && verifiedClient.expiresAt > Date.now()) {
+        if (alive) setAllowed(true);
+        return;
+      }
+
       try {
         const result = await fetchAuthenticatedRole(session.access_token);
         const role = result.ok ? result.role : null;
@@ -29,6 +36,7 @@ export function ClientAuthGate({ children }: { children: React.ReactNode }) {
           return;
         }
 
+        verifiedClient = { userId: session.user.id, expiresAt: Date.now() + 5 * 60_000 };
         if (alive) setAllowed(true);
       } catch {
         if (alive) router.replace("/");

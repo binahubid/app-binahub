@@ -46,7 +46,7 @@ import {
 } from "@/lib/program-questionnaire-editor";
 import { supabase } from "@/lib/supabase";
 
-type Kind = "pre_test" | "post_test";
+type Kind = "pre_test" | "post_test" | "binainsight";
 type WorkspaceTab = "questions" | "responses" | "settings";
 type QuestionnaireStatus = "draft" | "published" | "archived";
 
@@ -96,6 +96,8 @@ type Questionnaire = {
     percentage: number | null;
     attempt_number: number;
     submitted_at: string;
+    participant?: { name: string; email: string | null } | Array<{ name: string; email: string | null }> | null;
+    evaluations?: Array<{ questionId: string; scored: boolean; correct: boolean | null; awardedPoints: number; maximumPoints: number }>;
   }>;
 };
 
@@ -132,12 +134,34 @@ function questionnaireMeta(questionnaire: Questionnaire | null, kind: Kind, prog
     };
   }
   return {
-    title: kind === "pre_test" ? `Pre-test ${programTitle || "program"}` : `Post-test ${programTitle || "program"}`,
+    title: kind === "pre_test" ? `Pre-test ${programTitle || "program"}` : kind === "post_test" ? `Post-test ${programTitle || "program"}` : `BinaInsight ${programTitle || "program"}`,
     description: "",
     instructions: "Jawab seluruh pertanyaan dengan teliti.",
     passingScore: "",
     allowRetake: false,
     shuffleQuestions: false,
+  };
+}
+
+function kindLabel(kind: Kind) {
+  return kind === "pre_test" ? "Pre-test" : kind === "post_test" ? "Post-test" : "BinaInsight Program";
+}
+
+function localQuestionFromDraft(draft: QuestionDraft, position: number): ScoredProgramQuestion {
+  const payload = draftToQuestionPayload(draft, position);
+  return {
+    id: draft.id || `local-${crypto.randomUUID()}`,
+    position,
+    question_type: payload.questionType,
+    prompt: payload.prompt,
+    help_text: payload.helpText || null,
+    required: payload.required,
+    options: payload.options,
+    correct_answer: payload.correctAnswer ?? null,
+    points: payload.points,
+    scale_min: payload.scaleMin ?? null,
+    scale_max: payload.scaleMax ?? null,
+    scale_labels: payload.scaleLabels,
   };
 }
 
@@ -279,9 +303,11 @@ function QuestionEditorDialog({
             </section>
           )}
 
-          {["short_text", "long_text", "number"].includes(draft.questionType) && (
-            <label className="block text-xs font-bold text-slate-700">Kunci jawaban <span className="font-normal text-slate-400">(opsional; kosong berarti tidak dinilai otomatis)</span><input type={draft.questionType === "number" ? "number" : "text"} value={draft.correctAnswers[0] || ""} maxLength={2000} onChange={(event) => onChange({ ...draft, correctAnswers: event.target.value ? [event.target.value] : [] })} className="mt-2 min-h-11 w-full border border-slate-300 px-3 text-sm font-normal" /></label>
+          {draft.questionType === "number" && (
+            <label className="block text-xs font-bold text-slate-700">Kunci jawaban angka <span className="font-normal text-slate-400">(opsional; nilai numerik ekuivalen dianggap sama)</span><input type="number" value={draft.correctAnswers[0] || ""} maxLength={2000} onChange={(event) => onChange({ ...draft, correctAnswers: event.target.value ? [event.target.value] : [] })} className="mt-2 min-h-11 w-full border border-slate-300 px-3 text-sm font-normal" /></label>
           )}
+
+          {(draft.questionType === "short_text" || draft.questionType === "long_text") && <p className="border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">Jawaban teks bersifat terbuka dan tidak dinilai otomatis agar variasi bahasa peserta tidak dihukum secara tidak adil.</p>}
 
           <section className="grid gap-4 border-t border-slate-200 pt-5 sm:grid-cols-2">
             <label className="text-xs font-bold text-slate-700">Poin<input type="number" min="0" max="10000" value={draft.points} onChange={(event) => onChange({ ...draft, points: Number(event.target.value) })} className="mt-2 min-h-11 w-full border border-slate-300 px-3 text-sm font-normal" /></label>
@@ -373,6 +399,8 @@ function TestManagerContent() {
   const [error, setError] = useState("");
   const [meta, setMeta] = useState<QuestionnaireMeta>(() => questionnaireMeta(null, "pre_test", ""));
   const [metaDirty, setMetaDirty] = useState(false);
+  const [draftQuestions, setDraftQuestions] = useState<ScoredProgramQuestion[]>([]);
+  const [questionsDirty, setQuestionsDirty] = useState(false);
   const [questionDraft, setQuestionDraft] = useState<QuestionDraft | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [importPreview, setImportPreview] = useState<Array<Record<string, unknown>>>([]);
@@ -414,8 +442,6 @@ function TestManagerContent() {
       const loadedProgram = body.program as { id: string; code: string; title: string };
       setProgram(loadedProgram);
       setQuestionnaires(loadedQuestionnaires);
-      setMeta(questionnaireMeta(loadedQuestionnaires.find((item) => item.kind === kind) || null, kind, loadedProgram?.title || ""));
-      setMetaDirty(false);
       setQuestionDraft(null);
       setImportPreview([]);
     } catch (failure) {
@@ -423,14 +449,23 @@ function TestManagerContent() {
     } finally {
       setLoading(false);
     }
-  }, [kind, programId]);
+  }, [programId]);
 
   useEffect(() => { void Promise.resolve().then(load); }, [load]);
   const active = useMemo(() => questionnaires.find((item) => item.kind === kind) || null, [questionnaires, kind]);
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      setMeta(questionnaireMeta(active, kind, program?.title || ""));
+      setMetaDirty(false);
+      setDraftQuestions(active?.questions || []);
+      setQuestionsDirty(false);
+      setQuestionDraft(null);
+    });
+  }, [active, kind, program?.title]);
   const statistics = active?.statistics || EMPTY_STATISTICS;
   const responseCount = statistics.overall.submissionCount;
   const editingLocked = responseCount > 0;
-  const totalPoints = active ? totalQuestionnairePoints(active.questions) : 0;
+  const totalPoints = totalQuestionnairePoints(draftQuestions);
 
   const mutation = async (payload: Record<string, unknown>) => {
     const response = await fetch("/api/admin/program-questionnaires", {
@@ -468,7 +503,7 @@ function TestManagerContent() {
         allowRetake: meta.allowRetake,
         shuffleQuestions: meta.shuffleQuestions,
       });
-      toast.success(`${kind === "pre_test" ? "Pre-test" : "Post-test"} disimpan.`);
+      toast.success(`${kindLabel(kind)} disimpan.`);
       await load();
     } catch (failure) {
       toast.error(failure instanceof Error ? failure.message : "Gagal menyimpan test.");
@@ -481,59 +516,49 @@ function TestManagerContent() {
     if (!active || !questionDraft) return;
     const validation = validateQuestionDraft(questionDraft);
     if (validation) return;
-    setSaving(true);
-    try {
-      const position = questionDraft.id ? active.questions.find((item) => item.id === questionDraft.id)?.position || 1 : active.questions.length + 1;
-      await mutation({ action: "save_question", questionnaireId: active.id, question: draftToQuestionPayload(questionDraft, position) });
-      toast.success("Pertanyaan disimpan sebagai draf.");
-      setQuestionDraft(null);
-      await load();
-    } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : "Pertanyaan gagal disimpan.");
-    } finally {
-      setSaving(false);
-    }
+    const existingIndex = draftQuestions.findIndex((item) => item.id === questionDraft.id);
+    const position = existingIndex >= 0 ? existingIndex + 1 : draftQuestions.length + 1;
+    const nextQuestion = localQuestionFromDraft(questionDraft, position);
+    setDraftQuestions((current) => existingIndex >= 0
+      ? current.map((item, index) => index === existingIndex ? nextQuestion : item)
+      : [...current, nextQuestion]);
+    setQuestionsDirty(true);
+    setQuestionDraft(null);
+    toast.success("Pertanyaan ditambahkan ke draf. Simpan semua setelah susunan selesai.");
   };
 
-  const duplicateQuestion = async (question: ScoredProgramQuestion) => {
+  const duplicateQuestion = (question: ScoredProgramQuestion) => {
     if (!active || editingLocked) return;
-    setSaving(true);
-    try {
-      await mutation({ action: "save_question", questionnaireId: active.id, question: storedQuestionToPayload(question, active.questions.length + 1) });
-      toast.success("Salinan pertanyaan ditambahkan di bagian akhir.");
-      await load();
-    } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : "Pertanyaan tidak dapat diduplikasi.");
-    } finally {
-      setSaving(false);
-    }
+    setDraftQuestions((current) => [...current, { ...question, id: `local-${crypto.randomUUID()}`, position: current.length + 1 }]);
+    setQuestionsDirty(true);
+    toast.success("Salinan ditambahkan ke draf.");
   };
 
-  const reorderQuestion = async (questionId: string, direction: -1 | 1) => {
+  const reorderQuestion = (questionId: string, direction: -1 | 1) => {
     if (!active || editingLocked) return;
-    const reordered = moveQuestion(active.questions, questionId, direction);
-    if (reordered === active.questions) return;
-    setSaving(true);
-    try {
-      await mutation({ action: "replace_questions", questionnaireId: active.id, sourceFilename: null, sourceType: "manual_reorder", questions: reordered.map((question, index) => storedQuestionToPayload(question, index + 1)) });
-      toast.success("Urutan pertanyaan diperbarui.");
-      await load();
-    } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : "Urutan pertanyaan belum dapat disimpan.");
-    } finally {
-      setSaving(false);
-    }
+    const reordered = moveQuestion(draftQuestions, questionId, direction);
+    if (reordered === draftQuestions) return;
+    setDraftQuestions(reordered.map((question, index) => ({ ...question, position: index + 1 })));
+    setQuestionsDirty(true);
   };
 
-  const deleteQuestion = async (questionId: string) => {
-    if (!window.confirm("Hapus pertanyaan ini? Tindakan ini tidak dapat dibatalkan.")) return;
+  const deleteQuestion = (questionId: string) => {
+    if (!window.confirm("Hapus pertanyaan ini dari draf?")) return;
+    setDraftQuestions((current) => current.filter((question) => question.id !== questionId).map((question, index) => ({ ...question, position: index + 1 })));
+    setQuestionsDirty(true);
+  };
+
+  const saveAllQuestions = async () => {
+    if (!active || editingLocked) return;
+    const invalid = draftQuestions.map(questionToDraft).map(validateQuestionDraft).find(Boolean);
+    if (invalid) { toast.error(invalid); return; }
     setSaving(true);
     try {
-      await mutation({ action: "delete_question", questionId });
-      toast.success("Pertanyaan dihapus.");
+      await mutation({ action: "replace_questions", questionnaireId: active.id, sourceFilename: null, sourceType: "manual_batch", questions: draftQuestions.map((question, index) => storedQuestionToPayload(question, index + 1)) });
+      toast.success(`${draftQuestions.length} pertanyaan disimpan sekaligus.`);
       await load();
     } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : "Pertanyaan tidak dapat dihapus.");
+      toast.error(failure instanceof Error ? failure.message : "Draf pertanyaan belum dapat disimpan.");
     } finally {
       setSaving(false);
     }
@@ -576,8 +601,8 @@ function TestManagerContent() {
 
   const setStatus = async (status: QuestionnaireStatus) => {
     if (!active) return;
-    if (status === "published" && metaDirty) {
-      toast.error("Simpan perubahan pengaturan sebelum mempublikasikan.");
+    if (status === "published" && (metaDirty || questionsDirty)) {
+      toast.error("Simpan seluruh perubahan sebelum mempublikasikan.");
       setWorkspaceTab("settings");
       return;
     }
@@ -599,7 +624,7 @@ function TestManagerContent() {
       const text = Array.isArray(value) ? value.join(" | ") : value === null || value === undefined ? "" : String(value);
       return `"${text.replaceAll('"', '""')}"`;
     };
-    const headers = ["submitted_at", "attempt", "participant_id", "profile_id", "score", "maximum_score", "percentage", ...active.questions.map((question, index) => `Q${index + 1}: ${question.prompt}`)];
+    const headers = ["submitted_at", "respondent_name", "respondent_email", "attempt", "participant_id", "profile_id", "score", "maximum_score", "percentage", ...active.questions.flatMap((question, index) => [`Q${index + 1}: ${question.prompt}`, `Q${index + 1} status`])];
     const rows = active.submissions.map((submission) => {
       const answerMap = new Map<string, unknown>();
       if (Array.isArray(submission.answers)) {
@@ -610,13 +635,27 @@ function TestManagerContent() {
           }
         }
       }
-      return [submission.submitted_at, submission.attempt_number, submission.participant_id, submission.profile_id, submission.score, submission.maximum_score, submission.percentage, ...active.questions.map((question) => answerMap.get(question.id))].map(csvCell).join(",");
+      const participant = Array.isArray(submission.participant) ? submission.participant[0] : submission.participant;
+      const evaluations = new Map((submission.evaluations || []).map((item) => [item.questionId, item]));
+      return [submission.submitted_at, participant?.name, participant?.email, submission.attempt_number, submission.participant_id, submission.profile_id, submission.score, submission.maximum_score, submission.percentage, ...active.questions.flatMap((question) => {
+        const result = evaluations.get(question.id);
+        return [answerMap.get(question.id), result?.correct === true ? "Benar" : result?.correct === false ? "Salah" : "Tidak dinilai"];
+      })].map(csvCell).join(",");
     });
     const safeCode = (program.code || program.title || "program").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-|-$/g, "");
     downloadBlob(new Blob([`\uFEFF${[headers.map(csvCell).join(","), ...rows].join("\r\n")}`], { type: "text/csv;charset=utf-8" }), `${safeCode}-${kind}-responses.csv`);
   };
 
-  const confirmDiscard = () => !metaDirty || window.confirm("Perubahan pengaturan belum disimpan. Tetap berpindah?");
+  const downloadResponsesPdf = async () => {
+    if (!active) return;
+    try {
+      const response = await fetch(`/api/admin/program-questionnaires/export?questionnaireId=${encodeURIComponent(active.id)}`, { headers: { Authorization: `Bearer ${await token()}` } });
+      if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || "PDF belum dapat dibuat.");
+      downloadBlob(await response.blob(), `${program?.code || "program"}-${kind}-responses.pdf`);
+    } catch (failure) { toast.error(failure instanceof Error ? failure.message : "PDF belum dapat dibuat."); }
+  };
+
+  const confirmDiscard = () => !(metaDirty || questionsDirty) || window.confirm("Perubahan belum disimpan. Tetap berpindah?");
   const selectProgram = (nextProgramId: string) => {
     if (!confirmDiscard()) return;
     router.replace(nextProgramId ? `/admin/programs/tests?programId=${encodeURIComponent(nextProgramId)}` : "/admin/programs/tests", { scroll: false });
@@ -649,7 +688,7 @@ function TestManagerContent() {
   if (error || !program) return <div className="mx-auto max-w-[1500px] space-y-6">{programPicker}<div className="border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error || "Program tidak ditemukan."}</div></div>;
 
   const tabs: Array<{ key: WorkspaceTab; label: string; icon: typeof ListChecks; count?: number }> = [
-    { key: "questions", label: "Pertanyaan", icon: ListChecks, count: active?.questions.length || 0 },
+    { key: "questions", label: "Pertanyaan", icon: ListChecks, count: draftQuestions.length },
     { key: "responses", label: "Respons", icon: BarChart3, count: responseCount },
     { key: "settings", label: "Pengaturan", icon: Settings2 },
   ];
@@ -661,21 +700,22 @@ function TestManagerContent() {
       <div className="mt-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <Link href={`/admin/engagements/manage?id=${program.id}`} className="inline-flex min-h-10 items-center gap-2 text-xs font-bold text-blue-900"><ArrowLeft className="h-4 w-4" /> Kembali ke program</Link>
         <div className="inline-flex self-start border border-slate-200 bg-white p-1">
-          {(["pre_test", "post_test"] as Kind[]).map((item) => <button key={item} type="button" onClick={() => selectKind(item)} className={`min-h-10 px-5 text-xs font-bold transition-colors ${kind === item ? "bg-blue-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{item === "pre_test" ? "Pre-test" : "Post-test"}</button>)}
+          {(["pre_test", "post_test", "binainsight"] as Kind[]).map((item) => <button key={item} type="button" onClick={() => selectKind(item)} className={`min-h-10 px-5 text-xs font-bold transition-colors ${kind === item ? "bg-blue-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{kindLabel(item)}</button>)}
         </div>
       </div>
 
       <section className="mt-4 border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-5 border-b border-slate-200 px-5 py-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2"><span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${active?.status === "published" ? "bg-emerald-100 text-emerald-800" : active?.status === "archived" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}>{active ? statusLabel(active.status) : "Belum dibuat"}</span>{metaDirty && <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-300">Perubahan belum disimpan</span>}</div>
+            <div className="flex flex-wrap items-center gap-2"><span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${active?.status === "published" ? "bg-emerald-100 text-emerald-800" : active?.status === "archived" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}>{active ? statusLabel(active.status) : "Belum dibuat"}</span>{(metaDirty || questionsDirty) && <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-300">Perubahan belum disimpan</span>}</div>
             <h2 className="mt-2 truncate text-xl font-semibold text-[#0B2C6B]">{meta.title}</h2>
-            <p className="mt-1 text-xs text-slate-500">{active ? `Versi ${active.version} · ${active.questions.length} pertanyaan · ${totalPoints} total poin` : "Simpan pengaturan dasar untuk mulai menambahkan pertanyaan."}</p>
+            <p className="mt-1 text-xs text-slate-500">{active ? `Versi ${active.version} · ${draftQuestions.length} pertanyaan · ${totalPoints} total poin` : "Simpan pengaturan dasar untuk mulai menambahkan pertanyaan."}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => setPreviewOpen(true)} disabled={!active || active.questions.length === 0} className="inline-flex min-h-11 items-center gap-2 border border-slate-300 px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"><Eye className="h-4 w-4" /> Pratinjau peserta</button>
+            <button type="button" onClick={() => setPreviewOpen(true)} disabled={!active || draftQuestions.length === 0} className="inline-flex min-h-11 items-center gap-2 border border-slate-300 px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"><Eye className="h-4 w-4" /> Pratinjau peserta</button>
+            {questionsDirty && <button type="button" onClick={() => void saveAllQuestions()} disabled={saving} className="inline-flex min-h-11 items-center gap-2 bg-amber-500 px-4 text-xs font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-50"><Save className="h-4 w-4" /> Simpan semua soal</button>}
             {metaDirty && <button type="button" onClick={() => void saveMeta()} disabled={saving} className="inline-flex min-h-11 items-center gap-2 border border-blue-200 px-4 text-xs font-bold text-blue-900 hover:bg-blue-50 disabled:opacity-50"><Save className="h-4 w-4" /> Simpan</button>}
-            {active?.status === "published" ? <button type="button" onClick={() => void setStatus("archived")} disabled={saving} className="min-h-11 border border-slate-300 px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Tutup respons</button> : active?.status === "archived" ? <button type="button" onClick={() => void setStatus("draft")} disabled={saving} className="min-h-11 border border-amber-300 px-4 text-xs font-bold text-amber-800 hover:bg-amber-50 disabled:opacity-50">Buka sebagai draf</button> : <button type="button" onClick={() => void setStatus("published")} disabled={!active || active.questions.length === 0 || saving} className="inline-flex min-h-11 items-center gap-2 bg-blue-900 px-4 text-xs font-bold text-white hover:bg-blue-950 disabled:cursor-not-allowed disabled:bg-slate-300"><Send className="h-4 w-4" /> Publikasikan</button>}
+            {active?.status === "published" ? <button type="button" onClick={() => void setStatus("archived")} disabled={saving} className="min-h-11 border border-slate-300 px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Tutup respons</button> : active?.status === "archived" ? <button type="button" onClick={() => void setStatus("draft")} disabled={saving} className="min-h-11 border border-amber-300 px-4 text-xs font-bold text-amber-800 hover:bg-amber-50 disabled:opacity-50">Buka sebagai draf</button> : <button type="button" onClick={() => void setStatus("published")} disabled={!active || draftQuestions.length === 0 || saving || questionsDirty} className="inline-flex min-h-11 items-center gap-2 bg-blue-900 px-4 text-xs font-bold text-white hover:bg-blue-950 disabled:cursor-not-allowed disabled:bg-slate-300"><Send className="h-4 w-4" /> Publikasikan</button>}
           </div>
         </div>
 
@@ -691,14 +731,14 @@ function TestManagerContent() {
       {workspaceTab === "questions" && (
         <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <section className="border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Form builder</p><h3 className="mt-1 text-lg font-bold text-slate-950">Susun pertanyaan</h3><p className="mt-1 text-xs leading-5 text-slate-500">Gunakan satu konsep per pertanyaan. Atur kunci dan poin hanya jika jawaban perlu dinilai otomatis.</p></div><button type="button" onClick={() => setQuestionDraft(createEmptyQuestionDraft())} disabled={!active || editingLocked || saving} className="inline-flex min-h-11 items-center gap-2 bg-blue-900 px-4 text-xs font-bold text-white hover:bg-blue-950 disabled:cursor-not-allowed disabled:bg-slate-300"><Plus className="h-4 w-4" /> Tambah pertanyaan</button></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Form builder</p><h3 className="mt-1 text-lg font-bold text-slate-950">Susun pertanyaan</h3><p className="mt-1 text-xs leading-5 text-slate-500">Tambahkan dan atur seluruh soal tanpa menunggu server. Klik Simpan semua soal hanya sekali setelah susunan selesai.</p></div><div className="flex flex-wrap gap-2">{questionsDirty && <button type="button" onClick={() => void saveAllQuestions()} disabled={saving} className="inline-flex min-h-11 items-center gap-2 border border-amber-300 bg-amber-50 px-4 text-xs font-bold text-amber-900"><Save className="h-4 w-4" /> Simpan semua</button>}<button type="button" onClick={() => setQuestionDraft(createEmptyQuestionDraft())} disabled={!active || editingLocked || saving} className="inline-flex min-h-11 items-center gap-2 bg-blue-900 px-4 text-xs font-bold text-white hover:bg-blue-950 disabled:cursor-not-allowed disabled:bg-slate-300"><Plus className="h-4 w-4" /> Tambah pertanyaan</button></div></div>
 
             {!active && <div className="mt-6 border border-dashed border-slate-300 p-8 text-center"><p className="text-sm font-bold text-slate-800">Form belum dibuat.</p><p className="mt-2 text-xs leading-5 text-slate-500">Buka tab Pengaturan, lengkapi judul, lalu simpan sebelum menambah pertanyaan.</p><button type="button" onClick={() => setWorkspaceTab("settings")} className="mt-4 min-h-10 border border-blue-200 px-4 text-xs font-bold text-blue-900">Buka pengaturan</button></div>}
             {editingLocked && <div className="mt-5 border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900"><strong>Struktur dikunci.</strong> Test sudah memiliki {responseCount} respons. Pertanyaan tidak dapat diubah, diurutkan, atau dihapus agar hasil lama tetap dapat diaudit.</div>}
-            {active && active.questions.length === 0 && <div className="mt-6 border border-dashed border-slate-300 p-10 text-center"><ListChecks className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-4 text-sm font-bold text-slate-800">Belum ada pertanyaan</p><p className="mt-2 text-xs text-slate-500">Tambahkan secara manual atau impor dari dokumen yang sudah disiapkan.</p></div>}
+            {active && draftQuestions.length === 0 && <div className="mt-6 border border-dashed border-slate-300 p-10 text-center"><ListChecks className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-4 text-sm font-bold text-slate-800">Belum ada pertanyaan</p><p className="mt-2 text-xs text-slate-500">Tambahkan beberapa pertanyaan, lalu simpan semuanya dalam satu proses.</p></div>}
 
             <ol className="mt-5 space-y-3">
-              {active?.questions.map((question, index) => (
+              {draftQuestions.map((question, index) => (
                 <li key={question.id} className="border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 sm:p-5">
                   <div className="flex items-start gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center bg-blue-50 text-xs font-bold text-blue-900">{index + 1}</span>
@@ -710,11 +750,11 @@ function TestManagerContent() {
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap justify-end gap-1 border-t border-slate-100 pt-3">
-                    <button type="button" onClick={() => void reorderQuestion(question.id, -1)} disabled={editingLocked || saving || index === 0} aria-label="Naikkan pertanyaan" title="Naikkan" className="grid h-10 w-10 place-items-center text-slate-500 hover:bg-slate-100 disabled:opacity-25"><ArrowUp className="h-4 w-4" /></button>
-                    <button type="button" onClick={() => void reorderQuestion(question.id, 1)} disabled={editingLocked || saving || index === active.questions.length - 1} aria-label="Turunkan pertanyaan" title="Turunkan" className="grid h-10 w-10 place-items-center text-slate-500 hover:bg-slate-100 disabled:opacity-25"><ArrowDown className="h-4 w-4" /></button>
-                    <button type="button" onClick={() => void duplicateQuestion(question)} disabled={editingLocked || saving} aria-label="Duplikasi pertanyaan" title="Duplikasi" className="grid h-10 w-10 place-items-center text-slate-500 hover:bg-slate-100 disabled:opacity-25"><Copy className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => reorderQuestion(question.id, -1)} disabled={editingLocked || saving || index === 0} aria-label="Naikkan pertanyaan" title="Naikkan" className="grid h-10 w-10 place-items-center text-slate-500 hover:bg-slate-100 disabled:opacity-25"><ArrowUp className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => reorderQuestion(question.id, 1)} disabled={editingLocked || saving || index === draftQuestions.length - 1} aria-label="Turunkan pertanyaan" title="Turunkan" className="grid h-10 w-10 place-items-center text-slate-500 hover:bg-slate-100 disabled:opacity-25"><ArrowDown className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => duplicateQuestion(question)} disabled={editingLocked || saving} aria-label="Duplikasi pertanyaan" title="Duplikasi" className="grid h-10 w-10 place-items-center text-slate-500 hover:bg-slate-100 disabled:opacity-25"><Copy className="h-4 w-4" /></button>
                     <button type="button" onClick={() => setQuestionDraft(questionToDraft(question))} disabled={editingLocked || saving} aria-label="Edit pertanyaan" title="Edit" className="grid h-10 w-10 place-items-center text-blue-900 hover:bg-blue-50 disabled:opacity-25"><Pencil className="h-4 w-4" /></button>
-                    <button type="button" onClick={() => void deleteQuestion(question.id)} disabled={editingLocked || saving} aria-label="Hapus pertanyaan" title="Hapus" className="grid h-10 w-10 place-items-center text-red-600 hover:bg-red-50 disabled:opacity-25"><Trash2 className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => deleteQuestion(question.id)} disabled={editingLocked || saving} aria-label="Hapus pertanyaan" title="Hapus" className="grid h-10 w-10 place-items-center text-red-600 hover:bg-red-50 disabled:opacity-25"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </li>
               ))}
@@ -730,9 +770,9 @@ function TestManagerContent() {
 
       {workspaceTab === "responses" && (
         <section className="mt-5 border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Analitik</p><h3 className="mt-1 text-lg font-bold text-slate-950">Respons peserta</h3><p className="mt-1 text-xs text-slate-500">Statistik berasal dari jawaban tersimpan dan tidak memasukkan interaksi dalam mode pratinjau.</p></div><button type="button" onClick={downloadResponses} disabled={!active || responseCount === 0} className="inline-flex min-h-11 items-center gap-2 border border-slate-300 px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"><Download className="h-4 w-4" /> Unduh CSV</button></div>
+          <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Analitik</p><h3 className="mt-1 text-lg font-bold text-slate-950">Respons peserta</h3><p className="mt-1 text-xs text-slate-500">Nama peserta, skor, dan benar/salah tersedia untuk pemeriksaan individual.</p></div><div className="flex gap-2"><button type="button" onClick={downloadResponses} disabled={!active || responseCount === 0} className="inline-flex min-h-11 items-center gap-2 border border-slate-300 px-4 text-xs font-bold text-slate-700 disabled:opacity-40"><Download className="h-4 w-4" /> CSV</button><button type="button" onClick={() => void downloadResponsesPdf()} disabled={!active || responseCount === 0} className="inline-flex min-h-11 items-center gap-2 bg-blue-900 px-4 text-xs font-bold text-white disabled:bg-slate-300"><Download className="h-4 w-4" /> PDF</button></div></div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><div className="bg-slate-50 p-4"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Respons</p><p className="mt-2 text-2xl font-bold text-slate-950">{responseCount}</p></div><div className="bg-slate-50 p-4"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Rata-rata</p><p className="mt-2 text-2xl font-bold text-slate-950">{statistics.overall.averagePercentage === null ? "—" : `${statistics.overall.averagePercentage}%`}</p></div><div className="bg-slate-50 p-4"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Tertinggi</p><p className="mt-2 text-2xl font-bold text-emerald-700">{statistics.overall.maximumPercentage === null ? "—" : `${statistics.overall.maximumPercentage}%`}</p></div><div className="bg-slate-50 p-4"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Terendah</p><p className="mt-2 text-2xl font-bold text-amber-700">{statistics.overall.minimumPercentage === null ? "—" : `${statistics.overall.minimumPercentage}%`}</p></div></div>
-          {responseCount === 0 ? <div className="mt-6 border border-dashed border-slate-300 px-6 py-12 text-center"><BarChart3 className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-4 text-sm font-bold text-slate-800">Belum ada respons</p><p className="mt-2 text-xs text-slate-500">Publikasikan test dan bagikan akses program kepada peserta.</p></div> : <div className="mt-6 grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]"><section className="border border-slate-200 p-4"><h4 className="text-sm font-bold text-slate-900">Distribusi skor</h4><div className="mt-4 space-y-3">{statistics.overall.distribution.map((item) => <div key={item.label}><div className="flex justify-between text-xs text-slate-600"><span>{item.label}%</span><strong>{item.count}</strong></div><div className="mt-1.5 h-2 bg-slate-100"><div className="h-full bg-blue-900" style={{ width: `${responseCount ? Math.min(100, (item.count / responseCount) * 100) : 0}%` }} /></div></div>)}</div></section><section className="space-y-3">{statistics.perQuestion.map((item, index) => <article key={item.questionId} className="border border-slate-200 p-4"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Pertanyaan {index + 1}</p><h4 className="mt-1 text-sm font-semibold leading-6 text-slate-900">{item.prompt}</h4></div><span className="shrink-0 bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">{item.responseRatePercent}% terjawab</span></div>{item.numericSummary && <p className="mt-3 text-xs text-slate-600">Rata-rata <strong>{item.numericSummary.average}</strong> · Minimum {item.numericSummary.minimum} · Maksimum {item.numericSummary.maximum}</p>}{item.optionCounts.length > 0 && <div className="mt-4 space-y-2">{item.optionCounts.map((option) => <div key={option.label}><div className="flex justify-between gap-3 text-xs text-slate-600"><span className="truncate">{option.label}</span><strong>{option.count}</strong></div><div className="mt-1 h-1.5 bg-slate-100"><div className="h-full bg-amber-500" style={{ width: `${item.responseCount ? Math.min(100, (option.count / item.responseCount) * 100) : 0}%` }} /></div></div>)}</div>}</article>)}</section></div>}
+          {responseCount === 0 ? <div className="mt-6 border border-dashed border-slate-300 px-6 py-12 text-center"><BarChart3 className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-4 text-sm font-bold text-slate-800">Belum ada respons</p><p className="mt-2 text-xs text-slate-500">Publikasikan test dan bagikan akses program kepada peserta.</p></div> : <><div className="mt-6 grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]"><section className="border border-slate-200 p-4"><h4 className="text-sm font-bold text-slate-900">Distribusi skor</h4><div className="mt-4 space-y-3">{statistics.overall.distribution.map((item) => <div key={item.label}><div className="flex justify-between text-xs text-slate-600"><span>{item.label}%</span><strong>{item.count}</strong></div><div className="mt-1.5 h-2 bg-slate-100"><div className="h-full bg-blue-900" style={{ width: `${responseCount ? Math.min(100, (item.count / responseCount) * 100) : 0}%` }} /></div></div>)}</div></section><section className="space-y-3">{statistics.perQuestion.map((item, index) => <article key={item.questionId} className="border border-slate-200 p-4"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Pertanyaan {index + 1}</p><h4 className="mt-1 text-sm font-semibold leading-6 text-slate-900">{item.prompt}</h4></div><span className="shrink-0 bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">{item.responseRatePercent}% terjawab</span></div>{item.numericSummary && <p className="mt-3 text-xs text-slate-600">Rata-rata <strong>{item.numericSummary.average}</strong> · Minimum {item.numericSummary.minimum} · Maksimum {item.numericSummary.maximum}</p>}{item.optionCounts.length > 0 && <div className="mt-4 space-y-2">{item.optionCounts.map((option) => <div key={option.label}><div className="flex justify-between gap-3 text-xs text-slate-600"><span className="truncate">{option.label}</span><strong>{option.count}</strong></div><div className="mt-1 h-1.5 bg-slate-100"><div className="h-full bg-amber-500" style={{ width: `${item.responseCount ? Math.min(100, (option.count / item.responseCount) * 100) : 0}%` }} /></div></div>)}</div>}</article>)}</section></div><section className="mt-7 border-t border-slate-200 pt-6"><h4 className="text-sm font-bold text-slate-900">Jawaban per peserta</h4><div className="mt-4 space-y-4">{active?.submissions.map((submission) => { const participant = Array.isArray(submission.participant) ? submission.participant[0] : submission.participant; const answerMap = new Map((Array.isArray(submission.answers) ? submission.answers : []).flatMap((item) => item && typeof item === "object" && "questionId" in item && "value" in item ? [[String((item as { questionId: unknown }).questionId), (item as { value: unknown }).value] as const] : [])); const evaluationMap = new Map((submission.evaluations || []).map((item) => [item.questionId, item])); return <details key={submission.id} className="border border-slate-200"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4"><div><p className="font-bold text-blue-950">{participant?.name || "Peserta tanpa nama"}</p><p className="mt-1 text-xs text-slate-500">{participant?.email || "Email tidak tersedia"} · Percobaan {submission.attempt_number}</p></div><strong className="text-sm text-blue-900">{submission.percentage === null ? "Tidak dinilai" : `${submission.percentage}%`}</strong></summary><div className="space-y-2 border-t border-slate-200 bg-slate-50 p-4">{active.questions.map((question, index) => { const evaluation = evaluationMap.get(question.id); const raw = answerMap.get(question.id); return <div key={question.id} className="bg-white p-3"><div className="flex items-start justify-between gap-3"><p className="text-xs font-semibold leading-5 text-slate-800">{index + 1}. {question.prompt}</p><span className={`shrink-0 px-2 py-1 text-[9px] font-bold uppercase ${evaluation?.correct === true ? "bg-emerald-50 text-emerald-700" : evaluation?.correct === false ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-500"}`}>{evaluation?.correct === true ? "Benar" : evaluation?.correct === false ? "Salah" : "Tidak dinilai"}</span></div><p className="mt-2 text-xs text-slate-600">Jawaban: {Array.isArray(raw) ? raw.join(", ") : raw === null || raw === undefined || raw === "" ? "Tidak dijawab" : String(raw)}</p></div>; })}</div></details>; })}</div></section></>}
         </section>
       )}
 
@@ -744,12 +784,12 @@ function TestManagerContent() {
             <div className="mt-6 border-t border-slate-200 pt-6"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-600">Perilaku dan penilaian</p><div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="text-xs font-bold text-slate-700">Skor lulus (%) <span className="font-normal text-slate-400">(opsional)</span><input type="number" min="0" max="100" value={meta.passingScore} onChange={(event) => changeMeta({ passingScore: event.target.value })} placeholder="Contoh: 70" className="mt-2 min-h-11 w-full border border-slate-300 px-3 text-sm font-normal" /></label><div className="space-y-3"><label className="flex min-h-11 items-center gap-3 border border-slate-200 px-4 text-xs font-bold"><input type="checkbox" checked={meta.allowRetake} onChange={(event) => changeMeta({ allowRetake: event.target.checked })} /> Izinkan peserta mengulang</label><label className="flex min-h-11 items-center gap-3 border border-slate-200 px-4 text-xs font-bold"><input type="checkbox" checked={meta.shuffleQuestions} onChange={(event) => changeMeta({ shuffleQuestions: event.target.checked })} /> Acak urutan pertanyaan</label></div></div></div>
             <button type="button" disabled={saving || !metaDirty && Boolean(active)} onClick={() => void saveMeta()} className="mt-6 inline-flex min-h-11 items-center gap-2 bg-blue-900 px-5 text-sm font-bold text-white hover:bg-blue-950 disabled:cursor-not-allowed disabled:bg-slate-300">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {active ? "Simpan pengaturan" : "Buat form"}</button>
           </section>
-          <aside className="space-y-5"><section className="border border-slate-200 bg-white p-5"><h3 className="text-sm font-bold text-slate-900">Kesiapan publikasi</h3><ul className="mt-4 space-y-3 text-xs"><li className={`flex gap-2 ${meta.title.trim().length >= 3 ? "text-emerald-700" : "text-slate-500"}`}><Check className="h-4 w-4 shrink-0" /> Judul form tersedia</li><li className={`flex gap-2 ${(active?.questions.length || 0) > 0 ? "text-emerald-700" : "text-slate-500"}`}><Check className="h-4 w-4 shrink-0" /> Minimal satu pertanyaan</li><li className={`flex gap-2 ${!metaDirty ? "text-emerald-700" : "text-amber-700"}`}><Check className="h-4 w-4 shrink-0" /> Tidak ada perubahan tertunda</li><li className={`flex gap-2 ${active && active.questions.length > 0 ? "text-emerald-700" : "text-slate-500"}`}><Eye className="h-4 w-4 shrink-0" /> Preview tersedia</li></ul></section><section className="border border-blue-200 bg-blue-50 p-5 text-xs leading-5 text-blue-900"><strong>Catatan audit:</strong> setelah respons pertama masuk, struktur pertanyaan dikunci. Pengaturan judul dan perilaku form masih dapat disesuaikan tanpa mengubah jawaban historis.</section></aside>
+          <aside className="space-y-5"><section className="border border-slate-200 bg-white p-5"><h3 className="text-sm font-bold text-slate-900">Kesiapan publikasi</h3><ul className="mt-4 space-y-3 text-xs"><li className={`flex gap-2 ${meta.title.trim().length >= 3 ? "text-emerald-700" : "text-slate-500"}`}><Check className="h-4 w-4 shrink-0" /> Judul form tersedia</li><li className={`flex gap-2 ${draftQuestions.length > 0 ? "text-emerald-700" : "text-slate-500"}`}><Check className="h-4 w-4 shrink-0" /> Minimal satu pertanyaan</li><li className={`flex gap-2 ${!(metaDirty || questionsDirty) ? "text-emerald-700" : "text-amber-700"}`}><Check className="h-4 w-4 shrink-0" /> Tidak ada perubahan tertunda</li><li className={`flex gap-2 ${active && draftQuestions.length > 0 ? "text-emerald-700" : "text-slate-500"}`}><Eye className="h-4 w-4 shrink-0" /> Preview tersedia</li></ul></section><section className="border border-blue-200 bg-blue-50 p-5 text-xs leading-5 text-blue-900"><strong>Aturan skor:</strong> pilihan tunggal, ya/tidak, angka, dan skala memakai kunci eksak. Pilihan jamak memberi poin parsial untuk pilihan benar dan mengurangi pilihan salah tanpa menghasilkan nilai negatif. Pertanyaan tanpa kunci tidak masuk pembagi skor.</section></aside>
         </div>
       )}
 
       {questionDraft && <QuestionEditorDialog draft={questionDraft} saving={saving} onChange={setQuestionDraft} onClose={() => setQuestionDraft(null)} onSave={() => void saveQuestion()} />}
-      {previewOpen && active && <QuestionnairePreviewDialog kind={kind} meta={meta} questions={active.questions} status={active.status} onClose={() => setPreviewOpen(false)} />}
+      {previewOpen && active && <QuestionnairePreviewDialog kind={kind} meta={meta} questions={draftQuestions} status={active.status} onClose={() => setPreviewOpen(false)} />}
     </div>
   );
 }
@@ -757,7 +797,7 @@ function TestManagerContent() {
 export default function AdminProgramTestsPage() {
   return (
     <AdminAuthGate>
-      <AdminShell eyebrow="Pengukuran Pembelajaran" title="Pre-test & Post-test" description="Bangun form pembelajaran, tinjau pengalaman peserta, publikasikan, dan analisis respons dari satu editor.">
+      <AdminShell eyebrow="Pengukuran Program" title="Form Program" description="Bangun Pre-test, Post-test, dan BinaInsight khusus program; tinjau pengalaman peserta dan analisis respons dari satu editor.">
         <Suspense fallback={<div className="flex min-h-[24rem] items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-blue-900" /></div>}>
           <TestManagerContent />
         </Suspense>

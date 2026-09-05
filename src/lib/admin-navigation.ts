@@ -78,7 +78,7 @@ export const ADMIN_NAVIGATION: AdminNavigationGroup[] = [
     items: [
       { href: "/admin/programs", label: "Program", shortLabel: "Program", description: "Program aktif dan akses peserta.", icon: Boxes, aliases: ["/admin/engagements"] },
       { href: "/admin/catalog", label: "Katalog Produk", shortLabel: "Katalog", description: "Produk, modul, harga, dan publikasi.", icon: PackageSearch },
-      { href: "/admin/programs/tests", label: "Pre-test & Post-test", shortLabel: "Tes", description: "Pertanyaan, impor, dan statistik respons.", icon: FileQuestion },
+      { href: "/admin/programs/tests", label: "Form Program", shortLabel: "Form", description: "Pre-test, Post-test, BinaInsight, dan statistik respons.", icon: FileQuestion },
       { href: "/admin/lep", label: "Evaluasi Program", shortLabel: "LEP", description: "Form evaluasi dan hasil program.", icon: BookOpenCheck },
       { href: "/admin/tbos", label: "T-BOS", shortLabel: "T-BOS", description: "Observasi perilaku tim.", icon: Trophy },
     ],

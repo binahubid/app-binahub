@@ -2,7 +2,7 @@
 
 Tanggal mulai: 3 September 2026
 
-Status awal: `app-binahub v0.18.2` sudah dideploy; automation tetap terkunci dalam mode dry-run.
+Status saat ini: Gate A-C lulus. Remediasi Gate D-E tersedia pada `app-binahub v0.19.0`, `binahub-api v0.19.0`, dan migration `0040_program_assessment_finishing.sql`, tetapi belum dianggap lulus sebelum deployment dan verifikasi production. Automation tetap terkunci dalam mode dry-run.
 
 ## Tujuan
 
@@ -175,6 +175,8 @@ Pengujian ini hanya menguji validasi; **jangan mengisi keputusan bisnis baru**.
 8. Pada `Proposal & invoice`, buka dan baca template tetapi jangan mengubah status menjadi `approved`.
 9. Jangan mengaktifkan Business Rules, master pilot/live, workflow, atau outbound dari halaman mana pun.
 
+Hasil operator 4 September 2026: **PASS**. Pembuatan serta perubahan produk/modul, persistence, batas publikasi, dan seluruh pemeriksaan Pengaturan Bisnis berjalan lancar. Validasi owner dan backup menggunakan akun yang sama ditolak sesuai aturan. Screenshot Pengaturan Bisnis disimpan sebagai evidence operator; konfigurasi yang menunggu keputusan CEO tetap tidak diaktifkan.
+
 ## Gate D — Program, QR Code, dan bantuan
 
 Gunakan program UAT yang sudah ada. Jika belum tersedia, klik `Buat Program` dan isi:
@@ -204,6 +206,13 @@ Program ini tidak memakai peserta atau email klien nyata.
 8. Generate dan download QR Code. Nama file harus memuat nama atau kode program.
 9. Scan QR menggunakan ponsel; hasil harus mengarah ke program UAT yang sama.
 
+Hasil operator 5 September 2026: pembuatan program lulus setelah perbaikan kontrak modul `binahub-api v0.18.2`. Temuan lanjutan Gate D masuk release `v0.19.0`: QR harus mengisi kode program otomatis, dan kode peserta harus dapat diunduh sebagai TXT maupun kartu PNG bermerek. Setelah deployment, ulangi langkah 7–9 dan tambahkan pemeriksaan berikut:
+
+10. Pastikan URL undangan memuat parameter `program` dan `code`, lalu buka/scan URL tersebut. Kolom Kode akses harus langsung terisi tanpa diketik, tetapi server tetap memverifikasinya.
+11. Daftarkan peserta sintetis. Pada dialog kode peserta, unduh TXT dan PNG.
+12. Buka PNG dan pastikan logo BinaHub, nama perusahaan, nama program, dan kode peserta terbaca serta nama file mengenali program.
+13. Centang konfirmasi penyimpanan kode, lalu masuk ke beranda program.
+
 ## Gate E — Pre-test dan Post-test end-to-end
 
 ### Menyiapkan Pre-test
@@ -227,13 +236,14 @@ Tambahkan tujuh pertanyaan berikut untuk menguji setiap jenis kontrol:
 | 6 | Paragraf | `Jelaskan rencana penerapan Anda.` | Tanpa kunci, opsional |
 | 7 | Angka | `Berapa jumlah sesi tindak lanjut?` | Kunci `2`, 5 poin, wajib |
 
-Untuk setiap pertanyaan:
+Susun ketujuh pertanyaan terlebih dahulu. Setiap tombol pada dialog hanya menambahkan perubahan ke draf lokal dan tidak melakukan request server. Setelah semuanya benar:
 
-1. simpan;
-2. edit kembali dan pastikan nilai masih benar;
-3. duplikasi satu pertanyaan lalu hapus salinannya;
-4. pindahkan minimal satu pertanyaan naik dan turun;
-5. pastikan urutannya bertahan setelah refresh.
+1. edit kembali satu pertanyaan dan pastikan nilai masih benar;
+2. duplikasi satu pertanyaan lalu hapus salinannya;
+3. pindahkan minimal satu pertanyaan naik dan turun;
+4. klik `Simpan semua soal` satu kali;
+5. refresh dan pastikan seluruh soal serta urutannya bertahan;
+6. pastikan satu batch save tidak membutuhkan tujuh loading server terpisah.
 
 ### Preview
 
@@ -249,13 +259,14 @@ Untuk setiap pertanyaan:
 1. Publikasikan Pre-test.
 2. Buka link program pada incognito. Daftarkan peserta sintetis bernama `Peserta UAT P16`; gunakan `peserta.uat.p16@example.invalid` hanya jika email diminta. Simpan kode peserta yang ditampilkan karena domain tersebut tidak menerima email.
 3. Isi seluruh pertanyaan wajib lalu submit satu kali. Untuk hasil yang mudah diverifikasi, pilih dua jawaban berkunci pada pertanyaan 1–3, masukkan `2` pada pertanyaan angka, dan isi teks sintetis pada pertanyaan terbuka.
-4. Pastikan halaman sukses muncul. Pertanyaan tanpa kunci tidak boleh mengurangi skor otomatis; skor pertanyaan berkunci harus mengikuti poin yang diatur.
+4. Pastikan halaman terima kasih muncul. Karena retake nonaktif, soal tidak boleh muncul kembali setelah refresh; tombol kembali harus menuju beranda program.
 5. Kembali ke admin, buka tab Respons.
 6. Pastikan jumlah respons bertambah tepat satu.
 7. Periksa rata-rata, skor tertinggi/terendah, distribusi, dan statistik per pertanyaan.
-8. Unduh CSV dan pastikan kolom pertanyaan serta jawaban tersedia.
-9. Coba edit/hapus/reorder pertanyaan setelah respons masuk. Sistem harus menolak atau mengunci kontrol.
-10. Tutup penerimaan respons dan pastikan peserta tidak dapat membuat respons baru.
+8. Buka `Jawaban per peserta`; nama `Peserta UAT P16`, jawaban, serta label Benar/Salah/Tidak dinilai harus terlihat.
+9. Unduh CSV dan PDF. Keduanya harus memuat nama peserta, pertanyaan, jawaban, dan hasil penilaian; PDF harus rapi saat dibuka.
+10. Coba edit/hapus/reorder pertanyaan setelah respons masuk. Sistem harus menolak atau mengunci kontrol.
+11. Tutup penerimaan respons dan pastikan peserta tidak dapat membuat respons baru.
 
 ### Post-test dan retake
 
@@ -271,6 +282,18 @@ Untuk setiap pertanyaan:
 7. Kirim attempt pertama dengan jawaban berkunci, lalu mulai ulang dan kirim attempt kedua dengan satu jawaban berbeda.
 8. Kembali ke tab Respons. Pastikan tercatat dua attempt yang berbeda untuk peserta yang sama, bukan satu baris yang tertimpa atau duplikasi satu submission.
 9. Pastikan statistik jumlah attempt, nilai, dan distribusi jawaban berubah sesuai dua respons tersebut.
+
+### BinaInsight khusus program
+
+1. Pilih tab `BinaInsight Program` pada editor program yang sama.
+2. Buat form berjudul `UAT-P16 BinaInsight Program`, tambahkan minimal satu skala dan satu pertanyaan terbuka, lalu simpan semua dan publikasikan.
+3. Masuk sebagai peserta UAT dan buka kartu BinaInsight dari beranda program. URL harus tetap berada di `/client/program/test?kind=binainsight`, bukan assessment gratis `/insight`.
+4. Submit satu kali dan pastikan halaman terima kasih kembali ke beranda program.
+5. Pastikan respons muncul hanya pada tab BinaInsight Program dan tidak masuk dashboard assessment publik gratis.
+
+### Pemeriksaan performa peserta
+
+Berpindahlah berurutan dari Beranda Program → Pre-test → Beranda → LEP → Beranda → Post-test. Data cache boleh tampil langsung, lalu direvalidasi di belakang layar. Tidak boleh ada layar kosong atau full-screen loading 5–10 detik pada rute yang sudah pernah dibuka; hasil mutasi harus tetap diperbarui setelah revalidasi.
 
 ## Gate F — LEP dan T-BOS regression
 

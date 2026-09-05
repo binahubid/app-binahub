@@ -110,7 +110,7 @@ export function QuestionsStep({ step, answers, onAnswer }: QuestionsStepProps) {
           </aside>
 
           <section className="flex min-h-[540px] flex-col p-5 md:p-9 lg:p-11">
-            <div className="flex items-center justify-between gap-4 border-b border-[#0B2C6B]/7 pb-5">
+            <div className="flex flex-col items-start gap-4 border-b border-[#0B2C6B]/7 pb-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#D9A441]">
                   {isEnglish ? "Quick response" : "Respons cepat"}
@@ -119,7 +119,7 @@ export function QuestionsStep({ step, answers, onAnswer }: QuestionsStepProps) {
                   {isEnglish ? "Select a number to continue automatically" : "Pilih angka untuk lanjut otomatis"}
                 </p>
               </div>
-              <div className="flex gap-1.5" aria-label={isEnglish ? "Question navigator" : "Navigasi pertanyaan"}>
+              <div className="grid w-full grid-cols-7 gap-1.5 sm:flex sm:w-auto" aria-label={isEnglish ? "Question navigator" : "Navigasi pertanyaan"}>
                 {pageQuestions.map((question, index) => {
                   const isActive = index === activeIndex;
                   const isAnswered = Boolean(answers[question.id]);
@@ -130,7 +130,7 @@ export function QuestionsStep({ step, answers, onAnswer }: QuestionsStepProps) {
                       onClick={() => setActiveIndex(index)}
                       aria-label={`${isEnglish ? "Question" : "Pertanyaan"} ${index + 1}${isAnswered ? `, ${isEnglish ? "answered" : "terjawab"}` : ""}`}
                       aria-current={isActive ? "step" : undefined}
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold transition-all ${
+                      className={`flex h-9 w-full min-w-0 items-center justify-center rounded-full text-[10px] font-bold transition-all sm:h-8 sm:w-8 ${
                         isActive
                           ? "bg-[#0B2C6B] text-white shadow-md"
                           : isAnswered
@@ -155,21 +155,21 @@ export function QuestionsStep({ step, answers, onAnswer }: QuestionsStepProps) {
                   transition={{ duration: 0.22 }}
                   className="w-full"
                 >
-                  <div className="mb-5 flex items-center gap-3">
+                  <div className="mb-5 grid grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-3 sm:flex">
                     <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D9A441]/25 bg-[#D9A441]/8 text-xs font-bold text-[#0B2C6B]">
                       {activeIndex + 1}
                     </span>
                     <span className="h-px flex-1 bg-[#0B2C6B]/7" />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0B2C6B]/34">
+                    <span className="col-span-2 text-[9px] font-bold uppercase tracking-[0.12em] text-[#0B2C6B]/48 sm:col-span-1 sm:text-[10px] sm:tracking-[0.18em]">
                       {isEnglish ? "of 7 statements" : "dari 7 pernyataan"}
                     </span>
                   </div>
 
-                  <h3 className="min-h-[88px] text-xl font-medium leading-relaxed text-[#0B2C6B] md:text-[27px] md:leading-[1.45]">
+                  <h3 className="min-h-[88px] break-words text-xl font-medium leading-relaxed text-[#0B2C6B] md:text-[27px] md:leading-[1.45]">
                     {isEnglish ? publicSiteTranslations[activeQuestion.text] || activeQuestion.text : activeQuestion.text}
                   </h3>
 
-                  <div className="mt-7 grid grid-cols-5 gap-2 md:gap-3">
+                  <div className="mt-7 grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-3">
                     {LIKERT_OPTIONS.map((option) => {
                       const isSelected = answers[activeQuestion.id] === option.value;
                       return (
@@ -178,7 +178,7 @@ export function QuestionsStep({ step, answers, onAnswer }: QuestionsStepProps) {
                           type="button"
                           onClick={() => selectAnswer(option.value)}
                           aria-pressed={isSelected}
-                          className={`group relative flex min-h-[92px] flex-col items-center justify-center rounded-2xl border px-1.5 py-3 text-center transition-all duration-200 md:min-h-[118px] md:px-3 ${
+                          className={`group relative flex min-h-[92px] min-w-0 flex-col items-center justify-center rounded-xl border px-1 py-3 text-center transition-all duration-200 sm:rounded-2xl md:min-h-[118px] md:px-3 ${
                             isSelected
                               ? "-translate-y-1 border-[#0B2C6B] bg-[#0B2C6B] text-white shadow-[0_18px_42px_-24px_rgba(11,44,107,0.7)]"
                               : "border-[#0B2C6B]/7 bg-[#F7F9FB] text-[#0B2C6B] hover:-translate-y-1 hover:border-[#D9A441]/45 hover:bg-[#D9A441]/[0.055]"

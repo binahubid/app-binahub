@@ -5,6 +5,23 @@ Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-05
+
+### Added — Gate D/E Participant and Assessment Finishing
+
+- Menambahkan unduhan kode peserta dalam format TXT dan PNG bermerek yang memuat perusahaan, program, dan kode peserta.
+- Menanamkan kode program pada tautan/QR agar kolom akses terisi otomatis setelah dipindai.
+- Menambahkan BinaInsight khusus program pada editor form yang sama dengan Pre-test/Post-test.
+- Menambahkan nama responden, status benar/salah, ekspor PDF, dan rincian jawaban individual di dashboard respons.
+- Menjadikan bar Q1–Q49 pada dashboard Assessment dapat diklik untuk membuka isi pertanyaan.
+
+### Changed
+
+- Editor soal kini menampung banyak perubahan secara lokal dan menyimpannya dalam satu request transaksional.
+- Form satu-kali berubah menjadi halaman konfirmasi setelah respons tersimpan dan tidak menampilkan soal kembali.
+- Portal peserta memakai cache sesi singkat dan revalidasi latar belakang untuk menghilangkan full-screen loading berulang.
+- Layout assessment publik mobile diperbaiki agar navigator, pertanyaan, pilihan, dan tombol aksi tidak terpotong.
+
 ## [0.18.3] - 2026-09-04
 
 ### Changed — Acceptance UX and Admin Responsiveness

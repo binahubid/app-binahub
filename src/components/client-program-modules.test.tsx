@@ -21,8 +21,8 @@ describe("ClientProgramModules", () => {
     expect(screen.getByText("Belum ada modul yang tersedia untuk program ini.")).toBeInTheDocument();
   });
 
-  it("links an enabled BinaInsight module to the public assessment", () => {
+  it("links an enabled BinaInsight module to its program questionnaire", () => {
     render(<ClientProgramModules modules={[{ key: "binainsight", enabled: true, clientAvailable: true }]} />);
-    expect(screen.getByRole("link", { name: /BinaInsight/i })).toHaveAttribute("href", "/insight?source=program");
+    expect(screen.getByRole("link", { name: /BinaInsight/i })).toHaveAttribute("href", "/client/program/test?kind=binainsight");
   });
 });

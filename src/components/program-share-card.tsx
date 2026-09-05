@@ -26,7 +26,7 @@ export function ProgramShareCard({
     void Promise.resolve().then(() => setOrigin(window.location.origin));
   }, []);
 
-  const link = programAccessUrl(programId, origin);
+  const link = programAccessUrl(programId, origin, code);
   const invitation = programInvitationText({ programId, code, title, origin });
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export function ProgramShareCard({
       context.fillText(`Kode program: ${code}`, canvas.width / 2, 810);
       context.fillStyle = "#64748B";
       context.font = "400 17px Arial, sans-serif";
-      context.fillText("Pindai QR, lalu masukkan kode program untuk melanjutkan.", canvas.width / 2, 850);
+      context.fillText("Pindai QR; kode program akan terisi otomatis.", canvas.width / 2, 850);
 
       const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "program";
       const anchor = document.createElement("a");
@@ -113,7 +113,7 @@ export function ProgramShareCard({
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B2C6B] text-[#F3CE7A]"><Send className="h-4.5 w-4.5" aria-hidden="true" /></span>
         <div>
           <h3 id="share-program-title" className="font-bold text-[#0B2C6B]">Bagikan kepada peserta</h3>
-          <p className="mt-1 text-xs leading-5 text-[#4A4C54]/65">Kirim tautan dan kode berikut. Tautan menentukan program; kode tetap diverifikasi saat peserta masuk.</p>
+          <p className="mt-1 text-xs leading-5 text-[#4A4C54]/65">Kirim tautan atau QR berikut. Kode program sudah tertanam dan akan terisi otomatis, lalu tetap diverifikasi oleh server.</p>
         </div>
       </div>
 
@@ -156,7 +156,7 @@ export function ProgramShareCard({
       <button type="button" onClick={() => void share()} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0B2C6B] px-4 text-sm font-bold text-white hover:bg-[#071B3D]">
         <Send className="h-4 w-4" /> Bagikan undangan lengkap
       </button>
-      <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-[#4A4C54]/55"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Kode tidak disimpan di URL dan tetap wajib dimasukkan.</p>
+      <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-[#4A4C54]/55"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Kode pada tautan hanya memilih program dan tetap diverifikasi oleh server.</p>
     </section>
   );
 }

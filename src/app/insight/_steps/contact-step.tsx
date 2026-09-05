@@ -103,14 +103,14 @@ export function ContactStep({
           <button
             type="button"
             onClick={onPrev}
-            className="flex h-14 flex-1 items-center justify-center gap-2 rounded-[12px] border border-[#0B2C6B]/10 bg-white text-[11px] font-bold uppercase tracking-widest text-[#0B2C6B]/60 transition-all hover:bg-black/[0.03] hover:text-[#0B2C6B]"
+            className="flex min-h-14 w-full flex-1 items-center justify-center gap-2 rounded-[12px] border border-[#0B2C6B]/10 bg-white px-4 text-sm font-bold uppercase tracking-wide text-[#0B2C6B]/70 transition-all hover:bg-black/[0.03] hover:text-[#0B2C6B] sm:text-[11px] sm:tracking-widest"
           >
             <ArrowLeft size={16} /> {copy.back}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="group flex h-14 flex-[2] items-center justify-center gap-3 rounded-[12px] bg-[#0B2C6B] text-[11px] font-bold uppercase tracking-widest text-white shadow-lg shadow-[#0B2C6B]/10 transition-all hover:bg-black disabled:opacity-70"
+            className="group flex min-h-14 w-full flex-[2] items-center justify-center gap-3 rounded-[12px] bg-[#0B2C6B] px-4 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-[#0B2C6B]/10 transition-all hover:bg-black disabled:opacity-70 sm:text-[11px] sm:tracking-widest"
           >
             {isSubmitting ? (
               <span className="flex items-center gap-3">

@@ -40,7 +40,7 @@ export function ClientProgramModules({ modules }: { modules: ClientProgramModule
             </div>
           </Link>
         ) : module.key === "binainsight" ? (
-          <Link key={module.key} href="/insight?source=program" className="group relative overflow-hidden rounded-2xl border border-[#0B2C6B]/10 bg-white p-5 shadow-[0_18px_55px_-44px_rgba(11,44,107,0.45)] transition hover:-translate-y-0.5 hover:border-[#D9A441]/70 hover:shadow-[0_24px_60px_-40px_rgba(11,44,107,0.55)] sm:p-6">
+          <Link key={module.key} href="/client/program/test?kind=binainsight" prefetch className="group relative overflow-hidden rounded-2xl border border-[#0B2C6B]/10 bg-white p-5 shadow-[0_18px_55px_-44px_rgba(11,44,107,0.45)] transition hover:-translate-y-0.5 hover:border-[#D9A441]/70 hover:shadow-[0_24px_60px_-40px_rgba(11,44,107,0.55)] sm:p-6">
             <div className="absolute right-0 top-0 h-28 w-28 translate-x-9 -translate-y-9 rounded-full bg-[#EAF0F8]" />
             <div className="relative">
               <div className="flex items-start justify-between gap-3">
@@ -49,7 +49,7 @@ export function ClientProgramModules({ modules }: { modules: ClientProgramModule
               </div>
               <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#D9A441]">Diagnostik Performa 7 Dimensi</p>
               <h3 className="mt-1 text-lg font-bold text-[#0B2C6B]">BinaInsight</h3>
-              <p className="mt-2 text-sm leading-6 text-[#4A4C54]/68">Petakan kekuatan, hambatan, dan prioritas pengembangan. Hasil PDF dikirim langsung ke email Anda.</p>
+              <p className="mt-2 text-sm leading-6 text-[#4A4C54]/68">Isi diagnostik yang disusun khusus untuk program ini. Hasil tetap terhubung ke identitas peserta dan program.</p>
               <span className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-900 px-4 text-xs font-bold text-white">{module.completed ? "Isi ulang assessment" : "Mulai assessment"} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span>
             </div>
           </Link>

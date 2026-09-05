@@ -29,6 +29,7 @@ export default function ClientProgramPage() {
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.success) throw new Error(result.error || "Gagal memuat program.");
       setData(result);
+      sessionStorage.setItem("binahub:client-program", JSON.stringify(result));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Gagal memuat program.");
     } finally {
@@ -37,7 +38,13 @@ export default function ClientProgramPage() {
   }, []);
 
   useEffect(() => {
-    void Promise.resolve().then(() => loadProgram());
+    void Promise.resolve().then(() => {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem("binahub:client-program") || "null") as ProgramData | null;
+        if (cached) { setData(cached); setLoading(false); }
+      } catch { /* cache opsional */ }
+      return loadProgram();
+    });
   }, [loadProgram]);
 
   return (

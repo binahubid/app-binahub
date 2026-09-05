@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { Check, Mail, ArrowRight, Bell } from "lucide-react";
 import { useLocale } from "@/i18n/use-locale";
 
 interface SuccessStepProps {
   name: string;
   company: string;
+  onHome: () => void;
 }
 
 const COPY = {
@@ -39,7 +39,7 @@ const COPY = {
   },
 };
 
-export function SuccessStep({ name, company }: SuccessStepProps) {
+export function SuccessStep({ name, company, onHome }: SuccessStepProps) {
   const locale = useLocale();
   const copy = COPY[locale];
   const firstName = name.split(" ")[0] || (locale === "en" ? "there" : "Anda");
@@ -101,12 +101,13 @@ export function SuccessStep({ name, company }: SuccessStepProps) {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="https://binahub.id"
+          <button
+            type="button"
+            onClick={onHome}
             className="group flex h-16 items-center justify-center gap-3 rounded-[12px] bg-[#0B2C6B] px-12 text-[11px] font-bold uppercase tracking-[0.2em] text-white shadow-xl shadow-[#0B2C6B]/20 transition-all hover:bg-black"
           >
             {copy.home} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
+          </button>
           <div className="flex items-center gap-3 px-6 text-[10px] font-bold text-[#D9A441] tracking-[0.3em] uppercase">
             <Mail size={16} /> info@binahub.id
           </div>

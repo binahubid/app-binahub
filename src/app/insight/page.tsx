@@ -329,7 +329,7 @@ export default function InsightPage() {
           {step >= 2 && step <= 8 && !isSubmitting && <QuestionsStep key={step} step={step} answers={answers} onAnswer={handleAnswer} />}
           {step === 9  && <OpenQuestionsStep formData={formData} onChange={handleFormChange} onNext={handleSubmitLead} onPrev={prevStep} isSubmitting={isSubmitting} />}
           {step === 10 && <ContactStep formData={formData} onChange={handleFormChange} onSubmit={handleSubmitFinal} onPrev={prevStep} isSubmitting={isSubmitting} />}
-          {step === 11 && !isSubmitting && <SuccessStep name={formData.name} company={formData.company} />}
+          {step === 11 && !isSubmitting && <SuccessStep name={formData.name} company={formData.company} onHome={exitAssessment} />}
         </AnimatePresence>
 
         {/* Dynamic Full Screen Loading Overlay */}
@@ -343,18 +343,18 @@ export default function InsightPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-0 inset-x-0 p-4 md:p-6 flex justify-between gap-3 z-50 bg-white/96 backdrop-blur-sm border-t border-black/[0.05]"
+          className="fixed bottom-0 inset-x-0 z-50 grid grid-cols-[0.78fr_1.22fr] gap-3 border-t border-black/[0.05] bg-white/96 p-3 backdrop-blur-sm md:flex md:justify-between md:p-6"
         >
           <button
             onClick={prevStep}
-            className="h-12 px-6 rounded-xl border border-black/10 bg-white shadow-sm flex items-center text-black/60 hover:text-black hover:border-black/30 hover:bg-black/[0.02] transition-all text-xs font-medium uppercase tracking-widest"
+            className="flex min-h-14 w-full items-center justify-center rounded-xl border border-black/10 bg-white px-2 text-[11px] font-bold uppercase tracking-wide text-black/60 shadow-sm transition-all hover:border-black/30 hover:bg-black/[0.02] hover:text-black md:h-12 md:min-h-0 md:w-auto md:px-6 md:text-xs md:font-medium md:tracking-widest"
           >
             <span><ArrowLeft size={16} className="mr-2 inline" /> {copy.back}</span>
           </button>
           <button
             onClick={nextStep}
             disabled={!isQuestionPageValid()}
-            className="h-12 px-8 rounded-xl bg-[#0B2C6B] text-white flex items-center gap-2 font-medium text-xs tracking-widest uppercase transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black shadow-md shadow-black/20"
+            className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#0B2C6B] px-2 text-center text-[11px] font-bold uppercase tracking-wide text-white shadow-md shadow-black/20 transition-all hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 md:h-12 md:min-h-0 md:w-auto md:px-8 md:text-xs md:font-medium md:tracking-widest"
           >
             <span>
               {step === 8 ? copy.nextClosing : copy.nextPage}

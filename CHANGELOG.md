@@ -3,6 +3,23 @@
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 
+## [0.28.1] - 2026-10-06
+
+### Security
+
+- Memperbarui seluruh dependensi transitif `source-map-js` ke **1.2.2** melalui override dan lockfile untuk menambal **CVE-2026-93749 / GHSA-68fv-2mgg-jv7q** (event-loop denial of service pada indexed source map).
+
+### Verification
+
+- Audit dependensi produksi (`npm audit --omit=dev`): **0 kerentanan**. Production build dan typecheck lulus.
+- Seluruh **183 tes** lulus dengan satu worker. Pemeriksaan awal bersamaan dengan build mengalami 2 timeout tes UI; pengulangan berurutan lulus tanpa perubahan kode tes.
+- Audit seluruh dependensi masih melaporkan 5 temuan high dalam rantai tooling ESLint terkait `braces`; versi terbaru `braces` 3.0.3 masih terdampak. Tidak menjalankan perbaikan paksa yang menyarankan downgrade `eslint-config-next`.
+- Review lanjutan memastikan 5 temuan tersebut berasal dari satu advisori tanpa patch upstream. Konfigurasi app tidak mengaktifkan `settings.next.rootDir` glob; batasan dan langkah pencegahan didokumentasikan dalam `DEPENDENCY-SECURITY.md`. Temuan tidak disembunyikan atau dinyatakan sudah ditambal.
+
+### Deployment
+
+- Deploy ulang app agar patch terpasang. Tidak ada perubahan environment variable atau migrasi SQL.
+
 ## [0.28.0] - 2026-10-06
 
 ### Added

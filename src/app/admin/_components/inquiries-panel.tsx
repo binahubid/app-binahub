@@ -29,13 +29,14 @@ function InquiryMetric({ label, value, note, tone = "default" }: { label: string
   return <div className="min-w-0 border-l border-slate-200 pl-4 first:border-l-0 first:pl-0"><p className="text-xs font-semibold text-slate-500">{label}</p><p className={`mt-1 text-2xl font-semibold tracking-tight ${valueTone}`}>{value}</p><p className="mt-1 truncate text-[11px] text-slate-400">{note}</p></div>;
 }
 
-export function InquiriesPanel({ inquiries, onAction, onRefresh }: {
+export function InquiriesPanel({ inquiries, onAction, onRefresh, initialSelectedId = null }: {
   inquiries: InquiryRecord[];
   onAction: (url: string, init?: RequestInit) => Promise<unknown>;
   onRefresh: () => Promise<void>;
+  initialSelectedId?: string | null;
 }) {
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const [drafts, setDrafts] = useState<Record<string, { status: string; notes: string }>>({});
   const [actionError, setActionError] = useState("");
   const [followUpSending, setFollowUpSending] = useState<string | null>(null);

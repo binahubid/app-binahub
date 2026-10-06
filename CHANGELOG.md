@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.29.0] - 2026-10-06
+
+### Changed
+
+- Workspace Akuisisi & Penjualan terpadu: prioritas dengan tindakan kontekstual, inbound, outbound, klien/proposal, tindak lanjut, peluang, dan konsultasi dalam satu halaman.
+- Outbound menampilkan daftar target dan preview email berdampingan; kampanye cepat memakai nama dan sumber, tinjauan daftar dilakukan sekali saat impor. Uji inbox menjadi opsional. Konfirmasi kirim dapat mengaktifkan kampanye sekaligus mengantrekan hanya target terpilih.
+- Aktivasi/jeda kampanye dan follow-up dari aplikasi, tanpa mengganti flag harian di Vercel. Pengaturan teknis lanjutan disembunyikan dari alur rutin; izin pemakaian data dan daftar jangan dihubungi tetap diperiksa.
+- Diagnosis menyatukan pilihan pelajari/review hasil menjadi Review hasil assessment. Loading sekitar lima detik sejak submit, hanya selesai setelah API mengonfirmasi penerimaan; analisis, PDF dan email diproses di backend. Halaman boleh ditutup setelah diterima. Koneksi simpan yang lambat tetap menunggu konfirmasi, bukan menampilkan sukses palsu.
+- Istilah tampilan diagnosis, halaman publik, dan skor admin menjadi Area; kontrak/key skor tidak diubah.
+
+### Deployment
+
+- Pasangan API 0.29.0, SQL 61 dan 62 diperlukan sebelum deploy API, lalu app. Migrasi tidak mengirim email atau mengaktifkan outreach; antrean lama tidak dilepas saat aktivasi/jeda di aplikasi.
+- Verifikasi lokal menggunakan data contoh saja; AI agent belum ditambahkan.
+
 Semua perubahan yang signifikan pada proyek ini akan didokumentasikan di file ini.
 Format yang digunakan berdasarkan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/), dan proyek ini mematuhi aturan [Semantic Versioning](https://semver.org/).
 

@@ -6,7 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { AdminShell } from "@/components/admin-shell";
 import { supabase } from "@/lib/supabase";
-import { AcquisitionControlPanel } from "./acquisition-control-panel";
+import { SalesWorkspace } from "./sales-workspace";
 import { AssessmentPanel } from "./assessment-panel";
 import { ClientDeliveryPanel } from "./client-delivery-panel";
 import { ContactsPanel } from "./contacts-panel";
@@ -157,9 +157,9 @@ function AdminWorkspaceContent({ section }: { section: AdminWorkspaceSection }) 
       {error && <div role="alert" aria-live="assertive" className="mb-6 border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-800"><p className="font-semibold">Data belum dapat dimuat</p><p className="mt-1 text-xs leading-5 text-red-700">{error}</p></div>}
       {loading || !data ? <DashboardSkeleton /> : (
         <div className="admin-workspace-content">
-          <ObservabilityPanel onAction={adminRequest} compact={section !== "Operations Control"} />
+          {section !== "Acquisition Control" && <ObservabilityPanel onAction={adminRequest} compact={section !== "Operations Control"} />}
           {section === "Overview" && <Overview data={data} />}
-          {section === "Acquisition Control" && <AcquisitionControlPanel onAction={adminRequest} />}
+          {section === "Acquisition Control" && <SalesWorkspace data={data} onAction={adminRequest} onRefresh={refreshDashboard} />}
           {section === "Sales Pipeline" && <PipelinePanel data={data} onAction={adminRequest} onRefresh={refreshDashboard} />}
           {section === "Client & Delivery" && <ClientDeliveryPanel data={data} onAction={adminRequest} onRefresh={refreshDashboard} />}
           {section === "Operations Control" && <OperationsControlPanel onAction={adminRequest} />}

@@ -121,6 +121,7 @@ export function AssessmentPanel({
   setExpandedId,
   onAction,
   onRefresh,
+  initialDetailTab = "summary",
 }: {
   data: DashboardData;
   records: AssessmentRecord[];
@@ -136,6 +137,7 @@ export function AssessmentPanel({
   setExpandedId: (value: string | null) => void;
   onAction: (url: string, init?: RequestInit) => Promise<unknown>;
   onRefresh: () => Promise<void>;
+  initialDetailTab?: AssessmentDetailTab;
 }) {
   const categories = uniqueOptions(data.assessments, (item) => item.category);
   const employeeRanges = uniqueOptions(data.assessments, (item) => item.employees);
@@ -156,7 +158,7 @@ export function AssessmentPanel({
   const tabId = useId();
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
   const clientListRef = useRef<HTMLElement>(null);
-  const [detailTab, setDetailTab] = useState<AssessmentDetailTab>("summary");
+  const [detailTab, setDetailTab] = useState<AssessmentDetailTab>(initialDetailTab);
   const [queue, setQueue] = useState<AssessmentQueue>("all");
   const [sort, setSort] = useState("latest");
   const [actionSuccess, setActionSuccess] = useState("");
@@ -605,7 +607,7 @@ export function AssessmentPanel({
                       </div>
                     </div>
 
-                  <div className="rounded-xl border border-slate-200 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-900">Skor per dimensi</h3><span className="text-xs text-slate-500">Diagnosis: {record.overallScore}/100</span></div><div className="space-y-3">{Object.entries(record.scores).filter(([key]) => key !== "overall").map(([dimension, value]) => <MetricBar key={dimension} label={dimension} value={Math.max(0, Math.min(100, Number(value) || 0))} />)}</div><p className="mt-4 text-[11px] leading-5 text-slate-500">Skor diagnosis menggambarkan kondisi organisasi, bukan kesiapan membeli.</p></div>
+                  <div className="rounded-xl border border-slate-200 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-900">Skor per area</h3><span className="text-xs text-slate-500">Diagnosis: {record.overallScore}/100</span></div><div className="space-y-3">{Object.entries(record.scores).filter(([key]) => key !== "overall").map(([dimension, value]) => <MetricBar key={dimension} label={dimension} value={Math.max(0, Math.min(100, Number(value) || 0))} />)}</div><p className="mt-4 text-[11px] leading-5 text-slate-500">Skor diagnosis menggambarkan kondisi organisasi, bukan kesiapan membeli.</p></div>
                   <details className="rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer text-sm font-medium text-slate-800">Jawaban diagnosis ({Object.keys(record.answers || {}).length})</summary><ol className="mt-4 space-y-3">{QUESTIONS.filter((question) => record.answers?.[question.id] != null).map((question) => <li key={question.id} className="flex justify-between gap-4 border-b border-slate-100 pb-3 text-xs leading-5 text-slate-600"><span>{question.id}. {question.text}</span><strong className="shrink-0 text-[#0B2C6B]">{record.answers[question.id]}/5</strong></li>)}</ol></details>
                   <details className="rounded-xl border border-slate-200 p-4">
                     <summary className="cursor-pointer text-xs font-medium text-slate-600">Rincian penilaian minat</summary>

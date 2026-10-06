@@ -67,7 +67,7 @@ function MoreActions({ label, children }: { label: string; children: React.React
 
 const menuActionClass = "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-[#0B2C6B] disabled:cursor-not-allowed disabled:opacity-40";
 
-export function AcquisitionControlPanel({ onAction }: { onAction: AdminAction }) {
+export function AcquisitionControlPanel({ onAction, initialView = "overview", embedded = false }: { onAction: AdminAction; initialView?: WorkspaceView; embedded?: boolean }) {
   const [data, setData] = useState<AcquisitionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -78,7 +78,7 @@ export function AcquisitionControlPanel({ onAction }: { onAction: AdminAction })
   const [batchForm, setBatchForm] = useState(emptyBatch);
   const [reviewBatch, setReviewBatch] = useState<Batch | null>(null);
   const [reviewForm, setReviewForm] = useState({ decision: "approved", note: "" });
-  const [view, setView] = useState<WorkspaceView>("overview");
+  const [view, setView] = useState<WorkspaceView>(initialView);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -164,7 +164,7 @@ export function AcquisitionControlPanel({ onAction }: { onAction: AdminAction })
   return <div className="space-y-5">
     {error && <div role="alert" aria-live="assertive" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
-    {view !== "outbound" && <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+    {view !== "outbound" && !embedded && <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
       <div className="flex flex-col gap-5 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-700"><CheckCircle2 size={14} /> Guardrail aktif</div>
@@ -183,12 +183,12 @@ export function AcquisitionControlPanel({ onAction }: { onAction: AdminAction })
       </div>
     </section>}
 
-    <nav aria-label="Bagian kontrol akuisisi" className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-slate-100/70 p-1 sm:grid-cols-4">
+    {!embedded && <nav aria-label="Bagian kontrol akuisisi" className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-slate-100/70 p-1 sm:grid-cols-4">
       {WORKSPACE_VIEWS.map((item) => <button key={item.id} type="button" onClick={() => setView(item.id)} aria-current={view === item.id ? "page" : undefined} className={`min-h-11 min-w-0 rounded-xl px-4 py-3 text-left transition ${view === item.id ? "bg-white text-[#0B2C6B] shadow-sm" : "text-slate-500 hover:bg-white/60 hover:text-slate-800"}`}>
         <span className="block text-xs font-semibold">{item.label}</span>
         <span className="mt-0.5 hidden text-[10px] text-slate-400 lg:block">{item.description}</span>
       </button>)}
-    </nav>
+    </nav>}
 
     {view === "overview" && <div className="grid gap-5 xl:grid-cols-[1.35fr_.65fr]">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
@@ -231,6 +231,7 @@ export function AcquisitionControlPanel({ onAction }: { onAction: AdminAction })
     </div>}
 
     {view === "governance" && <div className="space-y-5">
+      {embedded && <button type="button" className={secondaryButton} onClick={() => setView(initialView)}>Kembali ke {initialView === "outbound" ? "Outbound" : "Inbound"}</button>}
       <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5"><h3 className="text-sm font-semibold text-[#0B2C6B]">Pengaturan sekali, operasional dari halaman Outbound</h3><p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">Untuk daftar email sendiri, buat sumber manual outbound dan lengkapi persetujuan penggunaan data. Setelah sumber aktif, siapkan kampanye Email. Impor, tinjauan target, preview, uji, dan pengiriman selanjutnya tersedia bersama di Outbound.</p><div className="mt-4 flex flex-wrap gap-2"><button className={secondaryButton} onClick={prepareManualOutboundSource}>1. Sumber outbound manual</button><button className={secondaryButton} onClick={prepareEmailCampaign} disabled={!activeSources.some((source) => source.channel === "outbound")}>2. Kampanye email</button><button className={buttonClass} onClick={() => setView("outbound")}>Buka Outbound <ArrowRight size={14} /></button></div></div>
       <div className="grid gap-5 xl:grid-cols-2">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">

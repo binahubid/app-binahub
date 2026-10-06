@@ -41,14 +41,14 @@ const COPY = {
       "Diagnostik mendalam berbasis data untuk menemukan blind spot performa, membaca kesiapan transformasi, dan menentukan prioritas pengembangan tim.",
     start: "Mulai Diagnostik",
     preview: "Lihat Preview Hasil",
-    stats: ["5-7 Menit", "49 Indikator", "7 Dimensi"],
+    stats: ["5-7 Menit", "49 Indikator", "7 Area"],
     productEyebrow: "Product Experience",
     productTitle: "Apa yang akan Anda dapatkan dari",
     productBody:
       "BinaInsight membantu organisasi melihat performa secara lebih jernih: apa yang sudah kuat, apa yang menghambat, dan area mana yang perlu diprioritaskan.",
     benefits: [
       {
-        title: "Skor 7 dimensi yang presisi",
+        title: "Skor 7 area yang presisi",
         desc: "Insights, Lab, Coach, Play, Academy, Works, dan Impact dihitung dari 49 indikator.",
       },
       {
@@ -62,7 +62,7 @@ const COPY = {
     ],
     spectrumTitle: "Pilih fokus pengukuran organisasi.",
     spectrumBody:
-      "Tujuh area ini dibaca sebagai satu spektrum. Pilih salah satu dimensi untuk melihat sinyal yang ingin dipahami sebelum menentukan prioritas intervensi.",
+      "Tujuh area ini dibaca sebagai satu spektrum. Pilih salah satu area untuk melihat sinyal yang ingin dipahami sebelum menentukan prioritas intervensi.",
     spectrumTags: ["Diagnose root cause", "Map capability gaps", "Prioritize intervention"],
     ctaMeta: "5-7 menit - 49 indikator - laporan terkirim",
     ctaTitle: "Dalam 7 menit, temukan area yang paling",
@@ -75,14 +75,14 @@ const COPY = {
       "A deep data-informed diagnostic to uncover performance blind spots, read transformation readiness, and define team development priorities.",
     start: "Start Diagnostic",
     preview: "View Report Preview",
-    stats: ["5-7 Minutes", "49 Indicators", "7 Dimensions"],
+    stats: ["5-7 Minutes", "49 Indicators", "7 Areas"],
     productEyebrow: "Product Experience",
     productTitle: "What will you get from",
     productBody:
       "BinaInsight helps organizations see performance more clearly: what is already strong, what slows progress, and which areas deserve priority.",
     benefits: [
       {
-        title: "Precise 7-dimension score",
+        title: "Precise 7-area score",
         desc: "Insights, Lab, Coach, Play, Academy, Works, and Impact are calculated from 49 indicators.",
       },
       {
@@ -96,7 +96,7 @@ const COPY = {
     ],
     spectrumTitle: "Choose the organization's measurement focus.",
     spectrumBody:
-      "These seven areas are read as one spectrum. Select a dimension to see the signals worth understanding before setting intervention priorities.",
+      "These seven areas are read as one spectrum. Select a area to see the signals worth understanding before setting intervention priorities.",
     spectrumTags: ["Diagnose root cause", "Map capability gaps", "Prioritize intervention"],
     ctaMeta: "5-7 minutes - 49 indicators - report delivered",
     ctaTitle: "In 7 minutes, find the area that most",
@@ -246,7 +246,7 @@ export function LandingStep({ onStart }: LandingStepProps) {
 
             <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#D9A441]">7 Dimensions</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#D9A441]">7 Areas</p>
                 <h2 className="mt-5 max-w-3xl text-4xl font-light leading-[1.02] tracking-[-0.05em] md:text-6xl lg:text-[4.2rem]">
                   {copy.spectrumTitle}
                 </h2>

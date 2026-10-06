@@ -14,10 +14,10 @@ const COPY = {
     message: "Asesmen untuk",
     messageSuffix:
       "telah berhasil kami terima. Hasil analisa strategis lengkap akan dikirimkan langsung ke",
-    messageEnd: "Anda segera setelah tim kami melakukan validasi.",
+    messageEnd: "Anda. Anda boleh menutup halaman ini; penyusunan laporan tetap berjalan.",
     notification: "Notifikasi",
     notificationBody:
-      "Pastikan untuk memeriksa folder Inbox atau Spam pada email korporasi Anda dalam 1x24 jam ke depan.",
+      "Laporan sedang disiapkan. Periksa Inbox atau Spam pada email yang Anda isi.",
     preview: "Preview Area Analisis",
     previewBody:
       "Berdasarkan struktur assessment, laporan Anda akan membaca pola yang berkaitan dengan:",
@@ -28,10 +28,10 @@ const COPY = {
     message: "The assessment for",
     messageSuffix:
       "has been successfully received. The complete strategic analysis will be sent directly to your",
-    messageEnd: "after our team completes validation.",
+    messageEnd: ". You may close this page; your report will continue to be prepared.",
     notification: "Notification",
     notificationBody:
-      "Please check your corporate email Inbox or Spam folder within the next 24 hours.",
+      "Your report is being prepared. Check the Inbox or Spam folder of the email you provided.",
     preview: "Analysis Area Preview",
     previewBody:
       "Based on the assessment structure, your report will read patterns related to:",
@@ -69,7 +69,7 @@ export function SuccessStep({ name, company, onHome }: SuccessStepProps) {
         </h2>
         
         <p className="text-[#0B2C6B]/60 text-lg md:text-xl mb-12 leading-relaxed font-light">
-          {copy.message} <strong>{company}</strong> {copy.messageSuffix} <strong>Email & WhatsApp</strong> {copy.messageEnd}
+          {copy.message} <strong>{company}</strong> {copy.messageSuffix} <strong>email</strong> {copy.messageEnd}
         </p>
 
         <div className="mb-12 flex items-start gap-4 rounded-[8px] border border-black/[0.03] bg-[#F5F7FA] p-6 text-left">

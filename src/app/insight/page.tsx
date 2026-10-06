@@ -19,6 +19,8 @@ import { useLocale } from "@/i18n/use-locale";
 import { useRouter } from "next/navigation";
 import { readAssessmentAttribution, readAssessmentJourneyId, storeAssessmentJourneyId } from "@/lib/attribution";
 
+import { submitAssessment } from "@/lib/assessment-submit";
+
 const TOTAL_STEPS = 11;
 const SPEED_LINES = [
   { width: 46, duration: 0.48 },
@@ -29,7 +31,7 @@ const STEP_CONTEXT = [
   { eyebrow: "Profil Organisasi", title: "Personalisasi laporan diagnostik" },
   { eyebrow: "Instruksi", title: "Kalibrasi cara menjawab" },
   ...DIMENSIONS.map((dimension) => ({
-    eyebrow: `Dimensi ${dimension}`,
+    eyebrow: `Area ${dimension}`,
     title: `Menganalisis ${dimension}`,
   })),
   { eyebrow: "Konteks Strategis", title: "Menangkap prioritas 3-6 bulan" },
@@ -40,7 +42,7 @@ const STEP_CONTEXT_EN = [
   { eyebrow: "Organization Profile", title: "Personalize the diagnostic report" },
   { eyebrow: "Instructions", title: "Calibrate how to answer" },
   ...DIMENSIONS.map((dimension) => ({
-    eyebrow: `${dimension} Dimension`,
+    eyebrow: `${dimension} Area`,
     title: `Analyzing ${dimension}`,
   })),
   { eyebrow: "Strategic Context", title: "Capture the next 3-6 month priorities" },
@@ -55,10 +57,12 @@ export default function InsightPage() {
     email: "", company: "", employees: "", name: "",
     role: "", whatsapp: "", challenge: "", target: "", industry: "", location: "",
     timeline: "unknown",
-    nextStepIntent: "explore", businessConsequence: "",
+    nextStepIntent: "result_review", businessConsequence: "",
   });
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionAccepted, setSubmissionAccepted] = useState(false);
+  const submittingRef = useRef(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const submissionKeyRef = useRef<string>(crypto.randomUUID());
   const journeyStartRecordedRef = useRef(false);
@@ -92,33 +96,33 @@ export default function InsightPage() {
   // ── Safety Measures ────────────────────────────────────────────────────────
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (step > 0 && step < 11) {
+      if (step > 0 && step < 11 && !submissionAccepted) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [step]);
+  }, [step, submissionAccepted]);
 
   useEffect(() => {
     if (step > 0 && step < 10) {
       window.history.pushState({ trap: true }, "", window.location.href);
     }
     const handlePopState = () => {
-      if (step > 0 && step < 11) {
+      if (step > 0 && step < 11 && !submissionAccepted) {
         setShowExitConfirm(true);
         window.history.pushState({ trap: true }, "", window.location.href);
       }
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [step]);
+  }, [step, submissionAccepted]);
 
   // ── Scroll to top on step change ──────────────────────────────────────────
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
-  }, [step]);
+  }, [step, submissionAccepted]);
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   const nextStep = () => {
@@ -166,36 +170,22 @@ export default function InsightPage() {
 
   const handleSubmitFinal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
-    
     try {
-      const response = await fetch("/api/assessment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": submissionKeyRef.current,
-        },
-        body: JSON.stringify({
-          ...formData,
-          answers: answers,
-          journeyId: readAssessmentJourneyId(window.location.search),
-          attribution: readAssessmentAttribution(window.location.search, window.location.href, document.referrer),
-          locale,
-        }),
-      });
-
-      const data = await response.json().catch(() => null);
-      if (response.ok && data?.success) {
-        nextStep();
-      } else {
-        const details = typeof data?.details === "string" ? ` (${data.details})` : "";
-        alert(copy.submitError + (data?.error ? `${data.error}${details}` : copy.genericError));
-      }
+      await submitAssessment({
+        ...formData, answers,
+        journeyId: readAssessmentJourneyId(window.location.search),
+        attribution: readAssessmentAttribution(window.location.search, window.location.href, document.referrer),
+        locale,
+      }, submissionKeyRef.current, () => setSubmissionAccepted(true));
+      setStep(11);
     } catch (error) {
       console.error("Submission error:", error);
-      alert(copy.connectionError);
+      alert(copy.submitError + (error instanceof Error ? error.message : copy.connectionError));
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -313,7 +303,7 @@ export default function InsightPage() {
         <header className="insight-header fixed top-0 inset-x-0 h-16 flex items-center justify-between px-6 md:px-12 z-50 bg-white/92 backdrop-blur-sm border-b border-black/[0.03]">
           <button 
             onClick={() => {
-              if (step > 0 && step < 11) {
+              if (step > 0 && step < 11 && !submissionAccepted) {
                 setShowExitConfirm(true);
               } else {
                 exitAssessment();
@@ -362,7 +352,7 @@ export default function InsightPage() {
 
         {/* Dynamic Full Screen Loading Overlay */}
         <AnimatePresence>
-          {isSubmitting && <LoadingOverlay locale={locale} />}
+          {isSubmitting && <LoadingOverlay locale={locale} accepted={submissionAccepted} />}
         </AnimatePresence>
       </main>
 
@@ -395,33 +385,18 @@ export default function InsightPage() {
   );
 }
 
-function LoadingOverlay({ locale }: { locale: "id" | "en" }) {
+function LoadingOverlay({ locale, accepted }: { locale: "id" | "en"; accepted: boolean }) {
   const isEnglish = locale === "en";
-  const messages = isEnglish
-    ? [
-        "Receiving and verifying your data...",
-        "Our consulting team is preparing the analysis framework...",
-        "Mapping performance across 7 operational dimensions...",
-        "Formulating strategic priorities and executive recommendations...",
-        "Preparing the final BinaHub Insight report...",
-        "Almost done, preparing delivery to your email..."
-      ]
-    : [
-        "Menerima dan memverifikasi data Anda...",
-        "Tim konsultan kami sedang menyusun kerangka analisis...",
-        "Memetakan performa ke dalam 7 dimensi operasional...",
-        "Merumuskan prioritas strategis dan rekomendasi eksekutif...",
-        "Menyusun laporan akhir BinaHub Insight...",
-        "Hampir selesai, menyiapkan pengiriman ke email Anda..."
-      ];
-  const [msgIdx, setMsgIdx] = useState(0);
-
+  const [slowSave, setSlowSave] = useState(false);
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMsgIdx((prev) => (prev < messages.length - 1 ? prev + 1 : prev));
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [messages.length]);
+    const timer = setTimeout(() => setSlowSave(true), 5_000);
+    return () => clearTimeout(timer);
+  }, []);
+  const message = accepted
+    ? isEnglish ? "Your assessment has been received." : "Assessment Anda sudah diterima."
+    : slowSave
+      ? isEnglish ? "Still saving. Please wait for confirmation." : "Sedang menyimpan. Tunggu konfirmasi penerimaan."
+      : isEnglish ? "Sending your assessment..." : "Mengirim assessment Anda...";
 
   return (
     <motion.div
@@ -437,19 +412,19 @@ function LoadingOverlay({ locale }: { locale: "id" | "en" }) {
       </div>
       
       <motion.h2 
-        key={msgIdx}
+        key={message}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         className="text-xl md:text-2xl font-bold text-[#0B2C6B] mb-4 max-w-lg"
       >
-        {messages[msgIdx]}
+        {message}
       </motion.h2>
 
       <p className="text-sm text-black/40 max-w-md font-light">
-        {isEnglish
-          ? "Please do not close this page. Our team is processing your business parameters for an accurate result."
-          : "Mohon jangan menutup halaman ini. Tim kami sedang memproses parameter bisnis Anda untuk hasil yang akurat."}
+        {accepted
+          ? isEnglish ? "You may close this page. Your report will be sent to your email." : "Anda boleh menutup halaman ini. Laporan akan dikirim ke email Anda."
+          : isEnglish ? "Please wait while we safely save your answers." : "Tunggu sebentar saat kami menyimpan jawaban Anda."}
       </p>
     </motion.div>
   );

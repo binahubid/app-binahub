@@ -48,4 +48,4 @@ function Preview() {
 const mode = new URLSearchParams(window.location.search);
 createRoot(document.getElementById("root")!).render(mode.has("phone")
   ? <div className="min-h-screen bg-slate-100 p-5"><iframe title="Preview ponsel" src={mode.has("outbound") ? "/?outbound&screen=phone" : "/?screen=phone"} style={{ width: 390, height: 844, border: "1px solid #cbd5e1", borderRadius: 16, background: "white" }} /></div>
-  : mode.has("outbound") ? <OutboundPreview /> : mode.has("proposal") ? <ProposalBook view={previewView} downloadUrl="#preview-only" /> : <Preview />);
+  : mode.has("outbound") || mode.has("sales") ? <OutboundPreview /> : mode.has("proposal") ? <ProposalBook view={previewView} downloadUrl="#preview-only" /> : <Preview />);

@@ -17,9 +17,9 @@ export const TAB_META: Record<(typeof tabs)[number], { eyebrow: string; title: s
     description: "Pahami kebutuhan klien, pantau proposal, dan kelola tindak lanjut dalam satu tempat.",
   },
   "Acquisition Control": {
-    eyebrow: "Tata kelola pertumbuhan",
-    title: "Kelola sumber data, kampanye, dan prospek",
-    description: "Pastikan dasar pemrosesan, persetujuan, masa simpan, pemeriksaan duplikasi, dan persetujuan penanggung jawab tersedia sebelum prospek menjadi lead.",
+    eyebrow: "Akuisisi & Penjualan",
+    title: "Workspace penjualan",
+    description: "Inbound, outbound, assessment, proposal, dan tindak lanjut dalam satu tempat.",
   },
   "Sales Pipeline": {
     eyebrow: "Operasional penjualan",

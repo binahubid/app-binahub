@@ -75,7 +75,7 @@ export function QuestionsStep({ step, answers, onAnswer }: QuestionsStepProps) {
 
             <div className="relative flex h-full flex-col">
               <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-[#D9A441]">
-                {isEnglish ? `Dimension ${pageIndex + 1} of 7` : `Dimensi ${pageIndex + 1} dari 7`}
+                {isEnglish ? `Area ${pageIndex + 1} of 7` : `Area ${pageIndex + 1} dari 7`}
               </p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">{dimension}</h2>
               <p className="mt-5 text-sm font-light leading-6 text-white/64">
@@ -86,7 +86,7 @@ export function QuestionsStep({ step, answers, onAnswer }: QuestionsStepProps) {
                 <div className="flex items-end justify-between">
                   <div>
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/45">
-                      {isEnglish ? "Dimension progress" : "Progres dimensi"}
+                      {isEnglish ? "Area progress" : "Progres area"}
                     </p>
                     <p className="mt-2 text-2xl font-semibold text-white">{answeredCount}<span className="text-sm font-normal text-white/38"> / 7</span></p>
                   </div>

@@ -56,7 +56,7 @@ export const ADMIN_NAVIGATION: AdminNavigationGroup[] = [
     id: "growth",
     label: "Akuisisi & Penjualan",
     items: [
-      { href: "/admin/acquisition", label: "Kontrol Akuisisi", shortLabel: "Akuisisi", description: "Sumber, kampanye, dan prospek.", icon: Sparkles },
+      { href: "/admin/acquisition", label: "Workspace Penjualan", shortLabel: "Penjualan", description: "Prioritas, inbound, outbound, klien, proposal, dan tindak lanjut.", icon: Sparkles },
       { href: "/admin/pipeline", label: "Pipeline Penjualan", shortLabel: "Pipeline", description: "Peluang, owner, dan next action.", icon: BarChart3 },
       { href: "/admin/assessments", label: "Assessment", shortLabel: "Assessment", description: "Hasil diagnostik dan tindak lanjut.", icon: ClipboardCheck },
       { href: "/admin/meetings", label: "Konsultasi", shortLabel: "Konsultasi", description: "Booking dan perubahan jadwal.", icon: CalendarDays },

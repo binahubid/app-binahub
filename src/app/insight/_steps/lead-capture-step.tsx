@@ -28,7 +28,7 @@ const COPY = {
       "Informasi ini digunakan untuk menyesuaikan analisis, bukan untuk membuat proses terasa administratif.",
     badges: [
       ["5-7 menit", "Estimasi pengisian"],
-      ["49 indikator", "Membaca 7 dimensi"],
+      ["49 indikator", "Membaca 7 area"],
       ["Privat", "Dikirim ke Email & WhatsApp"],
     ],
     fields: {
@@ -58,7 +58,7 @@ const COPY = {
       "This information is used to tailor the analysis, not to make the process feel administrative.",
     badges: [
       ["5-7 minutes", "Estimated completion"],
-      ["49 indicators", "Across 7 dimensions"],
+      ["49 indicators", "Across 7 areas"],
       ["Private", "Sent to Email & WhatsApp"],
     ],
     fields: {

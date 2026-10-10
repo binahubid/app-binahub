@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.30.0] - 2026-10-10
+
+### Added
+
+- Halaman internal Katalog Produk → Kamus kompetensi: pencarian berdasarkan kompetensi/judul solusi/kode SS, filter kesiapan definisi, dan rincian Core/Secondary untuk setiap kompetensi.
+- Status menunggu definisi/indikator CEO dan penggunaan diagnosis belum aktif ditampilkan terpisah dari pemetaan katalog; Core/Secondary tidak ditampilkan sebagai bobot skor.
+- Penanganan sesi berakhir, SQL belum terpasang, loading, batas waktu koneksi, retry, serta pembatalan request saat meninggalkan halaman. Kamus hanya untuk peninjauan, tidak mengaktifkan pertanyaan, rekomendasi, atau pembayaran baru.
+
+### Deployment
+
+- Memerlukan API 0.30.0 dan SQL 63 setelah katalog SQL 59. Jalankan migrasi, deploy API, kemudian app. Tidak membutuhkan env/secret baru dan tidak ada perubahan website/AMS pada tahap fondasi ini.
+
 ## [0.29.0] - 2026-10-06
 
 ### Changed

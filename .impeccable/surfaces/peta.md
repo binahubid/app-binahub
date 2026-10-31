@@ -6,6 +6,27 @@ related_targets: [src/components/peta-report.tsx, src/components/peta-admin.tsx,
 ---
 # PETA invitation pilot
 
+## Shared admin access · 31 October 2026
+
+Owner explicitly replaces the creator-only admin scope with access for all verified
+BinaHub admins. Progress, settings and consented reports are shared across admins;
+optional participant review permission, finalized answers and retention stay intact.
+Copy names the admin team rather than “akun admin saya” or a different assigned
+reader. Server canReadResult remains authoritative. No layout or visual identity
+change. Owner also corrects “antartim” to “antar tim” in situation14's public DTO;
+the immutable source, option IDs and scoring key are not rewritten. These current
+requirements supersede the historical creator-only directions below.
+
+CEO participant revision on31 October2026: put the context inside the question
+card before its statements. Review all24 contexts with the two selected full
+texts and the existing Edit action. Use the approved “Hasil merupakan
+kecenderungan pribadi/tabiat, bukan ukuran kemampuan/kompetensi.” notice. Add one
+plain-language, deterministic reflective paragraph, preserving ties/close scores;
+never infer ability, a permanent personality label or use AI. Hide version strings
+and generated technical participant IDs in report headers; keep the date and
+internal audit metadata. Exact counts, both charts, saved answers and scoring
+remain unchanged. This is an Operate/Read refinement, not a new visual world.
+
 ## Admin workspace revision · 30 October 2026 · v0.50.0
 
 Operate mode: owner requests friction reduction in existing PETA administration,

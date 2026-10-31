@@ -59,7 +59,11 @@ the participant journey and daily admin operations simple.
   Participant instructions lead, internal policy/version references stay out of
   public copy, and Next advances immediately with serial background saving.
   Final submission waits for confirmed saves. Participant results are private;
-  an assigned consultant needs separate participant permission. The owner sets
+  the BinaHub admin team needs separate participant permission. Owner update on
+  31 October 2026: every verified admin can manage PETA and review consented
+  results; creator identity is provenance, not a per-admin access restriction.
+  Existing declined consent is never changed. SQL79 is required for activation.
+  The owner sets
   storage to one year from initial consent (29 October 2026). It uses private
   immutable source, deterministic MOST/LEAST/NET counts and no AI/PE50:50 formula.
   Production source/key, retention worker, privacy/content rights and security

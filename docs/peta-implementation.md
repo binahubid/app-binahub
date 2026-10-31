@@ -1,6 +1,6 @@
 # PETA — implementation and activation
 
-Updated 31 October 2026 (app0.50.1 / API0.46.3 / SQL78). PETA is an invitation-only behavioral-preference
+Updated 31 October 2026 (app0.50.3 / API0.46.4 prepared; SQL79 required before API deployment). PETA is an invitation-only behavioral-preference
 pilot, **not** a PE/RM competency package, clinical diagnosis, HR selection tool,
 or psychometrically validated product. Nothing in this release activates payment.
 
@@ -10,8 +10,9 @@ or psychometrically validated product. Nothing in this release activates payment
    the program settings. Other module selections remain unchanged.
 2. Open **Program & Produk → PETA** (`/admin/peta`, optionally with `program_id`).
    Select the program and record the internal privacy reference, content rights
-   and pilot acceptance. Optionally assign the current account as consultant.
-   PETA workspaces/results remain owner-scoped; this is not a global result list.
+   and pilot acceptance. Optionally enable review by the BinaHub admin team.
+   All verified admins manage the same PETA workspaces and progress; the creator
+   is provenance, not the access boundary. Report access still requires consent.
 3. Share the existing program QR/link/code using the reused `ProgramShareCard`:
    copy, native share and QR PNG download are the same as other program modules.
    Participants register with their name or return using their personal
@@ -21,17 +22,24 @@ or psychometrically validated product. Nothing in this release activates payment
    disclosure opens data use, identity linkage, private result access and one-year
    storage. Internal reference/version IDs are not rendered. The participant
    gives required processing consent and may
-   separately allow the assigned consultant to read their report. Neither box is
+   separately allow the BinaHub admin team to read their report. Neither box is
    preselected. Declining consultant access does not prevent participation.
 5. Practise once, complete all 24 situations, review and submit. Each situation
-   needs two different choices. Next/Back move immediately with a finite200ms
+   needs two different choices. Its context appears inside the question card,
+   before the four statements. Review lists each context and the full text of
+   both selected statements, never only a completion badge. Next/Back move immediately with a finite200ms
    transition (instant with reduced motion). A serial in-memory queue saves in
    the background, preserves revisions/latest edits and reports actual status.
    Failed saves preserve choices and offer retry or confirmed reload; tab
    conflicts are not silently overwritten. Final submission waits for all saves.
-6. The participant reads their own report. A consultant can read it only with
+6. The participant reads their own report. An admin can read it only with
    the participant's separate permission. There is no automatic company access,
    team ranking, group report, AI call or catalog recommendation.
+   The owner-approved result notice is “Hasil merupakan kecenderungan
+   pribadi/tabiat, bukan ukuran kemampuan/kompetensi.” One deterministic paragraph
+   describes the relative pattern, including tied/close scores, without a permanent
+   type or ability claim. Report headers show the completion date, not technical
+   version strings or generated participant IDs. Audit metadata remains stored.
 
 The public `/peta` page explains the product but cannot start an uninvited session.
 New participation uses `/client/program/peta` inside the existing program access
@@ -42,14 +50,14 @@ automatically linked to a guessed program, and no real program is modified here.
 ## Storage, access and recovery
 
 - Admin opens **Program aktif** for PETA-enabled programs with active/in-progress
-  status whose end date has not passed. **Riwayat program** retains owned PETA
+  status whose end date has not passed. **Riwayat program** retains PETA
   workspaces for finished/disabled programs and legacy pilots. A direct link to
   an ended program opens history. Ending a program does not erase its responses.
 - Participant history uses server-side search/status filters and 20-row pages,
   not a global latest-100 cut-off. Counts cover all responses in the selected
   program scope, not every registered program member. Audit/invitation lists
   remain limited to the latest100 events; they are not the response history.
-- Reading historical results still requires the assigned admin, participant
+- Reading historical results still requires a verified admin, participant
   permission, final submission and unexpired retention. It does not reopen
   participant entry or reset the one-year retention. PETA-configured programs
   cannot be hard-deleted through the program API; archive them instead.
@@ -69,7 +77,7 @@ automatically linked to a guessed program, and no real program is modified here.
   HttpOnly, Secure-in-production, SameSite=Strict cookies. Tokens are hashed in DB.
 - Session: eight hours maximum, with a 30-minute inactivity timeout. A submitted
   result can be revisited while that session remains valid.
-- Legacy recovery: a workspace owner can issue a fresh 30-minute recovery invitation **after
+- Legacy recovery: a verified admin can issue a fresh 30-minute recovery invitation **after
   verifying the participant through the previously agreed private channel**.
   Merely knowing a participant code is not identity verification. Recovery
   invalidates previous session credentials; it does not alter final answers.
@@ -91,7 +99,10 @@ automatically linked to a guessed program, and no real program is modified here.
 ## Scoring and private source
 
 The immutable source is `PETA-DISC-FC24@1.0.0-pilot`: 24 contexts and 96 statements
-with the CEO's exact order/text. Public DTOs contain only statement content and
+with the CEO's order/text. The owner approved one display-only correction on
+31 October 2026: situation14 uses “antar tim”, not “antartim”. The API's validated
+public DTO applies it without rewriting the sealed source, source hash, option
+IDs, choices or scoring. Public DTOs contain only statement content and
 the participant's choices; dimension mappings stay server-side and encrypted at
 rest in the source table. Source hashes, key fingerprints and version are pinned.
 
@@ -107,6 +118,13 @@ they are not displayed to participants or used to invalidate answers.
 ## Deployment prerequisites — not executed by this implementation
 
 See the API repo's `docs/peta-activation.md` for the exact sequence:
+
+For an installation with SQL78 already applied, run only
+`binahub-api/supabase/migrations/0079_peta_admin_team_access.sql`, then deploy
+API0.46.4 before app0.50.3. It adds backend-only team RPCs and changes no stored
+answers, consent flags, results, identities or retention dates. There is no new
+environment variable. Existing declined consent remains declined. Do not repeat
+the older installation steps below on an already configured instance.
 
 1. Apply **SQL 76** (`0076_peta_invitation_pilot.sql`).
 2. Apply the locally prepared, ignored **SQL 76B** encrypted source file.

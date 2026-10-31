@@ -17,11 +17,16 @@ describe('PETA admin review wording and unchanged access gating',()=>{
   expect(await screen.findByRole('heading',{name:'Peta preferensi perilaku kerja Anda'})).toBeVisible();
   await waitFor(()=>expect(vi.mocked(fetch).mock.calls.some(([,init])=>init?.body===JSON.stringify({id:'synthetic-session',action:'result',verified:false}))).toBe(true));
  });
+ it('explains shared admin access without claiming that enrolled participants have started PETA',async()=>{
+  serve(true,true);render(<PetaAdmin/>);
+  expect(await screen.findByText(/Semua admin BinaHub dapat mengelola pengisian PETA/)).toHaveTextContent('bukan seluruh peserta terdaftar dalam program');
+  expect(screen.queryByText(/Hanya data yang Anda kelola/)).not.toBeInTheDocument();
+ });
  it('explains missing participant permission without offering a result action',async()=>{
   serve(false,false);render(<PetaAdmin/>);expect(await screen.findByText('Peserta belum memberikan izin untuk peninjauan hasil.')).toBeVisible();expect(screen.queryByRole('button',{name:'Lihat hasil peserta'})).not.toBeInTheDocument();
  });
- it('distinguishes a different assigned admin from a participant who declined',async()=>{
-  serve(false,true);render(<PetaAdmin/>);expect(await screen.findByText('Hasil hanya dapat dilihat oleh admin pendamping yang ditetapkan untuk peserta ini.')).toBeVisible();expect(screen.queryByText('Peserta belum memberikan izin untuk peninjauan hasil.')).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Lihat hasil peserta'})).not.toBeInTheDocument();
+ it('does not misreport an unavailable result as creator-only access or declined consent',async()=>{
+  serve(false,true);render(<PetaAdmin/>);expect(await screen.findByText('Hasil belum dapat dibuka. Periksa status akses dan masa simpan peserta.')).toBeVisible();expect(screen.queryByText('Peserta belum memberikan izin untuk peninjauan hasil.')).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Lihat hasil peserta'})).not.toBeInTheDocument();
  });
 });
 
@@ -99,7 +104,7 @@ describe('PETA admin task workspace',()=>{
   expect(screen.getByRole('heading',{name:'Siapkan PETA sebelum membagikan akses'})).toBeVisible();fireEvent.click(screen.getByRole('button',{name:'Buka pengaturan PETA'}));
   expect(screen.getByRole('button',{name:'Simpan pengaturan PETA'})).toBeDisabled();
   fireEvent.change(screen.getByRole('textbox',{name:'Acuan pemberitahuan privasi'}),{target:{value:'Kebijakan internal sintetis'}});
-  fireEvent.click(screen.getByLabelText(/Tetapkan akun admin saya/));fireEvent.click(screen.getByLabelText(/Saya memastikan hak penggunaan/));fireEvent.click(screen.getByRole('button',{name:'Simpan pengaturan PETA'}));
+  fireEvent.click(screen.getByLabelText(/Aktifkan peninjauan hasil oleh tim admin/));fireEvent.click(screen.getByLabelText(/Saya memastikan hak penggunaan/));fireEvent.click(screen.getByRole('button',{name:'Simpan pengaturan PETA'}));
   await waitFor(()=>expect(vi.mocked(fetch).mock.calls.some(([,init])=>init?.body===JSON.stringify({programId:'program-a',privacyReference:'Kebijakan internal sintetis',consultantAccess:true,privacyApproved:true,contentRightsConfirmed:true,pilotAcknowledged:true}))).toBe(true));
  });
  it('recovers an initial load error without losing the retry control',async()=>{

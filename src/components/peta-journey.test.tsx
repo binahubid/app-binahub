@@ -1,5 +1,5 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
-import {render,screen,fireEvent,waitFor,cleanup} from '@testing-library/react';
+import {render,screen,fireEvent,waitFor,cleanup,within} from '@testing-library/react';
 import {PetaJourney,PetaSelector} from './peta-journey';
 import {PetaReport} from './peta-report';
 import {makePetaSession,petaSyntheticReport} from '@/test/fixtures/peta';
@@ -17,8 +17,8 @@ describe('PETA participant UX',()=>{
  it('offers no uninvited start and no participant login form',async()=>{vi.mocked(fetch).mockImplementation(()=>response({success:false,code:'PETA_SESSION_REQUIRED',error:'Sesi berakhir'},401));render(<PetaJourney/>);expect(await screen.findByRole('heading',{name:'PETA tersedia melalui undangan.'})).toBeVisible();expect(screen.queryByRole('button',{name:'Mulai PETA'})).not.toBeInTheDocument();expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();});
  it('removes invitation from address, requires consent and never preselects consultant access',async()=>{
   window.history.replaceState(null,'','/peta#invite='+'a'.repeat(64));vi.mocked(fetch).mockImplementation(()=>response({success:true,invitation:{workspaceName:'Synthetic',privacyReference:'Synthetic policy',retentionMonths:12,consultantAccess:true,consentVersion:'peta-privacy-v1',purpose:'start',expiresAt:'2026-12-01T00:00:00Z'}}));render(<PetaJourney/>);await screen.findByRole('heading',{name:'Sebelum memulai'});expect(window.location.hash).toBe('');expect(screen.getByRole('button',{name:/Saya setuju dan lanjutkan/})).toBeDisabled();expect(screen.getAllByRole('checkbox').every(box=>!(box as HTMLInputElement).checked)).toBe(true);expect(document.body.textContent).not.toMatch(/Synthetic policy|peta-privacy-v1|Acuan pemberitahuan/);expect(screen.getByText('Penggunaan data dan hasil Anda')).toBeVisible();fireEvent.click(screen.getByLabelText(/Saya telah membaca/));expect(screen.getByRole('button',{name:/Saya setuju dan lanjutkan/})).toBeEnabled();
-  expect(screen.getByRole('checkbox',{name:/Saya mengizinkan tim pendamping BinaHub/})).not.toBeChecked();
-  fireEvent.click(screen.getByText('Penggunaan data dan hasil Anda'));expect(screen.getByText(/Hasil dapat ditinjau oleh tim pendamping yang ditugaskan/)).toBeVisible();
+  expect(screen.getByRole('checkbox',{name:/Saya mengizinkan tim admin BinaHub/})).not.toBeChecked();
+  fireEvent.click(screen.getByText('Penggunaan data dan hasil Anda'));expect(screen.getByText(/hasil dapat ditinjau oleh tim admin BinaHub sebagai pendamping program/)).toBeVisible();
  });
  it('prevents most/least duplication with labelled native radios',()=>{const block=makePetaSession().blocks[0],change=vi.fn();render(<PetaSelector block={block} pair={{most:'A',least:null}} onChange={change}/>);expect(screen.getByRole('radio',{name:'Paling tidak sesuai dengan saya: '+block.options[0].text})).toBeDisabled();fireEvent.click(screen.getByRole('radio',{name:'Paling tidak sesuai dengan saya: '+block.options[1].text}));expect(change).toHaveBeenCalledWith({most:'A',least:'B'});});
  it('moves to the next situation while the answer request is still pending',async()=>{
@@ -45,6 +45,30 @@ describe('PETA participant UX',()=>{
   fireEvent.click(screen.getByLabelText('Saya memahami bahwa pilihan akan terkunci setelah dikirim.'));fireEvent.click(screen.getByRole('button',{name:'Kirim dan lihat hasil'}));expect(submitted).toBe(false);
   complete(new Response(JSON.stringify({success:true,session:{...s,revision:1,answers:{...s.answers,[s.blocks[23].id]:{most:'A',least:'B'}}}})));
   await waitFor(()=>expect(submitted).toBe(true));
+ });
+ it('shows context immediately above the statements and both selected texts in review',async()=>{
+  const s=makePetaSession();for(const block of s.blocks.slice(0,23))s.answers[block.id]={most:'A',least:'B'};
+  vi.mocked(fetch).mockImplementation((_url,init)=>response({success:true,session:init?.method==='PUT'?{...s,revision:1,answers:{...s.answers,[s.blocks[23].id]:{most:'A',least:'B'}}}:s,csrfToken:'c'.repeat(64)}));
+  render(<PetaJourney/>);const context=await screen.findByRole('heading',{name:s.blocks[23].context});
+  expect(context.closest('[data-peta-question]')).not.toBeNull();
+  fireEvent.click(screen.getByRole('radio',{name:'Paling sesuai dengan saya: '+s.blocks[23].options[0].text}));
+  fireEvent.click(screen.getByRole('radio',{name:'Paling tidak sesuai dengan saya: '+s.blocks[23].options[1].text}));
+  fireEvent.click(screen.getByRole('button',{name:'Tinjau jawaban'}));
+  const row=screen.getByRole('heading',{name:'1. '+s.blocks[0].context}).closest('li')!;
+  expect(within(row).getByText('Paling sesuai')).toBeVisible();expect(within(row).getByText('Paling tidak sesuai')).toBeVisible();
+  expect(within(row).getByText(s.blocks[0].options[0].text)).toBeVisible();expect(within(row).getByText(s.blocks[0].options[1].text)).toBeVisible();
+  expect(within(row).queryByText(s.blocks[0].options[2].text)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Ubah situasi 1'}));
+  expect(screen.getByRole('heading',{name:s.blocks[0].context})).toBeVisible();
+  expect(screen.getByRole('radio',{name:'Paling sesuai dengan saya: '+s.blocks[0].options[0].text})).toBeChecked();
+ });
+ it('uses the CEO disclaimer and one reflective narrative without changing report figures',()=>{
+  render(<PetaReport report={petaSyntheticReport}/>);
+  expect(screen.getByText('Hasil merupakan kecenderungan pribadi/tabiat, bukan ukuran kemampuan/kompetensi.')).toBeVisible();
+  expect(screen.queryByText('Hasil pilot, bukan ukuran kompetensi.')).not.toBeInTheDocument();
+  expect(screen.getByText(/Berdasarkan pilihan Anda, kecenderungan untuk mengambil keputusan/)).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/1\.0\.0-pilot|PETA-SYNTHETIC|Versi instrumen/);
+  expect(screen.getAllByRole('img')).toHaveLength(2);
  });
  it('shows both required charts and exact numbers, without percent scores or hidden keys',()=>{render(<PetaReport report={petaSyntheticReport}/>);expect(screen.getAllByRole('img')).toHaveLength(2);expect(screen.getByRole('table',{name:'Rincian angka pilihan'})).toBeVisible();expect(screen.getByRole('heading',{level:1})).toHaveFocus();expect(screen.getByText('-24')).toBeVisible();expect(screen.getByText('+24')).toBeVisible();expect(document.body.textContent).not.toMatch(/\d+%|qualityFlags|optionToDimension/);});
  it('renders true zero net/count widths, not decorative minimum bars',()=>{render(<PetaReport report={petaSyntheticReport}/>);expect(document.querySelector('[data-net="0"]')).toHaveAttribute('width','0');expect(document.querySelector('[data-count="0"]')).toHaveAttribute('width','0');});

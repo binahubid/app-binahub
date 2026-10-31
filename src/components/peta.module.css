@@ -12,3 +12,4 @@
 @keyframes peta-step-back{from{opacity:.65;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
 @media(prefers-reduced-motion:reduce){.questionStep{animation:none}}
 .programAccess{min-width:0}.programAccess>h2{font-size:20px;font-weight:600;line-height:1.4;margin-bottom:12px}.programAccess>p{font-size:14px;line-height:1.8;color:#405779}.programAccess>section{margin-top:20px}
+.reviewList li{align-items:flex-start}.reviewContent{min-width:0;flex:1}.reviewContent h3{font-size:14px;font-weight:600;line-height:1.7;text-wrap:balance}.reviewChoices{display:grid;gap:10px;margin-top:12px}.reviewChoices dt{font-size:12px;font-weight:600;line-height:1.7;color:#0b2c6b}.reviewChoices dd{font-size:13px;line-height:1.8;color:#405779;overflow-wrap:anywhere}.reviewList .textButton{flex:none}.panel .narrative{max-width:72ch;margin-bottom:20px}

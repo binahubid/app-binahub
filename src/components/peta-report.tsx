@@ -1,17 +1,17 @@
 import {useEffect,useId,useRef} from 'react';
 import {type PetaReportData,petaDate} from '@/lib/peta';
+import {petaNarrative} from '@/lib/peta-narrative';
 import styles from './peta.module.css';
 const descriptions={D:{title:'D — Mendorong penyelesaian',text:'Kecenderungan mengambil keputusan dan menggerakkan pekerjaan menuju hasil.'},I:{title:'I — Membangun pengaruh',text:'Kecenderungan bertukar gagasan dan melibatkan orang lain melalui komunikasi.'},S:{title:'S — Menjaga kerja sama',text:'Kecenderungan menjaga dukungan, kesinambungan, dan kerja sama.'},C:{title:'C — Memeriksa standar',text:'Kecenderungan memperhatikan ketelitian, bukti, dan standar pekerjaan.'}};
 export function PetaReport({report,headingLevel=1}:{report:PetaReportData;headingLevel?:1|2}){
  const id=useId(),{result}=report,heading=useRef<HTMLHeadingElement>(null),Heading=headingLevel===1?'h1':'h2';
  useEffect(()=>{heading.current?.focus();},[]);
  return <article className={styles.report} aria-labelledby={id+'-title'}>
-  <header className={styles.reportHeader}><Heading ref={heading} tabIndex={-1} id={id+'-title'}>Peta preferensi perilaku kerja Anda</Heading><p>{report.participantCode} · {petaDate(report.submittedAt)} · Versi {result.instrumentVersion}</p>
-   <p className={styles.notice}><strong>Hasil pilot, bukan ukuran kompetensi.</strong> Skor menunjukkan pilihan relatif dalam diri Anda, bukan perbandingan antarpeserta atau label kepribadian permanen.</p>
+  <header className={styles.reportHeader}><Heading ref={heading} tabIndex={-1} id={id+'-title'}>Peta preferensi perilaku kerja Anda</Heading><p>Diselesaikan pada {petaDate(report.submittedAt)}</p>
+   <p className={styles.notice}><strong>Hasil merupakan kecenderungan pribadi/tabiat, bukan ukuran kemampuan/kompetensi.</strong> Skor menunjukkan pilihan relatif dalam diri Anda, bukan perbandingan antarpeserta atau label kepribadian permanen.</p>
   </header>
   <section className={styles.panel} aria-label="Ringkasan preferensi"><h2>Baca pola Anda secara utuh</h2>
-   <p>{result.topDimensions.length===4?'Keempat dimensi memiliki selisih yang setara. Tidak ada satu dimensi tertinggi.':result.topIsTied?'Dimensi '+result.topDimensions.join(', ')+' memiliki selisih tertinggi yang sama. Tidak perlu memaksakan satu tipe tunggal.':'Dimensi '+result.topDimensions.join(', ')+' relatif lebih sering muncul dalam selisih pilihan Anda.'}</p>
-   {result.closeTopScores&&result.topDimensions.length!==4&&<p>Skor teratas berdekatan. Pertimbangkan seluruh pola dan konteks pekerjaan Anda.</p>}
+   <p className={styles.narrative}>{petaNarrative(result)}</p>
    <p>Nilai positif bukan berarti lebih baik, dan nilai negatif bukan berarti kemampuan yang buruk.</p>
    <div className={styles.charts}>
     <figure className={styles.chart} aria-labelledby={id+'-net'} aria-describedby={id+'-table'}><figcaption id={id+'-net'}>Selisih pilihan relatif</figcaption>

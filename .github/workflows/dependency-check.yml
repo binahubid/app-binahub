@@ -1,0 +1,33 @@
+name: Dependency security and compatibility
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependencies-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install the locked dependency tree without lifecycle hooks
+        run: npm ci --ignore-scripts
+      - name: Check all dependency advisories
+        run: npm audit --audit-level=moderate
+      - name: Check matcher version and active lint rules
+        run: npm run test:dependencies
+
+      # Read-only dependency checks; no deploy, credentials, production data or pentest.

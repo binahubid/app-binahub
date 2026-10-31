@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.50.2] - 2026-10-31
+
+- Tambal CVE-2026-118764 / GHSA-g3hv-75wg-m249 dengan minimatch resmi11.0.1
+  pada seluruh jalur lint. ESLint9, konfigurasi Next dan aturan tetap dipertahankan.
+- Adapter hanya dalam proses lint mempertahankan API callable CommonJS lama
+  dan helper .test() untuk import/no-internal-modules, tetap memakai mesin v11;
+  tidak mengembalikan compiler regex lama, mengubah file node_modules, atau
+  memasang hook instalasi/build. Source fitur dan dependensi runtime tidak berubah.
+- Tambahkan kontrak versi lockfile/API/rule lint serta CI dependency read-only
+  yang memeriksa advisori development maupun runtime. Tidak ada SQL/env baru.
+
 ## [0.50.1] - 2026-10-31
 
 - Pisahkan Program aktif dan Riwayat program di admin PETA. Pilihan aktif hanya

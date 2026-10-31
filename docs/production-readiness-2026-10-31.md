@@ -121,3 +121,20 @@ bukan daftar status runtime terkini.
   bebas kerentanan; deployment produksi belum diverifikasi.
 - AMS yang sudah disiapkan, minimisasi prompt lintas fitur, alarm, PDF PETA dan
   pekerjaan lain tetap dilanjutkan per urutan, tidak dinyatakan selesai di batch ini.
+
+### Batch 3: advisori minimatch pada app dan website
+
+- App0.50.2 dan website0.2.47: seluruh jalur minimatch memakai paket registry
+  resmi11.0.1 untuk CVE-2026-118764 / GHSA-g3hv-75wg-m249. Jalur yang ditemukan
+  adalah tool lint development; dependency runtime aplikasi tidak berubah.
+- Kompatibilitas callable plugin lama dijaga hanya pada proses lint, melalui
+  facade atas matcher11. Tidak ada compiler regex lama, patch file node_modules,
+  hook instalasi/build, penonaktifan rule atau penekanan advisori.
+- Audit penuh dan runtime-only kedua repo menghasilkan0 advisori. npm ci,
+  kontrak dependency, lint, build/TypeScript dan394 tes app lulus; kontrak
+  handoff/workflow website juga lulus. CI kini memeriksa dependency development.
+- Status16 peringatan development pada Batch1 adalah bukti historis API,
+  bukan hasil audit terbaru app/website. Repo API/AMS tidak diubah pada batch ini.
+- Tidak ada SQL/env, perubahan UI/skor, aktivasi scheduler atau data produksi.
+  Verifikasi deployment Hostinger dan rescan tetap terpisah dari keberhasilan
+  lokal/push. Detail: [patch minimatch](minimatch-security-patch-2026-10-31.md).

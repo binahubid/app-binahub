@@ -20,11 +20,11 @@ describe('PETA participant UX',()=>{
   expect(screen.getByRole('checkbox',{name:/Saya mengizinkan tim pendamping BinaHub/})).not.toBeChecked();
   fireEvent.click(screen.getByText('Penggunaan data dan hasil Anda'));expect(screen.getByText(/Hasil dapat ditinjau oleh tim pendamping yang ditugaskan/)).toBeVisible();
  });
- it('prevents most/least duplication with labelled native radios',()=>{const block=makePetaSession().blocks[0],change=vi.fn();render(<PetaSelector block={block} pair={{most:'A',least:null}} onChange={change}/>);expect(screen.getByRole('radio',{name:'Paling kurang sesuai dengan saya: '+block.options[0].text})).toBeDisabled();fireEvent.click(screen.getByRole('radio',{name:'Paling kurang sesuai dengan saya: '+block.options[1].text}));expect(change).toHaveBeenCalledWith({most:'A',least:'B'});});
+ it('prevents most/least duplication with labelled native radios',()=>{const block=makePetaSession().blocks[0],change=vi.fn();render(<PetaSelector block={block} pair={{most:'A',least:null}} onChange={change}/>);expect(screen.getByRole('radio',{name:'Paling tidak sesuai dengan saya: '+block.options[0].text})).toBeDisabled();fireEvent.click(screen.getByRole('radio',{name:'Paling tidak sesuai dengan saya: '+block.options[1].text}));expect(change).toHaveBeenCalledWith({most:'A',least:'B'});});
  it('moves to the next situation while the answer request is still pending',async()=>{
   const s=makePetaSession();s.answers[s.blocks[0].id]={most:'A',least:'B'};let finish!:(value:Response)=>void;
   vi.mocked(fetch).mockImplementation((_url,init)=>init?.method==='PUT'?new Promise<Response>(r=>{finish=r;}):response({success:true,session:s,csrfToken:'c'.repeat(64)}));
-  render(<PetaJourney/>);const b=s.blocks[1];fireEvent.click(await screen.findByRole('radio',{name:'Paling sesuai dengan saya: '+b.options[0].text}));fireEvent.click(screen.getByRole('radio',{name:'Paling kurang sesuai dengan saya: '+b.options[1].text}));
+  render(<PetaJourney/>);const b=s.blocks[1];fireEvent.click(await screen.findByRole('radio',{name:'Paling sesuai dengan saya: '+b.options[0].text}));fireEvent.click(screen.getByRole('radio',{name:'Paling tidak sesuai dengan saya: '+b.options[1].text}));
   fireEvent.click(screen.getByRole('button',{name:'Lanjut'}));
   expect(await screen.findByRole('heading',{name:s.blocks[2].context})).toBeVisible();expect(screen.getByRole('status')).toHaveTextContent('latar belakang');
   finish(new Response(JSON.stringify({success:true,session:{...s,revision:1,answers:{...s.answers,[b.id]:{most:'A',least:'B'}}}})));await waitFor(()=>expect(screen.getByRole('status')).toHaveTextContent('Semua jawaban tersimpan.'));

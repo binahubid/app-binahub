@@ -36,7 +36,7 @@ test('program admin reuses the existing QR/card, module setup and participant-co
  const actions:unknown[]=[];
  const dashboard={sourceReady:true,programs:[{id:ws,title:'Program PETA sintetis',code:'PETA-TEST-2026',status:'active',petaEnabled:true}],workspaces:[{id:ws,name:'Program PETA sintetis',programId:ws,consultantAccess:true,privacyReference:'Acuan internal sintetis'}],invitations:[],sessions:[{id:makePetaSession().id,workspaceId:ws,programId:ws,participantCode:'PETA-SYNTHETIC',participantName:'Peserta sintetis',status:'submitted',completedBlocks:24,submittedAt:petaSyntheticReport.submittedAt,retentionUntil:petaSyntheticReport.retentionUntil,canReadResult:false,instrumentVersion:'1.0.0-pilot',consentVersion:'peta-privacy-v1',consentedAt:petaSyntheticReport.submittedAt,reviewConsent:false}],audit:[]};
  await page.route('**/api/**',route=>{if(route.request().method()==='GET')return route.fulfill({json:{success:true,...dashboard}});actions.push(route.request().postDataJSON());return route.fulfill({json:{success:true,id:ws}});});
- await page.goto('/?peta-admin&program_id='+ws);await expect(page.getByRole('combobox',{name:'Program',exact:true})).toHaveValue(ws);
+ await page.goto('/?peta-admin&program_id='+ws);await expect(page.getByRole('combobox',{name:'Program',exact:true})).toHaveValue(ws,{timeout:20000});
  await expect(page.getByRole('heading',{name:'Pengisian peserta'})).toBeVisible();
  await page.getByText('Kelola peserta',{exact:true}).click();
  await expect(page.getByRole('link',{name:'Kelola kode peserta'})).toHaveAttribute('href','/admin/engagements/access-codes?engagement_id='+ws);
@@ -80,11 +80,35 @@ test('admin sees scoped progress and explicit source/permission boundaries',asyn
  const phone=info.project.name.includes('mobile');await page.setViewportSize({width:phone?390:1440,height:1000});const actions:string[]=[];
  const dashboard={sourceReady:true,workspaces:[{id:ws,name:'Ruang sintetis',consultantAccess:true,privacyReference:'Kebijakan sintetis'}],invitations:[{id:ws,workspaceId:ws,participantCode:'PETA-SYNTHETIC',purpose:'start',expiresAt:'2026-12-01T00:00:00Z',status:'used'}],sessions:[{id:makePetaSession().id,workspaceId:ws,participantCode:'PETA-SYNTHETIC',status:'submitted',completedBlocks:24,submittedAt:petaSyntheticReport.submittedAt,retentionUntil:petaSyntheticReport.retentionUntil,canReadResult:true,instrumentVersion:'1.0.0-pilot',consentVersion:'peta-privacy-v1',consentedAt:petaSyntheticReport.submittedAt,reviewConsent:true}],audit:[{id:'1',workspaceId:ws,participantCode:'PETA-SYNTHETIC',event:'participant_result_opened',createdAt:'2026-10-29T04:00:00Z',adminAction:false}]};
  await page.route('**/api/**',route=>{if(route.request().method()==='GET')return route.fulfill({json:{success:true,...dashboard}});const body=route.request().postDataJSON();actions.push(body.action||'invite');if(body.action==='result')return route.fulfill({json:{success:true,report:petaSyntheticReport}});return route.fulfill({json:{success:true,invitationPath:'/peta#invite='+'a'.repeat(64),expiresAt:'2026-12-01T00:00:00Z'}});});
-  await page.goto('/?peta-admin');await expect(page.getByRole('heading',{name:'PETA-SYNTHETIC',exact:true})).toBeVisible();
+  await page.goto('/?peta-admin');await page.getByRole('button',{name:'Riwayat program',exact:true}).click();await expect(page.getByRole('heading',{name:'PETA-SYNTHETIC',exact:true})).toBeVisible();
   await page.getByText('Detail pengisian',{exact:true}).click();await expect(page.getByText('peta-privacy-v1',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Pengaturan',exact:true}).click();await page.getByText('Undangan pilot lama',{exact:true}).click();await page.getByRole('combobox',{name:'Ruang pilot lama',exact:true}).selectOption(ws);await page.getByRole('textbox',{name:'Kode peserta',exact:true}).fill('PETA-NEW');await page.getByRole('button',{name:'Buat tautan undangan'}).click();await expect(page.getByRole('heading',{name:'Tautan pribadi siap dibagikan'})).toBeVisible();await page.getByRole('button',{name:'Tutup tautan'}).click();await page.getByText('Riwayat akses dan tindakan',{exact:true}).click();await expect(page.getByText('Peserta membuka hasil',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Peserta',exact:true}).click();await page.screenshot({path:'.impeccable/review/peta-admin-'+(phone?'mobile':'desktop')+'.png',fullPage:true});await page.getByRole('button',{name:'Lihat hasil peserta'}).click();await expect(page.getByRole('heading',{name:'Peta preferensi perilaku kerja Anda'})).toBeFocused();expect(actions).toContain('result');
   await page.getByRole('button',{name:'Kembali ke daftar peserta'}).click();await expect(page.getByRole('heading',{name:'Pengisian peserta'})).toBeFocused();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});
+
+test('PETA history separates ended programs and finds earlier participants across server pages',async({page},info)=>{
+ const phone=info.project.name.includes('mobile'),device=phone?'mobile':'desktop';await page.setViewportSize({width:phone?390:1440,height:phone?844:1000});
+ const ended='731e9e0e-6aba-43e1-8bb9-009a0453dd39',active='a11e9e0e-6aba-43e1-8bb9-009a0453dd39',historyWorkspace='f11e9e0e-6aba-43e1-8bb9-009a0453dd39';
+ const workspaces=[{id:historyWorkspace,programId:ended,programStatus:'completed',name:'Program selesai sintetis',consultantAccess:true,privacyReference:'Approved synthetic policy'},{id:ws,programId:active,programStatus:'active',name:'Program aktif sintetis',consultantAccess:true,privacyReference:'Approved synthetic policy'}];
+ const records=Array.from({length:125},(_,i)=>({id:'history-'+i,workspaceId:historyWorkspace,programId:ended,participantName:'Peserta riwayat '+String(i+1).padStart(3,'0'),participantCode:'HISTORY-'+i,status:'submitted',completedBlocks:24,submittedAt:petaSyntheticReport.submittedAt,retentionUntil:petaSyntheticReport.retentionUntil,reviewConsent:i===124,canReadResult:i===124,instrumentVersion:'1.0.0-pilot',consentVersion:'peta-program-privacy-v1',consentedAt:petaSyntheticReport.submittedAt}));
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/api/**',route=>{
+  if(route.request().method()==='POST')return route.fulfill({json:{success:true,report:petaSyntheticReport}});
+  const query=new URL(route.request().url()).searchParams,history=query.get('scope')==='history',index=Number(query.get('page')||0),search=query.get('search')||'';
+  const filtered=history?records.filter(r=>r.participantName.includes(search)):[];
+  return route.fulfill({json:{success:true,sourceReady:true,programs:[{id:active,title:'Program aktif sintetis',code:'ACTIVE',status:'active',petaEnabled:true}],workspaces,invitations:[],audit:[],sessions:filtered.slice(index*20,index*20+20),total:filtered.length,page:index,pageSize:20,counts:{total:history?125:0,inProgress:0,submitted:history?125:0}}});
+ });
+ await page.goto('/?peta-admin');await expect(page.getByRole('option',{name:'Program aktif sintetis'})).toBeAttached();await expect(page.getByRole('option',{name:'Program selesai sintetis'})).toHaveCount(0);
+ await page.getByRole('button',{name:'Riwayat program',exact:true}).click();await page.getByRole('combobox',{name:'Program',exact:true}).selectOption(ended);
+ await expect(page.getByRole('heading',{name:'Peserta riwayat 001'})).toBeVisible();await expect(page.getByRole('button',{name:'Bagikan akses'})).toHaveCount(0);await expect(page.getByRole('button',{name:'Akses peserta',exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Berikutnya',exact:true}).click();await expect(page.getByRole('heading',{name:'Peserta riwayat 021'})).toBeVisible();
+ await page.getByRole('searchbox').fill('Peserta riwayat 125');await expect(page.getByRole('heading',{name:'Peserta riwayat 125'})).toBeVisible();
+ await page.screenshot({path:'.impeccable/review/peta-history-'+device+'.png',fullPage:true});
+ await page.getByRole('button',{name:'Lihat hasil peserta'}).click();await expect(page.getByRole('heading',{name:'Hasil Peserta riwayat 125'})).toBeVisible();
+ await page.getByRole('button',{name:'Kembali ke daftar peserta'}).click();await expect(page.getByRole('searchbox')).toHaveValue('Peserta riwayat 125');
+ for(const width of [320,390,768,1024]){await page.setViewportSize({width,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
+ expect(errors).toEqual([]);
 });
 
 test('admin workspace keeps one program context, searchable participants, safe actions and a clear result return',async({page},info)=>{

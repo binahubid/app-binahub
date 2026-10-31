@@ -1,6 +1,6 @@
 # PETA — implementation and activation
 
-Updated 30 October 2026 (app0.49.0 / API0.46.0 / SQL77). PETA is an invitation-only behavioral-preference
+Updated 31 October 2026 (app0.50.1 / API0.46.3 / SQL78). PETA is an invitation-only behavioral-preference
 pilot, **not** a PE/RM competency package, clinical diagnosis, HR selection tool,
 or psychometrically validated product. Nothing in this release activates payment.
 
@@ -40,6 +40,22 @@ Old standalone pilot links/sessions remain supported; their records are not
 automatically linked to a guessed program, and no real program is modified here.
 
 ## Storage, access and recovery
+
+- Admin opens **Program aktif** for PETA-enabled programs with active/in-progress
+  status whose end date has not passed. **Riwayat program** retains owned PETA
+  workspaces for finished/disabled programs and legacy pilots. A direct link to
+  an ended program opens history. Ending a program does not erase its responses.
+- Participant history uses server-side search/status filters and 20-row pages,
+  not a global latest-100 cut-off. Counts cover all responses in the selected
+  program scope, not every registered program member. Audit/invitation lists
+  remain limited to the latest100 events; they are not the response history.
+- Reading historical results still requires the assigned admin, participant
+  permission, final submission and unexpired retention. It does not reopen
+  participant entry or reset the one-year retention. PETA-configured programs
+  cannot be hard-deleted through the program API; archive them instead.
+- Explicit program status edits now set manual mode and survive date
+  reconciliation. Other automatic programs retain their existing date rules.
+  Manual status does not override the participant access end date.
 
 - Answers and results expire **one calendar year from initial consent/session
   creation**, following the owner's explicit instruction. Recovery never resets it.
@@ -101,7 +117,13 @@ See the API repo's `docs/peta-activation.md` for the exact sequence:
    no program and relinks/deletes no legacy record. SQL76/76B need not be rerun
    if installed. No new environment variable: retain the matching encryption key
    and existing cron secret.
-5. Verify the admin source gate and real same-origin cookie/bearer flow. API0.45.2+
+5. Apply **SQL78** (`0078_peta_history_program_status.sql`) before API0.46.3,
+   followed by app0.50.1. Owner reported successful execution on31 October2026;
+   this is not an independent production schema verification. It adds manual
+   status mode and a backend-only paginated dashboard; no operational data,
+   result permission, source, retention or existing program status is changed.
+   Do not replay SQL76/76B/77 or add new env variables for this patch.
+6. Verify the admin source gate and real same-origin cookie/bearer flow. API0.45.2+
    provides an owner-approved monthly Vercel Cron on the first day
    at 00:00 UTC / 07:00 WIB for PETA only. Set the
    API Production `CRON_SECRET` (at least32characters), deploy, confirm Cron Jobs
@@ -110,7 +132,7 @@ See the API repo's `docs/peta-activation.md` for the exact sequence:
    Access still expires at one year; physical deletion normally waits up to
    31 days for the next successful monthly run. An offline secret generator is
    available in the API repo; its private output must not be uploaded.
-6. Approve privacy/content
+7. Approve privacy/content
    rights and complete the pre-live security/UX checklist before real invitations.
 
 SQL 75 is the separate Relationship Management source and does not install PETA.

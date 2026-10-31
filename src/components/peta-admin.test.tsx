@@ -4,10 +4,10 @@ vi.mock('@/lib/supabase',()=>({supabase:{auth:{getSession:async()=>({data:{sessi
 vi.mock('./program-share-card',()=>({ProgramShareCard:()=>null}));
 import {PetaAdmin} from './peta-admin';
 import {petaSyntheticReport} from '@/test/fixtures/peta';
-beforeEach(()=>vi.stubGlobal('fetch',vi.fn()));
+beforeEach(()=>{window.history.replaceState(null,'','/admin/peta');vi.stubGlobal('fetch',vi.fn());});
 afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 function serve(canReadResult:boolean,reviewConsent:boolean){
- const dashboard={sourceReady:true,programs:[],workspaces:[],invitations:[],audit:[],sessions:[{id:'synthetic-session',workspaceId:'synthetic-workspace',participantCode:'SYNTHETIC',status:'submitted',completedBlocks:24,retentionUntil:petaSyntheticReport.retentionUntil,submittedAt:petaSyntheticReport.submittedAt,canReadResult,reviewConsent,instrumentVersion:'1.0.0-pilot',consentVersion:'peta-privacy-v1',consentedAt:petaSyntheticReport.submittedAt}]};
+ const dashboard={sourceReady:true,programs:[{id:'synthetic-program',title:'Synthetic program',code:'SYN',status:'active',petaEnabled:true}],workspaces:[{id:'synthetic-workspace',programId:'synthetic-program',name:'Synthetic program'}],invitations:[],audit:[],sessions:[{id:'synthetic-session',workspaceId:'synthetic-workspace',participantCode:'SYNTHETIC',status:'submitted',completedBlocks:24,retentionUntil:petaSyntheticReport.retentionUntil,submittedAt:petaSyntheticReport.submittedAt,canReadResult,reviewConsent,instrumentVersion:'1.0.0-pilot',consentVersion:'peta-privacy-v1',consentedAt:petaSyntheticReport.submittedAt}]};
  vi.mocked(fetch).mockImplementation((_url,init)=>Promise.resolve(new Response(JSON.stringify(init?.method==='POST'?{success:true,report:petaSyntheticReport}:{success:true,...dashboard}),{status:200,headers:{'Content-Type':'application/json'}})));
 }
 describe('PETA admin review wording and unchanged access gating',()=>{
@@ -34,9 +34,29 @@ function servePrograms(overrides:Record<string,unknown>={}){
  vi.mocked(fetch).mockImplementation((_url,init)=>Promise.resolve(new Response(JSON.stringify(init?.method==='POST'?{success:true,report:petaSyntheticReport}:{success:true,...dashboard}),{status:200,headers:{'Content-Type':'application/json'}})));
 }
 describe('PETA admin task workspace',()=>{
- it('does not label a draft program as available to participants',async()=>{
+ it('keeps ended program participants in history, not the active picker or sharing flow',async()=>{
+  servePrograms({programs:[{...programs[0],status:'completed'}, {...programs[1],petaEnabled:false}]});render(<PetaAdmin/>);
+  await screen.findByRole('heading',{name:'Belum ada pengisian peserta'});
+  expect(screen.queryByRole('option',{name:programs[0].title})).not.toBeInTheDocument();expect(screen.queryByRole('option',{name:programs[1].title})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Riwayat program'}));
+  expect(await screen.findByRole('heading',{name:'Ayu Sintetis'})).toBeVisible();expect(screen.queryByRole('button',{name:'Bagikan akses'})).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Akses peserta'})).not.toBeInTheDocument();
+  fireEvent.change(screen.getByRole('combobox',{name:'Program'}),{target:{value:'program-a'}});fireEvent.click(screen.getByRole('button',{name:'Lihat hasil peserta'}));
+  expect(await screen.findByRole('heading',{name:'Hasil Ayu Sintetis'})).toBeVisible();
+ });
+ it('opens an ended program deep link directly in retained history',async()=>{
+  window.history.replaceState(null,'','/admin/peta?program_id=program-a');servePrograms({programs:[]});render(<PetaAdmin/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Riwayat program'})).toHaveAttribute('aria-pressed','true'));
+  expect(await screen.findByRole('heading',{name:'Ayu Sintetis'})).toBeVisible();expect(screen.getByRole('combobox',{name:'Program'})).toHaveValue('program-a');
+ });
+ it('requests the next server page without truncating the total to loaded rows',async()=>{
+  servePrograms({counts:{total:125,inProgress:124,submitted:1},total:125,page:0,pageSize:20});render(<PetaAdmin/>);
+  await screen.findByRole('heading',{name:'Ayu Sintetis'});fireEvent.click(screen.getByRole('button',{name:'Berikutnya'}));
+  await waitFor(()=>expect(vi.mocked(fetch).mock.calls.some(([url])=>new URL(String(url),'http://localhost').searchParams.get('page')==='1')).toBe(true));
+  expect(screen.getByRole('status')).toHaveTextContent('Halaman 2 dari 7 · 125 pengisian');
+ });
+ it('does not list a draft program in the active picker',async()=>{
   servePrograms({programs:[{...programs[0],status:'draft'}]});render(<PetaAdmin/>);
-  expect(await screen.findByText('Program belum aktif',{exact:true})).toBeVisible();expect(screen.queryByText('Siap digunakan',{exact:true})).not.toBeInTheDocument();
+  await screen.findByRole('combobox',{name:'Program'});expect(screen.queryByRole('option',{name:programs[0].title})).not.toBeInTheDocument();expect(screen.queryByText('Siap digunakan',{exact:true})).not.toBeInTheDocument();
  });
  it('retains unsaved program settings if changing program is cancelled',async()=>{
   servePrograms();const confirm=vi.spyOn(window,'confirm').mockReturnValue(false);render(<PetaAdmin/>);await screen.findByRole('heading',{name:'Ayu Sintetis'});
@@ -74,7 +94,7 @@ describe('PETA admin task workspace',()=>{
   vi.restoreAllMocks();
  });
  it('blocks sharing before setup and keeps the existing settings payload and explicit approval',async()=>{
-  servePrograms({workspaces:[]});render(<PetaAdmin/>);await screen.findByRole('heading',{name:'Ayu Sintetis'});
+  servePrograms({workspaces:[]});render(<PetaAdmin/>);await screen.findByRole('heading',{name:'Belum ada pengisian peserta'});
   fireEvent.change(screen.getByRole('combobox',{name:'Program'}),{target:{value:'program-a'}});fireEvent.click(screen.getByRole('button',{name:'Akses peserta'}));
   expect(screen.getByRole('heading',{name:'Siapkan PETA sebelum membagikan akses'})).toBeVisible();fireEvent.click(screen.getByRole('button',{name:'Buka pengaturan PETA'}));
   expect(screen.getByRole('button',{name:'Simpan pengaturan PETA'})).toBeDisabled();

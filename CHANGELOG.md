@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.50.1] - 2026-10-31
+
+- Pisahkan Program aktif dan Riwayat program di admin PETA. Pilihan aktif hanya
+  menampilkan program aktif/berjalan dengan modul PETA; program selesai atau
+  modul dinonaktifkan tetap memiliki riwayat owner-scoped selama masa simpan.
+- Pencarian, filter status, total dan pagination peserta memakai server, bukan
+  hanya 100 pengisian terbaru. Tautan program lama membuka tampilan riwayat;
+  izin opsional dan pembatasan hasil per pendamping tetap dipertahankan.
+- Perbaiki badge modul: PETA/pre-test/post-test tidak lagi dilabeli T-BOS.
+  Perjelas bahwa status manual dipertahankan dan instruksi dua pilihan PETA:
+  satu paling sesuai serta satu paling tidak sesuai, dari pernyataan berbeda.
+- Abaikan hasil build/preview lokal pada lint, tanpa mengabaikan source produk.
+- Memerlukan API0.46.3 dan SQL78. Tidak ada env baru, perubahan instrumen/skor,
+  retensi, izin peserta, aktivasi scheduler, pengiriman nyata atau cleanup data.
+
 ## [0.50.0] - 2026-10-30
 
 - Rapikan admin PETA menjadi Peserta, Akses peserta dan Pengaturan dengan satu

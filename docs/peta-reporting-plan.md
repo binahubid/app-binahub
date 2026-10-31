@@ -1,13 +1,15 @@
 # PETA reporting: current access and proposed extension
 
-30 October 2026. User asks how admin/facilitators can review participants and
+Updated31 October2026 (app0.50.1 / API0.46.3 / SQL78). User asks how admin/facilitators can review participants and
 produce individual/group reports like T-BOS. This file is a plan, not an activated
 permission change, group analysis, report builder or PDF export.
 
 ## Available now
 
-- Open Admin → PETA (`/admin/peta`), choose the configured program and inspect
-  participant progress. The list is owner-scoped and bounded to100recent sessions.
+- Open Admin → PETA (`/admin/peta`), choose a PETA-enabled active program and inspect
+  participant progress. Finished/disabled programs remain in **Riwayat program**.
+  The list is owner-scoped, with server-side search/filter/counts and20-row pages;
+  old participants are no longer hidden by a global latest100 cut-off.
 - A completed participant result offers **Lihat hasil peserta** only when that
   participant granted separate review permission and the current account is the
   snapshotted reviewing consultant. Creating/selecting a program does not itself
@@ -20,7 +22,9 @@ permission change, group analysis, report builder or PDF export.
   The existing general facilitator report screen is not a PETA integration.
 
 Evidence: app peta-admin.tsx / peta-report.tsx; API peta/http.ts admin guard;
-SQL76 peta_admin_dashboard/peta_admin_action and SQL77 program-bound wrappers.
+SQL76 peta_admin_dashboard/peta_admin_action, SQL77 program-bound wrappers and
+SQL78 peta_management_dashboard. Ending a program closes participant access,
+not the assigned admin's permitted historical result within original retention.
 API is source-inspected, not covered by the app graph. No production data inspected.
 
 ## Proposed route through the program

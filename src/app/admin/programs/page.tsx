@@ -109,7 +109,7 @@ function AdminProgramsPageContent() {
         </div>
         <div className="mt-4 flex flex-col gap-1 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-semibold">Menampilkan {filteredPrograms.length} program {statusFilter === "active" ? "aktif" : statusFilter === "completed" ? "selesai" : "arsip"}</p>
-          <p>Status mengikuti tanggal program; pintasan manual tersedia pada setiap kartu.</p>
+          <p>Status mengikuti tanggal program sampai Anda mengubahnya secara manual. Pilihan manual dipertahankan.</p>
         </div>
       </section>}
 
@@ -173,7 +173,7 @@ function AdminProgramsPageContent() {
         onClose={() => { if (!statusUpdating) setStatusTarget(null); }}
         onConfirm={updateProgramStatus}
         title="Ubah status program?"
-        description={statusTarget ? `Ubah “${statusTarget.program.title}” dari ${PROGRAM_STATUS_LABELS[statusTarget.program.status]} menjadi ${PROGRAM_STATUS_LABELS[statusTarget.status]}? Gunakan pintasan ini hanya jika status otomatis berdasarkan tanggal perlu dikoreksi.` : undefined}
+        description={statusTarget ? `Ubah “${statusTarget.program.title}” dari ${PROGRAM_STATUS_LABELS[statusTarget.program.status]} menjadi ${PROGRAM_STATUS_LABELS[statusTarget.status]}? Status pilihan Anda akan dipertahankan dan tidak diubah otomatis berdasarkan tanggal.` : undefined}
         confirmLabel="Ya, ubah status"
         loading={statusUpdating}
       />

@@ -1,12 +1,14 @@
 # Rencana scheduler operasional BinaHub
 
-Status 31 Oktober 2026: n8n lokal di laptop; API Vercel Hobby. Belum ada persetujuan
-biaya/aktivasi baru. Dokumen ini bukan bukti worker produksi sudah berjalan.
+Status 31 Oktober 2026: n8n lokal di laptop; API Vercel Hobby pada akun pribadi
+pemilik. Pemilik menyetujui Vercel Pro setelah migrasi ke akun/workspace BinaHub,
+yang belum dibuat. Persetujuan ini tidak mengizinkan upgrade atau migrasi sekarang.
+Dokumen ini bukan bukti worker produksi sudah berjalan.
 
 ## Rekomendasi
 
-Gunakan Vercel Pro + Cron untuk API yang sudah berada di Vercel, setelah pemilik
-menyetujui biaya dan mengonfirmasi paket. Tidak perlu menjalankan VPS/n8n hanya
+Gunakan Vercel Pro + Cron setelah project dipindahkan ke workspace BinaHub dan
+paket Pro dikonfirmasi aktif. Tidak perlu menjalankan VPS/n8n hanya
 untuk memanggil endpoint berkala. Simpan n8n lokal sebagai lingkungan uji.
 
 Menurut [harga resmi](https://vercel.com/docs/plans/pro-plan), Pro memiliki biaya
@@ -16,9 +18,27 @@ tambahan, seat/add-on dan pajak dapat menambah biaya. Konfirmasi ulang saat akti
 sedangkan Hobby minimal harian. [Hobby](https://vercel.com/docs/plans/hobby) dibatasi
 untuk penggunaan pribadi nonkomersial. Mengganti scheduler saja tidak mengubahnya.
 
-Jika pemilik tidak memilih Pro, tinjau penempatan API dan scheduler bersama-sama
-pada hosting yang sesuai untuk bisnis. Jangan memaksa cron berfrekuensi tinggi
-ke konfigurasi Hobby atau menjadikan laptop sebagai ketergantungan produksi.
+Selama migrasi belum siap, jangan memaksa cron berfrekuensi tinggi ke konfigurasi
+Hobby, meng-upgrade akun pribadi, atau menjadikan laptop sebagai ketergantungan
+produksi. Perbaikan kode dan pengujian lokal tetap dapat dilanjutkan.
+
+## Prasyarat migrasi yang ditunda
+
+1. Pemilik menyiapkan akun dan workspace/team milik BinaHub untuk kepemilikan dan
+   penagihan, lalu menentukan waktu pelaksanaan migrasi.
+2. Gunakan alur Transfer Project yang didukung Vercel, bukan menghapus project
+   lama atau membuat salinan produksi yang dapat menggandakan jadwal.
+3. Periksa domain/SSL, koneksi GitHub, environment per lingkungan, integrasi,
+   cron yang sudah ada, serta akses operator pada tujuan. Jangan menganggap semua
+   integrasi dan konfigurasi sensitif berpindah otomatis; jangan menyalin secret
+   ke Git/chat. Perubahan paket/metode pembayaran tetap ditangani pemilik.
+4. Konfirmasi Pro aktif pada tujuan sebelum memasang cron berfrekuensi tinggi.
+5. Verifikasi deployment dan alur layanan, lalu aktifkan recovery bertahap sesuai
+   urutan di bawah. Outreach tidak ikut diaktifkan secara otomatis.
+
+Acuan saat pelaksanaan: [transfer project resmi](https://vercel.com/docs/projects/transferring-projects).
+Belum ada akun dibuat, project dipindahkan atau konfigurasi produksi diubah oleh
+pekerjaan pencatatan keputusan ini.
 
 ## Pisahkan jenis pekerjaan
 
@@ -40,7 +60,8 @@ ke URL/log/workflow scheduler.
 1. Selesaikan retry terbatas, idempotensi dan penanganan gagal analisis AI.
 2. Siapkan autentikasi cron, heartbeat, deteksi antrean terlambat dan kanal alarm.
 3. Pastikan ada satu scheduler untuk tiap pekerjaan, bukan n8n dan Cron bersamaan.
-4. Setujui paket/biaya, gunakan secret di penyimpanan environment platform dan
+4. Konfirmasi migrasi selesai dan Pro aktif di workspace BinaHub; gunakan secret
+   di penyimpanan environment platform dan
    pasang batas/peringatan pemakaian. Jangan menyalin secret ke Git atau chat.
 5. Uji satu siklus memakai data sintetis/penerima internal yang disetujui, tanpa
    memproses antrean outreach nyata secara tidak sengaja. Verifikasi hasil dan

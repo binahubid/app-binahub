@@ -28,7 +28,11 @@ Implementasi API0.47.15 / SQL89 disiapkan pada 4 November: satu job recovery
 laporan, nonaktif saat pertama dipasang, kontrol/status hanya operator database,
 credential Vault, target HTTPS tetap dan pembatasan request antre/in-flight.
 Lihat `binahub-api/docs/SUPABASE-REPORT-SCHEDULER.md` untuk setup sekali jalan.
-Ini kesiapan kode, bukan bukti SQL89/Vault/cron produksi sudah terpasang.
+Pemilik melaporkan SQL89 berhasil dijalankan pada4November, Vault telah diisi dan
+job diaktifkan. Status yang dikirim operator menunjukkan `active:true`,
+`accepted_by_worker`, HTTP200 pada13:42WIB. Ini bukti penerimaan worker yang
+dilaporkan operator, bukan inspeksi langsung database atau bukti semua laporan/email
+selesai. Tidak perlu cron baru untuk demo RM; demo dihitung langsung.
 
 1. Supabase Cron memanggil worker BinaHub yang sudah ada, bukan menyalin fungsi
    reminder SLJ atau membuat antrean kedua. `/api/assessment/worker` memakai GET

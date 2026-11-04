@@ -73,6 +73,12 @@ the participant journey and daily admin operations simple.
   Gateway/merchant integration, scoped passwordless customer identity, checkout,
   paid delivery and additional reports remain unimplemented. Price, commercial
   report, access period, retakes, refund terms and answer reuse need decisions.
+- Owner update4November2026: PE/RM must be demonstrable before Mayar integration.
+  App0.51.13/API0.47.17 add an admin-only trial, real full-source questions and
+  server scoring, clearly mock checkout, and24-hour browser-tab draft restoration.
+  Public Coming soon remains. This is not paid entitlement, participant persistence,
+  email delivery, a final commercial report or activation of public RM. Module
+  combination is provisionally50:50; RM per-competency SJT weights remain pending.
 
 ## Brand Commitments
 

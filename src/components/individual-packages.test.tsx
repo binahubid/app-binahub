@@ -1,5 +1,6 @@
 import {render,screen,cleanup} from '@testing-library/react';
-import {afterEach,describe,it,expect} from 'vitest';
+import {afterEach,describe,it,expect,vi} from 'vitest';
+vi.mock('./individual-trial-entry',()=>({IndividualTrialEntry:()=>null}));
 import {IndividualPackages} from './individual-packages';
 afterEach(cleanup);
 describe('locked individual packages',()=>{

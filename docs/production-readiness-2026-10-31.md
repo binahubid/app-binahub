@@ -22,7 +22,7 @@ Setiap bagian membedakan kode, tes sintetis, deployment dan bukti produksi.
 | --- | --- | --- | --- |
 | R01 | Patch dependensi API dan AMS | Selesai kode/regresi: API0.47.3, AMS0.11.1/web0.10.2; produksi belum diverifikasi | Audit penuh/runtime0, lockfile dan build/regresi lulus; versi deployment perlu diverifikasi terpisah |
 | R02 | Satu jalur deployment website, CI yang benar | Selesai lokal; deployment belum diverifikasi | Workflow non-destruktif, quality script tersedia, build Next sesuai konfigurasi Hostinger |
-| R03 | Scheduler dan pemulihan seluruh antrean | API0.47.15/SQL89: recovery laporan Supabase Cron siap kode, pemasangan/aktivasi operator belum; AMS/outreach terpisah | Vault/target/deployment, satu scheduler per pekerjaan dan bukti heartbeat/hasil; migrasi hosting terpisah, belum seluruh antrean diotomatisasi |
+| R03 | Scheduler dan pemulihan seluruh antrean | API0.47.15/SQL89: operator mengonfirmasi Cron aktif dan HTTP200 diterima worker4November13:42WIB; hasil tiap laporan/email belum diverifikasi; AMS/outreach terpisah | Satu scheduler per pekerjaan dan bukti heartbeat/hasil; migrasi hosting terpisah, belum seluruh antrean diotomatisasi |
 | R04 | AI SPIN gagal → retry/needs-review, bukan selesai kosong | Kode dan regresi lokal selesai di API0.46.3; produksi belum diverifikasi | Jawaban/snapshot tetap, retry tidak menggandakan email; tes outage dan pulih |
 | R05 | Minimisasi data AI lintas jalur | Selesai kode/proyeksi aktif API0.47.4/AMS0.11.2; pengecualian dicatat, produksi belum diverifikasi | Kontak terstruktur/pola dibatasi; CV/impor profil bertujuan khusus tetap memiliki data identitas; bukan anonim penuh |
 | R06 | Kesiapan layanan dan alarm | Monitoring laporan API/admin selesai kode; alarm eksternal, AMS DB/antrean dan aktivasi scheduler belum | Liveness/readiness terpisah;4 antrean laporan dan heartbeat tampil; cakupan/unknown jelas, kanal alarm tetap perlu keputusan |
@@ -31,12 +31,12 @@ Setiap bagian membedakan kode, tes sintetis, deployment dan bukti produksi.
 | R09 | PDF/catatan pendamping PETA individu | PDF individu/grup internal khusus admin selesai; catatan pendamping belum | App0.51.1/API0.47.2/SQL80; izin dan retensi diperiksa server; tidak ada distribusi perusahaan/anonim |
 | R10 | Integrasi AMS, handoff, evaluasi dan pesanan ulang | Direncanakan | Bukti identitas/program, revoke/retry idempoten, pesanan ulang tidak disimpulkan dari label |
 | R11 | Backup/restore dan baseline migrasi | Menunggu validasi operator | Pemulihan terisolasi DB + Storage + kunci; satu pemilik migrasi; tidak replay SQL lama |
-| R12 | Produk berbayar individu | Menunggu CEO/gateway | Aturan/report/entitlement dan pembayaran sandbox lolos sebelum checkout aktif |
+| R12 | Produk berbayar individu | Demo admin PE/RM app0.51.13/API0.47.17; pembayaran hanya simulasi; penjualan publik belum dibuka | Aturan/report/entitlement dan pembayaran sandbox lolos sebelum checkout aktif |
 
 ## Keputusan yang belum tersedia
 
 Waktu migrasi ke workspace Vercel BinaHub dan aktivasi Pro (akun tujuan belum dibuat;
-scheduler diarahkan ke Supabase pada 4 November, belum aktif); kanal/penerima alarm; aturan SJT RM per kompetensi dan
+scheduler Supabase diaktifkan operator pada4November); kanal/penerima alarm; aturan SJT RM per kompetensi dan
 interpretasinya; keputusan akhir bobot, masa akses/retake/refund berbayar;
 instrumen LE/WBR; ketentuan pajak/biaya tambahan/custom; format proposal custom
 final; kebijakan pembagian laporan PETA ke pihak luar; standar layanan dan
@@ -53,7 +53,9 @@ bukan daftar status runtime terkini.
 - Pembaruan 4 November: pola Supabase Cron SLJ telah diperiksa dan sesuai untuk
   pemicu recovery BinaHub. Arah scheduler tidak lagi wajib menunggu Vercel Pro;
   migrasi hosting tetap terpisah. Catatan penundaan pada batch historis di bawah
-  tidak boleh dibaca sebagai keputusan scheduler terbaru. Aktivasi belum terjadi.
+  tidak boleh dibaca sebagai keputusan scheduler terbaru. Operator kemudian
+  mengaktifkan Cron: status aktif/accepted_by_worker/HTTP200 dilaporkan pada
+  4November13:42WIB. Tidak disimpulkan sebagai semua pekerjaan/email selesai.
 - n8n berada di laptop/komputer lokal, bukan server yang selalu aktif.
 - API masih memakai paket Vercel Hobby. Jangan menambahkan jadwal per menit pada
   konfigurasi deployment aktif: paket tersebut menolak jadwal lebih dari harian.
@@ -618,8 +620,45 @@ bukan daftar status runtime terkini.
   lulus/4 dilewati; lint/types/build produksi lulus. PL/pgSQL/role/transaksi
   diuji dengan PGlite, extension Cron/Net/Vault berupa fixture; bukan bukti
   extension native atau scheduler/email/AI produksi telah berjalan.
-- Operator perlu menerapkan SQL89, mengisi Vault `binahub_report_worker_secret`
+- Operator melaporkan SQL89 berhasil dijalankan pada4November; ini bukan
+  pemeriksaan langsung produksi. Berikutnya isi Vault `binahub_report_worker_secret`
   dari `FOLLOW_UP_CRON_SECRET` produksi API, memverifikasi deployment/antrean dan
   mengaktifkan secara eksplisit. Tidak ada nama env baru. Panduan:
   `binahub-api/docs/SUPABASE-REPORT-SCHEDULER.md`. Tidak mengaktifkan worker,
   menjalankan SQL produksi, mengirim email/AI atau menyentuh PFA2026 saat tes.
+
+#### Koreksi CI setelah batch18
+
+- API GitHub quality gagal pada satu tes SPIN yang membaca sibling app checkout.
+  Vercel deployment dilaporkan berhasil pada screenshot pengguna; CI gagal ini
+  terpisah dari SQL89 dan bukan bukti query database gagal.
+- API0.47.16 mengganti ketergantungan sibling dengan fingerprint kontrak publik
+  yang dipin di kedua repo. App CI juga memeriksa source lokalnya terhadap
+  fingerprint yang sama, tanpa skip jika sibling tidak ada. Form runtime,
+  validasi jawaban, SQL89 dan pengiriman tidak diubah.
+- Reproduksi lokal source-only dari Git index tanpa sibling app/env produksi:
+  1163 tes publik/151 file lulus,3 tes/1 file dilewati; types/lint,3 kontrak
+  dependency dan build dengan env sintetis lulus.4 kontrak Node pada app lulus.
+  Ini bukan klaim remote GitHub sudah hijau. Satu tes loopback provider sempat
+  gagal pada putaran awal lalu lulus terpisah dan pada rerun penuh; tidak memakai
+  provider nyata atau mengubah routing AI untuk hotfix ini.
+
+### Batch19: demo paket individu sebelum Mayar
+
+- User meminta demo PE/RM untuk5November dengan pembayaran simulasi; publik tetap
+  Coming soon. App0.51.13/API0.47.17 menyediakan pemilihan paket, contoh checkout
+  berhasil/gagal, bank lengkap PE24+12/RM27+13, tinjau pilihan dan hasil server.
+- Skor gabungan sementara50:50, metode tetap terpisah. RM tidak menyebarkan kredit
+  SJT ke kompetensi tanpa aturan CEO. Tidak ada kategori/norma/interpretasi atau
+  rekomendasi personal rekaan; laporan komersial final tetap belum diaktifkan.
+- Draft demo scoped admin/sumber pada tab browser, dapat dipulihkan24jam. Bukan
+  arsip peserta, transaksi atau entitlement. Tidak mengirim email/AI, membuat
+  antrean baru, mengubah instrumen/hasil lama, retensi gratis atau PFA2026.
+- API13 tes khusus +1177 regresi sintetis lulus,2 dilewati. App578 tes/96file
+  lulus. Uji browser4 perjalanan lulus (PE/RM desktop/mobile),7 kontrak Node lulus,
+  lint/types dan build API133/133 +app98/98 lulus dengan env sintetis. Review UI
+  menutup dua temuan label skor aksesibel dan pemulihan jaringan. Status deploy
+  dan smoke test admin bank produksi harus
+  dicatat terpisah, tidak diartikan dari fixture sintetis.
+- Tidak ada SQL/env baru. API0.47.17 harus dirilis sebelum app0.51.13. Panduan:
+  [demo individu](individual-paid-demo-2026-11-05.md).

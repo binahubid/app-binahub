@@ -15,15 +15,17 @@ aktivasi scheduler atau pernyataan semua alur produksi sudah terbukti.
 - UI bersama app0.51.12 dan AMS0.11.5/web0.10.5 sedang dirilis terpisah dari
   API. Build dan tes lokal bukan bukti deployment, autentikasi/inbox produksi.
 - Scheduler laporan disiapkan melalui API0.47.15/SQL89: Supabase Cron mengikuti
-  pola SLJ, belum dipasang/diaktifkan operator. Pemasangan awal nonaktif; Vault
-  dan pemeriksaan antrean global wajib sebelum aktivasi. Outreach/AMS tetap
+  pola SLJ; operator mengonfirmasi SQL89/Vault/job aktif dan status worker200
+  pada4November13:42WIB. Ini belum membuktikan semua laporan/email selesai. Outreach/AMS tetap
   terpisah. Migrasi workspace Vercel BinaHub + Pro tetap terpisah.
   Tombol “Diizinkan”/kampanye aktif tidak membuktikan worker berjalan berkala.
 - Proposal indikatif bukan penawaran komersial final. Catatan meeting disimpan
   terpisah dari jawaban/laporan klien; bukan otomatis membuat/mengirim proposal
   revisi. Meeting → draf proposal otomatis dan handoff AMS penuh masih pekerjaan
   lanjutan yang belum boleh didemokan sebagai kemampuan selesai.
-- Pembayaran individu/produk Coming soon tetap terkunci, bukan scope uji sales.
+- Pembayaran individu/produk Coming soon tetap terkunci untuk umum. Demo admin
+  PE/RM dengan pembayaran simulasi tersedia terpisah dari uji sales:
+  [panduan demo individu](individual-paid-demo-2026-11-05.md).
 
 ## Sebelum meeting — tim teknis/operator
 

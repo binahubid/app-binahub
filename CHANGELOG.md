@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.51.13] - 2026-11-04
+
+- Add verified-admin PE/RM demonstration: package selection, explicit successful/
+  failed mock checkout, real full-bank completion, selected-answer review and
+  server-computed separate/50:50 module scores. Public offers remain Coming soon;
+  an admin-only entry is available from pricing and Diagnosis individu.
+- Preserve demo answers across Previous/reload in the same tab (24-hour restore,
+  account/source scoped); normalize network/timeout recovery, retain answers on
+  failed submission and clear state on account change. No contact collection.
+- Responsive checkout/questions/report; accessible method labels; reduced motion.
+  RM competency SJT/combined remain unset pending CEO rules, not invented weights.
+- Requires API0.47.17, existing PE/RM private banks. No new SQL/env or gateway,
+  order/entitlement, participant archive, email, worker or AI-provider activation.
+- Check pinned SPIN browser contract independently in CI; exclude local QA outputs
+  from TypeScript inputs instead of interpreting an isolated API checkout as app code.
+
 ## [0.51.12] - 2026-11-04
 
 - Apply Unslop polish to the shared admin shell, forms and metrics: readable

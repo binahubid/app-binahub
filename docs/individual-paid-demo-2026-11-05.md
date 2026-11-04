@@ -75,3 +75,18 @@ skor benar-benar dihitung server. Ini demo internal, bukan pembukaan penjualan.
 Status operator4November menunjukkan Cron aktif dan worker menerima request200
 pada13:42WIB. Itu pemulihan antrean laporan yang sudah didukung, bukan aktivasi
 RM berbayar. Demo ini menghitung hasil langsung; tidak memerlukan scheduler tambahan.
+
+## Verifikasi rilis — 4 November 2026
+
+- API0.47.17 `0950f93` dan app0.51.13 `225d5b7` dipush ke main repo resmi
+  `binahubid`, bukan mirror GM-Builder. Kedua pemeriksaan CI selesai sukses;
+  status deployment Vercel API sukses.
+- Endpoint demo RM produksi tanpa autentikasi mengembalikan401 dan pesan akses
+  admin. Halaman admin mengarahkan pengunjung tanpa sesi ke login; ini perilaku
+  yang diharapkan, bukan bukti soal bisa dibuka tanpa izin.
+- Bundle yang dirujuk halaman pricing publik sudah memuat tautan demo baru.
+  Pemeriksaan ini tidak mengambil sesi, kunci, atau data peserta.
+- Browser lokal dinonaktifkan di Work settings, sehingga smoke test dengan akun
+  admin dan bank produksi belum dilakukan oleh agen. Operator perlu membuka
+  tautan demo setelah masuk dan mencoba PE serta RM sebelum meeting. Jangan
+  menyamakan fixture sintetis/CI sukses dengan verifikasi bank produksi.

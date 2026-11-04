@@ -1,5 +1,12 @@
 # Assessment Admin local preview
 
+`/unslop.html?route=/admin/programs` previews the actual admin shell/shared
+controls with synthetic records. Also supports PETA/sales navigation contexts.
+`node scripts/test-unslop-workspaces-ui.mjs after` checks it alongside the
+sibling AMS UI fixture (see binahub-platform/scripts/ui-preview/README.md).
+`node scripts/test-unslop-public-ui.mjs` checks four public entry routes against
+an already-built app running at loopback4330; all API traffic is mocked.
+
 Run `npx vite --config scripts/assessment-preview/vite.config.ts` and open `http://127.0.0.1:4318`.
 
 Uses the real AssessmentPanel with synthetic fixtures and in-memory action callbacks. No production API proxy, credentials, real email, or database writes. Documents deliberately cannot be fetched because the mock session is unauthenticated. This is not a public Next.js route and is not included in the application build.

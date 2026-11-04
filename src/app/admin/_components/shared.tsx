@@ -36,7 +36,7 @@ export function AdminSearch({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition hover:border-slate-300 focus:border-[#0B2C6B] focus:ring-2 focus:ring-[#0B2C6B]/10"
+        className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition hover:border-slate-300 focus:border-[#0B2C6B] focus:ring-2 focus:ring-[#0B2C6B]/10"
       />
     </div>
   );
@@ -140,7 +140,7 @@ export function AdminSelect({
       onChange={(event) => onChange(event.target.value)}
       aria-label={ariaLabel}
       disabled={disabled}
-      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs sm:text-sm text-slate-800 outline-none transition hover:border-slate-300 focus:border-[#0B2C6B] focus:ring-2 focus:ring-[#0B2C6B]/10"
+      className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-base sm:text-sm text-slate-800 outline-none transition hover:border-slate-300 focus:border-[#0B2C6B] focus:ring-2 focus:ring-[#0B2C6B]/10"
     >
       {options.map((option) => {
         const optionValue = Array.isArray(option) ? option[0] : option;
@@ -172,7 +172,7 @@ export function AdminInput({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+      <span className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
         {label}
         {help ? <HelpTooltip content={help} /> : null}
       </span>
@@ -181,7 +181,7 @@ export function AdminInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition hover:border-slate-300 focus:border-[#0B2C6B] focus:ring-2 focus:ring-[#0B2C6B]/10"
+        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition hover:border-slate-300 focus:border-[#0B2C6B] focus:ring-2 focus:ring-[#0B2C6B]/10"
       />
     </label>
   );
@@ -204,7 +204,7 @@ export function AdminTextarea({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+      <span className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
         {label}
         {help ? <HelpTooltip content={help} /> : null}
       </span>
@@ -212,7 +212,7 @@ export function AdminTextarea({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`${minHeight} w-full rounded-xl border border-slate-200 bg-white p-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition hover:border-slate-300 focus:border-[#0B2C6B] focus:ring-2 focus:ring-[#0B2C6B]/10`}
+        className={`${minHeight} w-full rounded-xl border border-slate-200 bg-white p-3 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition hover:border-slate-300 focus:border-[#0B2C6B] focus:ring-2 focus:ring-[#0B2C6B]/10`}
       />
     </label>
   );
@@ -241,7 +241,7 @@ export function HelpTooltip({ content }: { content: string }) {
 
 export function FieldLabel({ label, help }: { label: string; help?: string }) {
   return (
-    <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+    <span className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
       {label}
       {help ? <HelpTooltip content={help} /> : null}
     </span>
@@ -261,7 +261,7 @@ export function FormSection({
     <div className="rounded-xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs">
       <div className="mb-3.5">
         <p className="text-sm font-semibold text-slate-900">{title}</p>
-        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{description}</p>
+        <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{description}</p>
       </div>
       {children}
     </div>
@@ -328,14 +328,12 @@ export function StatCard({
   }[tone];
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:border-[#D9A441]/40">
-      {Icon ? (
-        <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${toneClass}`}>
-          <Icon size={18} />
-        </div>
-      ) : null}
-      <p className="text-xs font-semibold text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+    <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-600">{label}</p>
+        <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</p>
+      </div>
+      {Icon ? <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${toneClass}`}><Icon size={18} aria-hidden="true" /></div> : null}
     </div>
   );
 }
@@ -396,9 +394,9 @@ export function ModuleHero({
     <section className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-3xl">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#80560F]">{eyebrow}</p>
-          <h2 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
-          <p className="mt-1 text-xs sm:text-sm leading-relaxed text-slate-500">{description}</p>
+          <p className="text-xs font-medium text-slate-600">{eyebrow}</p>
+          <h2 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">{title}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">{description}</p>
         </div>
         {stats.length ? (
           <div className="flex flex-wrap gap-2 lg:max-w-[430px] lg:justify-end">
@@ -425,7 +423,7 @@ export function EmptyState({
     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-8 text-center">
       <ShieldCheck className="mx-auto mb-3 text-[#D9A441]" size={30} />
       <p className="text-sm font-semibold text-slate-900">{title}</p>
-      <p className="mx-auto mt-1.5 max-w-md text-xs leading-relaxed text-slate-500">{description}</p>
+      <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-slate-600">{description}</p>
       {action ? (
         <button
           type="button"
@@ -467,7 +465,7 @@ export function ConfirmDialog({ action, onClose, errorText }: { action: ConfirmA
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} aria-busy={submitting} className="w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#80560F]">Tinjau tindakan</p>
+            <p className="text-xs font-medium text-slate-600">Tinjau tindakan</p>
             <h2 id={titleId} className="mt-1 text-lg font-bold tracking-tight text-slate-900">{action.title}</h2>
           </div>
           <button
@@ -484,7 +482,7 @@ export function ConfirmDialog({ action, onClose, errorText }: { action: ConfirmA
         <p id={descriptionId} className="text-sm leading-relaxed text-slate-600">{action.description}</p>
         {action.details?.length ? (
           <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-            <p className="mb-2 text-xs font-semibold text-slate-700">Yang akan diproses</p>
+            <p className="mb-2 text-sm font-medium text-slate-700">Yang akan diproses</p>
             <div className="space-y-1.5">
               {action.details.map((detail) => (
                 <p key={detail} className="text-xs leading-relaxed text-slate-600">{detail}</p>
@@ -498,7 +496,7 @@ export function ConfirmDialog({ action, onClose, errorText }: { action: ConfirmA
             type="button"
             onClick={onClose}
             disabled={submitting}
-            className="h-10 rounded-xl border border-slate-200 px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            className="h-10 rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
           >
             Batal
           </button>
@@ -518,7 +516,7 @@ export function ConfirmDialog({ action, onClose, errorText }: { action: ConfirmA
 
 export function AdminNotice({ children }: { children: React.ReactNode }) {
   return (
-    <div role="status" aria-live="polite" className="mb-4 rounded-xl border border-rose-200 bg-rose-50/90 px-4 py-3 text-xs sm:text-sm font-medium text-rose-800">
+    <div role="status" aria-live="polite" className="mb-4 rounded-xl border border-rose-200 bg-rose-50/90 px-4 py-3 text-base sm:text-sm font-medium text-rose-800">
       {children}
     </div>
   );
@@ -544,7 +542,7 @@ export function AdminModal({
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`mx-auto flex h-full w-full ${maxWidth} flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl`}>
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4">
           <div>
-            {eyebrow && <p className="text-[10px] font-bold uppercase tracking-wider text-[#80560F]">{eyebrow}</p>}
+            {eyebrow && <p className="text-xs font-medium text-slate-600">{eyebrow}</p>}
             <h2 id={titleId} className="mt-1 text-lg font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
           <button
@@ -588,7 +586,7 @@ export function AdminDrawer({
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`flex h-full w-[min(100%,48rem)] ${maxWidth} flex-col overflow-hidden border-l border-slate-200 bg-white shadow-[-24px_0_70px_-38px_rgba(7,27,61,0.5)]`}>
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-4 sm:px-6">
           <div className="min-w-0">
-            {eyebrow && <p className="text-[10px] font-bold uppercase tracking-wider text-[#80560F]">{eyebrow}</p>}
+            {eyebrow && <p className="text-xs font-medium text-slate-600">{eyebrow}</p>}
             <h2 id={titleId} className="mt-1 truncate text-lg font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
           <button
@@ -623,7 +621,7 @@ export function Panel({ title, action, children }: { title: string; action?: str
 export function MetricBar({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <div className="mb-1.5 flex items-center justify-between text-xs sm:text-sm">
+      <div className="mb-1.5 flex items-center justify-between text-base sm:text-sm">
         <span className="font-medium text-slate-700">{label}</span>
         <span className="font-bold text-[#0B2C6B]">{value}%</span>
       </div>

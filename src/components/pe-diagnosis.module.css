@@ -17,13 +17,13 @@
 .areaList { display: grid; gap: 17px; margin-top: 24px; }
 .areaList li { display: flex; gap: 12px; align-items: flex-start; }
 .areaList strong { display: block; font-size: 12px; line-height: 1.7; font-weight: 600; overflow-wrap: anywhere; }
-.areaList p { margin-top: 2px; font-size: 11px; line-height: 1.8; }
+.areaList p { margin-top: 2px; font-size: 12px; line-height: 1.8; }
 .areaIcon { display: inline-flex; width: 38px; height: 38px; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 10px; background: #eef5ff; color: #174c9f; }
 .areaActive .areaIcon { background: #0b2c6b; color: #fff; }
 .guideNote { display: flex; gap: 12px; margin-top: 26px; padding-top: 21px; border-top: 1px solid #e2eaf5; }
 .guideNote > svg { flex-shrink: 0; margin-top: 3px; }
 .guideNote strong { display: block; font-size: 12px; line-height: 1.7; font-weight: 600; }
-.guideNote p { margin: 4px 0 0; font-size: 11px; }
+.guideNote p { margin: 4px 0 0; font-size: 12px; }
 .card { min-width: 0; padding: 26px 28px; border-radius: 20px; background: #fff; box-shadow: 0 10px 38px #254d850c; }
 .card h2 { font-size: 18px; line-height: 1.5; font-weight: 600; letter-spacing: -.025em; }
 .lead { margin-top: 5px; font-size: 12px; line-height: 1.85; color: #516783; }
@@ -31,15 +31,16 @@
 .field { display: grid; gap: 7px; min-width: 0; font-size: 13px; font-weight: 500; line-height: 1.7; }
 .field input, .field textarea, .relevance select { width: 100%; min-width: 0; min-height: 44px; padding: 9px 12px; border: 1px solid #bdcce1; border-radius: 10px; background: #fff; font-size: 14px; font-weight: 400; line-height: 1.6; color: #15345f; }
 .field textarea { min-height: 90px; resize: vertical; }
+@media (max-width: 639px) { .field input, .field textarea, .relevance select { font-size: 16px; } }
 .field :is(input, textarea)::placeholder { color: #64748b; }
 .field :is(input, textarea):hover, .relevance select:hover { border-color: #8ea7ca; }
-.help { font-size: 11px; font-weight: 400; line-height: 1.8; color: #516783; }
+.help { font-size: 12px; font-weight: 400; line-height: 1.8; color: #516783; }
 .relevance { display: grid; gap: 9px; margin-top: 13px; }
 .relevance label { display: grid; grid-template-columns: minmax(0, 1fr) 165px; align-items: center; gap: 12px; font-size: 12px; line-height: 1.7; }
 .relevance select { font-size: 12px; }
 .legend { font-size: 13px; font-weight: 600; line-height: 1.8; }
 .areaChips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-.areaChips li { padding: 7px 10px; border-radius: 8px; background: #f1f6ff; font-size: 11px; font-weight: 500; line-height: 1.7; }
+.areaChips li { padding: 7px 10px; border-radius: 8px; background: #f1f6ff; font-size: 12px; font-weight: 500; line-height: 1.7; }
 .notice { display: flex; align-items: flex-start; gap: 9px; margin-top: 20px; padding: 12px; border-radius: 10px; background: #f2f7ff; font-size: 12px; line-height: 1.8; color: #405b82; }
 .notice svg { margin-top: 3px; flex-shrink: 0; }
 .privacy { margin-top: 14px; border-top: 1px solid #e2eaf5; font-size: 12px; line-height: 1.9; color: #516783; }
@@ -48,7 +49,7 @@
 .consent { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; font-size: 12px; line-height: 1.9; cursor: pointer; }
 .consent input { width: 17px; height: 17px; margin-top: 3px; flex-shrink: 0; accent-color: #0b2c6b; }
 .start { margin-top: 17px; width: 100%; }
-.hint { margin-top: 8px; font-size: 11px; line-height: 1.7; text-align: center; color: #516783; }
+.hint { margin-top: 8px; font-size: 12px; line-height: 1.7; text-align: center; color: #516783; }
 .support { margin-top: 21px; text-align: center; font-size: 12px; line-height: 1.8; color: #516783; }
 .support a { text-decoration: underline; text-underline-offset: 4px; }
 .alert { margin-bottom: 18px; padding: 13px 16px; border-radius: 12px; background: #fff6e5; color: #74460d; font-size: 13px; line-height: 1.8; }
@@ -56,12 +57,12 @@
 .taskIntro { margin-bottom: 21px; }
 .taskIntro h1 { font-size: 26px; }
 .taskIntro p { margin-top: 5px; font-size: 13px; }
-.questionMeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px 16px; font-size: 11px; line-height: 1.8; color: #516783; }
+.questionMeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px 16px; font-size: 12px; line-height: 1.8; color: #516783; }
 .progress { display: block; width: 100%; height: 5px; margin-top: 12px; overflow: hidden; border: 0; border-radius: 4px; background: #eaf0f8; accent-color: #174c9f; }
 .progress::-webkit-progress-bar { background: #eaf0f8; }
 .progress::-webkit-progress-value { background: #174c9f; border-radius: 4px; }
 .progress::-moz-progress-bar { background: #174c9f; border-radius: 4px; }
-.questionKind { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 25px; font-size: 11px; line-height: 1.7; color: #516783; }
+.questionKind { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 25px; font-size: 12px; line-height: 1.7; color: #516783; }
 .questionKind strong { font-weight: 600; color: #174c9f; }
 .scenario { margin-top: 18px; padding: 17px 19px; border-radius: 12px; background: #f2f6fc; font-size: 14px; line-height: 1.9; color: #3d5678; }
 .question { margin-top: 19px; }
@@ -73,11 +74,11 @@
 .answer:has(input:disabled) { cursor: not-allowed; }
 .answer input { width: 17px; height: 17px; margin-top: 4px; accent-color: #0b2c6b; flex-shrink: 0; }
 .footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 25px; padding-top: 18px; border-top: 1px solid #e2eaf5; }
-.save { margin-top: 10px; min-height: 22px; font-size: 11px; line-height: 1.8; color: #516783; }
+.save { margin-top: 10px; min-height: 22px; font-size: 12px; line-height: 1.8; color: #516783; }
 .review { display: grid; margin-top: 24px; }
 .review button { display: flex; min-height: 68px; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid #e2eaf5; text-align: left; font-size: 13px; font-weight: 600; }
 .review button:hover { color: #174c9f; }
-.review small { display: block; margin-top: 4px; font-size: 11px; font-weight: 400; color: #516783; }
+.review small { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; color: #516783; }
 .review button > span:last-child { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; }
 .receipt { max-width: 680px; margin: 28px auto; padding: 38px; border-radius: 22px; background: #fff; box-shadow: 0 10px 38px #254d850c; }
 .receipt h1 { margin-top: 21px; font-size: 28px; font-weight: 700; letter-spacing: -.03em; line-height: 1.4; }
@@ -129,7 +130,7 @@
   .areaList { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 17px; }
   .areaList li { display: block; }
   .areaList .areaIcon { display: none; }
-  .areaList p { font-size: 10px; }
+  .areaList p { font-size: 12px; }
   .areaChips { display: none; }
   .guideNote { display: none; }
   .taskGuide > p, .taskGuide h2, .taskGuide > :global(span) { display: none; }
@@ -150,11 +151,11 @@
   .card, .accessCard { padding: 22px 19px; border-radius: 17px; }
   .guide { padding: 17px 19px; border-radius: 17px; }
   .areaList { gap: 10px; }
-  .areaList strong { font-size: 11px; }
+  .areaList strong { font-size: 12px; }
   .areaList p { display: none; }
   .taskGuide .areaList p { display: block; }
   .areaChips { gap: 6px; }
-  .areaChips li { font-size: 10px; padding: 6px 8px; }
+  .areaChips li { font-size: 12px; padding: 6px 8px; }
   .field input, .field textarea, .relevance select { font-size: 16px; }
   .relevance label { grid-template-columns: minmax(0, 1fr); gap: 5px; }
   .question legend { font-size: 18px; }
@@ -174,4 +175,4 @@
 }
 .answerWorkspace{margin-inline:auto}.answerReview{list-style:none;padding:0;margin:24px 0 0}.answerReview li{padding:20px 0;border-bottom:1px solid #dce4ef;font-size:14px;line-height:1.7;overflow-wrap:anywhere}.reviewMore{position:relative;padding-top:30px;display:flex;flex-direction:column;align-items:center;gap:8px}.reviewMore::before{content:'';position:absolute;inset:0 0 auto;height:20px;background:#f3f6fb;opacity:.5;pointer-events:none}
 @media (min-width:768px) and (max-width:1099px){.workspace{grid-template-columns:210px minmax(0,1fr);gap:16px}.guide{padding:22px 18px}.card{padding:24px}.layout{padding-inline:24px}}
-@media (max-width:767px){.taskGuide .areaList{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.taskGuide .areaList p{display:none}.taskGuide .areaList strong{font-size:11px}.taskGuide{border-radius:12px;padding:12px 16px}.taskGuide li+li{border-left:1px solid #dce5f0;padding-left:12px}.answerWorkspace{gap:12px}.answerWorkspace .card{padding-top:20px}.taskIntro{margin-bottom:14px}.taskIntro p{font-size:12px}.questionKind{margin-top:18px}}
+@media (max-width:767px){.taskGuide .areaList{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.taskGuide .areaList p{display:none}.taskGuide .areaList strong{font-size:12px}.taskGuide{border-radius:12px;padding:12px 16px}.taskGuide li+li{border-left:1px solid #dce5f0;padding-left:12px}.answerWorkspace{gap:12px}.answerWorkspace .card{padding-top:20px}.taskIntro{margin-bottom:14px}.taskIntro p{font-size:12px}.questionKind{margin-top:18px}}

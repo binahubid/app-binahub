@@ -61,7 +61,7 @@ function AdminNavigation({ onNavigate }: { onNavigate?: () => void }) {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Cari menu..."
-          className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.06] pl-10 pr-3 text-xs text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:bg-white/[0.09] focus:outline-none"
+          className="admin-navigation-search h-11 w-full rounded-lg border pl-10 pr-3 text-base sm:text-sm focus:border-amber-300 focus:outline-none"
         />
       </label>
 
@@ -79,7 +79,7 @@ function AdminNavigation({ onNavigate }: { onNavigate?: () => void }) {
                 onFocus={() => prefetchGroup(group.id)}
                 aria-expanded={isOpen}
                 aria-controls={contentId}
-                className={`flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-[10px] font-bold uppercase tracking-[0.16em] transition ${containsActive ? "text-amber-400" : "text-slate-500 hover:bg-white/[0.05] hover:text-slate-300"}`}
+                className={`flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-xs font-medium transition-colors ${containsActive ? "text-[#F3C76A]" : "text-slate-300 hover:bg-white/[0.05] hover:text-white"}`}
               >
                 {group.label}
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
@@ -96,9 +96,9 @@ function AdminNavigation({ onNavigate }: { onNavigate?: () => void }) {
                         prefetch
                         onClick={onNavigate}
                         aria-current={isActive ? "page" : undefined}
-                        className={`group flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition ${isActive ? "bg-white text-[#071B3D] shadow-[0_10px_30px_-18px_rgba(0,0,0,0.8)]" : "text-slate-300 hover:bg-white/[0.07] hover:text-white"}`}
+                        className={`group flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors ${isActive ? "bg-white text-[#071B3D]" : "text-slate-300 hover:bg-white/[0.07] hover:text-white"}`}
                       >
-                        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${isActive ? "bg-amber-400/15 text-amber-700" : "bg-white/[0.06] text-slate-400 group-hover:text-white"}`}>
+                        <span className={`grid h-7 w-7 shrink-0 place-items-center ${isActive ? "text-[#0B2C6B]" : "text-slate-300 group-hover:text-white"}`}>
                           <Icon className="h-4 w-4" aria-hidden="true" />
                         </span>
                         <span className="min-w-0 flex-1 truncate">{item.label}</span>
@@ -208,7 +208,7 @@ export function AdminShell({
           </Link>
           <div className="mt-4 flex items-center gap-2">
             <span className="h-px w-5 bg-amber-400" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400">Admin workspace</span>
+            <span className="text-xs font-medium text-slate-300">Admin workspace</span>
           </div>
         </div>
 
@@ -221,7 +221,7 @@ export function AdminShell({
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-400 text-xs font-black text-[#071B3D]">{initials}</span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-white">{email}</p>
-              <p className="mt-0.5 text-[10px] text-slate-500">Administrator</p>
+              <p className="mt-0.5 text-xs text-slate-300">Administrator</p>
             </div>
             <button type="button" onClick={logout} aria-label="Keluar dari sesi" className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-300">
               <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -257,7 +257,7 @@ export function AdminShell({
               <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
                 <span className="truncate">{current.group.label}</span>
                 <ChevronRight className="h-3 w-3 shrink-0" aria-hidden="true" />
                 <span className="truncate text-amber-700">{current.item.shortLabel}</span>
@@ -265,21 +265,21 @@ export function AdminShell({
               <p className="mt-1 truncate text-sm font-bold text-slate-950 lg:hidden">{current.item.shortLabel}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <button type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog" aria-expanded={guideOpen} aria-label="Buka cara kerja halaman" className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 hover:text-blue-950">
+              <button type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog" aria-expanded={guideOpen} aria-label="Buka cara kerja halaman" className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 hover:text-blue-950">
                 <CircleHelp className="h-4 w-4" aria-hidden="true" /> <span className="hidden sm:inline">Cara kerja</span>
               </button>
-              <button type="button" onClick={logout} aria-label="Keluar dari sesi" className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 lg:hidden">
+              <button type="button" onClick={logout} aria-label="Keluar dari sesi" className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 lg:hidden">
                 <LogOut className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </div>
         </header>
 
-        <main id="admin-page-content" className="mx-auto max-w-[1680px] px-4 pb-12 pt-[5.5rem] sm:px-6 sm:pt-24 lg:px-8">
+        <main id="admin-page-content" tabIndex={-1} className="mx-auto min-w-0 max-w-[1680px] px-4 pb-12 pt-[5.5rem] sm:px-6 sm:pt-24 lg:px-8">
           <section className="mb-6 border-b border-slate-200 pb-5">
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#80560F]">{eyebrow}</p>
+                <p className="text-xs font-medium text-slate-600">{eyebrow}</p>
                 <h1 className="mt-2 max-w-4xl text-2xl font-semibold tracking-[-0.035em] text-[#0B2C6B] sm:text-[2rem]">{title}</h1>
                 {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">{description}</p>}
               </div>
@@ -296,7 +296,7 @@ export function AdminShell({
           <aside ref={guideRef} role="dialog" aria-modal="true" aria-labelledby="admin-guide-title" className="absolute inset-y-0 right-0 flex w-[min(26rem,94vw)] flex-col border-l border-slate-200 bg-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">Panduan kontekstual</p>
+                <p className="text-xs font-medium text-slate-600">Panduan kontekstual</p>
                 <h2 id="admin-guide-title" className="mt-1 text-lg font-semibold text-blue-950">Cara kerja {current.item.label}</h2>
                 <p className="mt-1 text-xs leading-5 text-slate-500">{current.item.description}</p>
               </div>

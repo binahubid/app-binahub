@@ -26,7 +26,7 @@ Setiap bagian membedakan kode, tes sintetis, deployment dan bukti produksi.
 | R04 | AI SPIN gagal → retry/needs-review, bukan selesai kosong | Kode dan regresi lokal selesai di API0.46.3; produksi belum diverifikasi | Jawaban/snapshot tetap, retry tidak menggandakan email; tes outage dan pulih |
 | R05 | Minimisasi data AI lintas jalur | Selesai kode/proyeksi aktif API0.47.4/AMS0.11.2; pengecualian dicatat, produksi belum diverifikasi | Kontak terstruktur/pola dibatasi; CV/impor profil bertujuan khusus tetap memiliki data identitas; bukan anonim penuh |
 | R06 | Kesiapan layanan dan alarm | Monitoring laporan API/admin selesai kode; alarm eksternal, AMS DB/antrean dan aktivasi scheduler belum | Liveness/readiness terpisah;4 antrean laporan dan heartbeat tampil; cakupan/unknown jelas, kanal alarm tetap perlu keputusan |
-| R07 | Pagination/pencarian server, prioritas tugas admin | PETA, rekomendasi, diagnosis tim/org, inquiry, Kontak & Leads, pipeline, prioritas CRM dan konsultasi selesai kode; arsip kampanye dan AMS masih ditinjau | Data lama dapat ditemukan; total berasal dari server; tampilan mobile dan izin tetap benar |
+| R07 | Pagination/pencarian server, prioritas tugas admin | PETA, rekomendasi, diagnosis tim/org, inquiry, Kontak & Leads, pipeline, prioritas CRM, konsultasi dan arsip kampanye selesai kode; pagination AMS masih ditinjau | Data lama dapat ditemukan; total berasal dari server; tampilan mobile dan izin tetap benar |
 | R08 | Meeting → draf proposal yang ditinjau | Berikutnya | Revisi meeting terpisah dari hasil klien; isi/harga dari sumber yang disahkan; tidak otomatis mengirim |
 | R09 | PDF/catatan pendamping PETA individu | PDF individu/grup internal khusus admin selesai; catatan pendamping belum | App0.51.1/API0.47.2/SQL80; izin dan retensi diperiksa server; tidak ada distribusi perusahaan/anonim |
 | R10 | Integrasi AMS, handoff, evaluasi dan pesanan ulang | Direncanakan | Bukti identitas/program, revoke/retry idempoten, pesanan ulang tidak disimpulkan dari label |
@@ -573,3 +573,25 @@ bukan daftar status runtime terkini.
   migrasi akun Vercel BinaHub + Pro; tidak menjalankan email/AI/cleanup produksi,
   mengubah instrumen/skor/izin/retensi atau menyentuh PFA2026. AMS berikutnya;
   pemilik juga meminta perapihan website-prod dengan Unslop setelah batch ini.
+
+### Batch 17 - 4 November 2026: perapihan UI app dan AMS
+
+- App0.51.12 dan AMS0.11.5/web0.10.5 menerapkan prinsip Unslop pada shell dan
+  komponen bersama: hierarki tenang, metadata terbaca, tabel normal-case, angka
+  sejajar/tabular, serta input mobile16px. Identitas navy/gold dan font dipertahankan.
+- App: sidebar/search/breadcrumb, target fokus, formulir dan statistik bersama,
+  helper/footnote diagnosis dan PE. AMS: shell admin/reviewer/associate, tombol,
+  pencarian, tab, status tanpa ping dan kartu statistik tanpa hover-translate.
+- Menu mobile AMS memiliki nama kontrol, focus loop/Escape/return; popup
+  notifikasi tidak keluar viewport. Styling tabel screen-only, CV/PDF terpisah.
+- Bukti:568 tes app/93 file lulus; lint/types app lulus; build app97/97 halaman.
+  AMS14 kontrak lokal lulus; build web final38/38 termasuk lint/types lulus.
+  30 pemeriksaan fixture workspace +20 publik pada1440/1024/768/390/320px lulus.
+  Browser memakai API sintetis dan memblokir writes/jaringan produksi; bukan bukti
+  runtime data/auth, inbox, provider fallback atau semua inner section diaudit.
+- Tidak ada API/SQL/env, perubahan izin/skor/harga, pengiriman/email/AI,
+  aktivasi scheduler atau sentuhan pada PFA2026. API AMS tetap0.11.2.
+  Bukan redesign seluruh halaman, pentest Strix atau klaim WCAG lengkap.
+- Checklist UAT sales5November disiapkan di `docs/sales-uat-meeting-2026-11-05.md`.
+  Jadwal/migrasi tetap ditunda; proposal final/custom dan handoff AMS otomatis
+  tidak dinyatakan siap. Push dan deployment tetap dibuktikan terpisah.

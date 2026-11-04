@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.51.12] - 2026-11-04
+
+- Apply Unslop polish to the shared admin shell, forms and metrics: readable
+  sentence-case navigation/breadcrumbs/table headers, aligned metric baselines,
+  calmer icons, tabular figures, and mobile-safe shared input typography.
+- Improve sidebar search contrast, focus destination and control sizes. Raise
+  small diagnosis/PE helper text without changing questions, scoring or consent.
+- Add local-only workspace/public browser checks and navigation regression tests.
+  Keep existing brand/artwork, menus, auth, sending and PDF behavior. No SQL/env.
+
 ## [0.51.11] - 2026-11-04
 
 - Add a read-only campaign archive, independent of capped operational lists.

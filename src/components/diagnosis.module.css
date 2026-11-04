@@ -63,7 +63,7 @@
 .backLink { min-height: 44px; display: inline-flex; align-items: center; gap: 10px; border-radius: 5px; font-size: 13px; font-weight: 500; }
 .backLink:hover, .textLink:hover { color: #174fbd; }
 .choiceLayout { max-width: 944px; margin: 0 auto; padding: 34px 28px 24px; }
-.eyebrow { font-size: 10px; font-weight: 700; line-height: 1.6; letter-spacing: .12em; text-transform: uppercase; color: #526888; }
+.eyebrow { font-size: 12px; font-weight: 500; line-height: 1.6; letter-spacing: 0; color: #526888; }
 .choiceTitle { margin-top: 10px; font-size: 34px; font-weight: 700; line-height: 1.3; letter-spacing: -.035em; text-wrap: balance; }
 .subtitle { max-width: 74ch; margin-top: 8px; font-size: 15px; line-height: 1.75; color: var(--diagnosis-muted); }
 .choiceGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 26px; }
@@ -95,14 +95,14 @@
 .rowContent { flex: 1; min-width: 0; }
 .rowTitle { display: block; font-size: 13px; line-height: 1.6; font-weight: 600; }
 .rowDescription { display: block; margin-top: 1px; font-size: 12px; line-height: 1.6; color: var(--diagnosis-muted); }
-.accountHistory { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 3px; font-size: 11px; color: var(--diagnosis-muted); }
-.accountHistory .textLink { min-height: 36px; font-size: 11px; }
+.accountHistory { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 3px; font-size: 12px; color: var(--diagnosis-muted); }
+.accountHistory .textLink { min-height: 36px; font-size: 12px; }
 .programCallout { display: flex; align-items: center; gap: 18px; margin-top: 14px; padding: 15px 21px; border: 1px solid #dce8f8; border-radius: 14px; background: #eff5ff; }
 .programCallout h2 { font-size: 13px; line-height: 1.7; font-weight: 600; }
 .programCallout p { font-size: 12px; line-height: 1.7; color: var(--diagnosis-muted); }
 .programLink { display: inline-flex; min-height: 44px; align-items: center; gap: 11px; margin-left: auto; flex-shrink: 0; border-radius: 4px; font-size: 13px; font-weight: 600; }
 .programLink:hover { text-decoration: underline; text-underline-offset: 4px; }
-.footnote { margin-top: 16px; font-size: 11px; line-height: 1.9; text-align: center; color: #526783; }
+.footnote { margin-top: 16px; font-size: 12px; line-height: 1.9; text-align: center; color: #526783; }
 .discoveryLayout { max-width: 1024px; margin: 0 auto; padding: 34px 28px 28px; }
 .welcome { padding: 43px 48px 40px; border-radius: 24px; background: #fff; box-shadow: 0 12px 46px #254d8510; }
 .welcomeTitle { max-width: 730px; font-size: 38px; font-weight: 700; line-height: 1.25; letter-spacing: -.035em; text-wrap: balance; }
@@ -143,10 +143,10 @@
 .contextPrivacy { display: flex; gap: 10px; margin-top: 23px; padding-top: 20px; border-top: 1px solid #dce6f5; }
 .contextPrivacy svg { flex-shrink: 0; margin-top: 3px; }
 .contextPrivacy strong { display: block; font-size: 12px; font-weight: 600; line-height: 1.8; }
-.contextPrivacy p { margin-top: 3px; font-size: 11px; line-height: 1.85; color: var(--diagnosis-muted); }
+.contextPrivacy p { margin-top: 3px; font-size: 12px; line-height: 1.85; color: var(--diagnosis-muted); }
 .formMain { min-width: 0; padding: 6px 5px 0 0; }
 .formHeading { margin-bottom: 23px; font-size: 20px; font-weight: 600; line-height: 1.5; letter-spacing: -.025em; }
-.partCount { margin-bottom: 20px; font-size: 11px; line-height: 1.6; color: var(--diagnosis-muted); }
+.partCount { margin-bottom: 20px; font-size: 12px; line-height: 1.6; color: var(--diagnosis-muted); }
 .contextPanel .partCount { margin: 18px 0 0; grid-column: 1 / -1; }
 .partCount + .formHeading { margin-top: -9px; }
 .fields { display: grid; gap: 23px; }
@@ -173,7 +173,7 @@ textarea.input { min-height: 116px; resize: vertical; }
 .secondaryButton { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 10px; padding: 10px 6px; border-radius: 8px; color: var(--diagnosis-muted); font-size: 13px; font-weight: 500; }
 .secondaryButton:hover:not(:disabled) { color: #164b9f; }
 .secondaryButton:disabled { cursor: not-allowed; color: #6d7b90; }
-.saveStatus { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-top: 9px; font-size: 11px; line-height: 1.8; color: var(--diagnosis-muted); }
+.saveStatus { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-top: 9px; font-size: 12px; line-height: 1.8; color: var(--diagnosis-muted); }
 .saveStatus p { display: inline-flex; align-items: center; gap: 6px; }
 .summaryList > div { padding: 15px 0; border-bottom: 1px solid var(--diagnosis-border); }
 .summaryList dt { font-size: 13px; font-weight: 600; }
@@ -226,7 +226,7 @@ textarea.input { min-height: 116px; resize: vertical; }
   .welcomeTitle { font-size: 28px; }
   .welcome .subtitle { font-size: 13px; }
   .steps { margin: 24px -10px; }
-  .step { gap: 8px; padding: 4px 3px 0; font-size: 10px; line-height: 1.5; }
+  .step { gap: 8px; padding: 4px 3px 0; font-size: 12px; line-height: 1.5; }
   .stepNumber { width: 28px; height: 28px; font-size: 13px; }
   .step:not(:last-child)::after { top: 18px; left: calc(50% + 17px); width: calc(100% - 34px); }
   .step[aria-current="step"] .stepNumber { box-shadow: 0 0 0 4px #f0f5ff; }

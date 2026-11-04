@@ -9,6 +9,7 @@ export default defineConfig({
   // Public URL only; preview never imports production .env or credentials.
   define: { 'process.env.NEXT_PUBLIC_SITE_URL': JSON.stringify('https://app.binahub.id') },
   resolve: { alias: [
+    { find: 'next/navigation', replacement: path.resolve(__dirname, 'mock-navigation.ts') },
     { find: 'next/image', replacement: path.resolve(__dirname, 'mock-image.tsx') },
     { find: "next/link", replacement: path.resolve(__dirname, "mock-link.tsx") },
     { find: "@/lib/api-fetch", replacement: path.resolve(__dirname, "mock-api-fetch.ts") },

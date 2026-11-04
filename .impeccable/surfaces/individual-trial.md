@@ -41,3 +41,10 @@ Mode: Operate. Extends the existing individual admin surface; not a redesign.
   `DESIGN.md` and `.impeccable/design.json` remain outside this extension.
   Public Coming soon and the no-payment/no-email/no-participant-record boundary
   continue to apply.
+
+## Public visibility correction — 4 November 2026
+
+The owner removes all simulation shortcuts from public pages, including for
+signed-in admins. App0.51.14 removes the public pricing entry/component; the
+protected Diagnosis individu dashboard link and direct demo route remain.
+No demo flow, scoring, styling or access boundary is expanded or replaced.

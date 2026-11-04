@@ -1,9 +1,13 @@
 import {render,screen,cleanup} from '@testing-library/react';
-import {afterEach,describe,it,expect,vi} from 'vitest';
-vi.mock('./individual-trial-entry',()=>({IndividualTrialEntry:()=>null}));
+import {afterEach,describe,it,expect} from 'vitest';
 import {IndividualPackages} from './individual-packages';
 afterEach(cleanup);
 describe('locked individual packages',()=>{
+ it('never exposes admin payment simulation from the public package page',()=>{
+  render(<IndividualPackages/>);
+  for(const link of screen.getAllByRole('link'))expect(link.getAttribute('href')).not.toMatch(/\/admin\/|\/individual\/trial/);
+  expect(screen.queryByText(/Akses admin|simulasi pembayaran|Uji coba paket PE & RM/i)).not.toBeInTheDocument();
+ });
  it('shows exact owner prices, leaves free entry active and never offers checkout',()=>{
   render(<IndividualPackages freeHref="/insight/individual?utm_source=email"/>);
   for(const price of ['59.000','89.000','69.000','119.000','299.000'])expect(screen.getByText(new RegExp(price.replace('.','\\.')))).toBeVisible();

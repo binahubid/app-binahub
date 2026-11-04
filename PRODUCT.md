@@ -76,7 +76,9 @@ the participant journey and daily admin operations simple.
 - Owner update4November2026: PE/RM must be demonstrable before Mayar integration.
   App0.51.13/API0.47.17 add an admin-only trial, real full-source questions and
   server scoring, clearly mock checkout, and24-hour browser-tab draft restoration.
-  Public Coming soon remains. This is not paid entitlement, participant persistence,
+  Public Coming soon remains. Owner clarification in app0.51.14 removes the demo
+  shortcut from public package pricing even for admins; access stays in the
+  protected admin workspace only. This is not paid entitlement, participant persistence,
   email delivery, a final commercial report or activation of public RM. Module
   combination is provisionally50:50; RM per-competency SJT weights remain pending.
 

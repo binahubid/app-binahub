@@ -3,7 +3,6 @@ import Image from 'next/image';
 import {ArrowRight,Check,LockKeyhole} from 'lucide-react';
 import {DiagnosisShell} from './diagnosis-shell';
 import {IndividualReturningAccess} from './individual-returning-access';
-import {IndividualTrialEntry} from './individual-trial-entry';
 import styles from './individual-packages.module.css';
 
 export const individualPackages=[
@@ -58,7 +57,6 @@ export function IndividualPackages({freeHref='/insight/individual'}:{freeHref?:s
     </li>)}
    </ul>
   </section>
-  <IndividualTrialEntry/>
   <footer className={styles.footer}><p>Self Diagnostic membantu refleksi dan pengembangan diri, bukan diagnosis klinis.</p><p>Butuh bantuan? <a href="mailto:admin@binahub.id">Hubungi tim BinaHub<ArrowRight size={14} aria-hidden="true"/></a></p></footer>
  </div></div></DiagnosisShell>;
 }

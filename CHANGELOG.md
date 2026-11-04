@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.51.14] - 2026-11-04
+
+- Remove the admin simulation shortcut from public individual package pricing,
+  including for signed-in admins. Keep PE/RM demonstration accessible exclusively
+  from Diagnosis individu in the protected admin workspace and its direct URL.
+- Preserve Coming soon, free diagnosis and app PETA functionality. Remove the
+  unused public-only entry component; add public-page regression coverage.
+- No API, SQL, env, source/scoring, payment, report, retention or participant change.
+
 ## [0.51.13] - 2026-11-04
 
 - Add verified-admin PE/RM demonstration: package selection, explicit successful/

@@ -9,8 +9,9 @@ skor benar-benar dihitung server. Ini demo internal, bukan pembukaan penjualan.
 1. Masuk ke app BinaHub sebagai admin masing-masing.
 2. Buka **Diagnosis individu → Uji coba paket PE & RM**, atau langsung
    `https://app.binahub.id/admin/assessments/individual/trial`.
-3. Admin juga mendapat tautan uji coba di bawah paket pada halaman individu.
-   Pengunjung umum tetap melihat **Coming soon** dan tidak dapat memanggil API demo.
+3. Pembaruan app0.51.14: tidak ada tautan simulasi pada halaman paket publik,
+   termasuk ketika admin sedang masuk. Demo hanya melalui dashboard admin atau
+   URL langsung di atas. Publik tetap **Coming soon** tanpa akses API demo.
 
 ## Alur yang dicoba
 
@@ -84,8 +85,10 @@ RM berbayar. Demo ini menghitung hasil langsung; tidak memerlukan scheduler tamb
 - Endpoint demo RM produksi tanpa autentikasi mengembalikan401 dan pesan akses
   admin. Halaman admin mengarahkan pengunjung tanpa sesi ke login; ini perilaku
   yang diharapkan, bukan bukti soal bisa dibuka tanpa izin.
-- Bundle yang dirujuk halaman pricing publik sudah memuat tautan demo baru.
-  Pemeriksaan ini tidak mengambil sesi, kunci, atau data peserta.
+- Pada rilis0.51.13 bundle pricing publik sempat memuat tautan khusus admin.
+  Pemilik kemudian meminta penghapusan: app0.51.14 tidak lagi menawarkan tautan
+  simulasi di pricing publik. Akses tetap melalui dashboard admin/URL langsung.
+  Pemeriksaan rilis tidak mengambil sesi, kunci, atau data peserta.
 - Browser lokal dinonaktifkan di Work settings, sehingga smoke test dengan akun
   admin dan bank produksi belum dilakukan oleh agen. Operator perlu membuka
   tautan demo setelah masuk dan mencoba PE serta RM sebelum meeting. Jangan

@@ -1,5 +1,9 @@
 # Kampanye untuk admin
 
+Untuk demo5November, gunakan [tutorial langkah demi langkah dan contoh email/
+Instagram](tutorial-demo-kampanye-email-instagram-2026-11-05.md). Membuat tautan
+Inbound tidak memasang iklan; Meta Ads Manager tetap tempat mengelola iklan.
+
 ## Pilih sesuai pekerjaan
 
 - **Outbound:** mengirim email pertama ke daftar calon klien yang sudah diperiksa.
@@ -28,8 +32,10 @@
    penerima jika ada yang salah. Berpindah langkah tidak mengirim email.
 6. Pada **Hasil**, pantau antrean dan status. **Diterima penyedia email** bukan
    jaminan masuk inbox atau dibaca. **Perlu diperiksa** tidak dikirim ulang
-   otomatis. Tombol pemrosesan antrean yang sudah ada tetap membutuhkan tindakan
-   admin; scheduler produksi belum diaktifkan.
+   otomatis. Konfirmasi kirim memicu pemrosesan awal di backend; bila masih ada
+   antrean, tombol **Proses antrean berikutnya** memproses kampanye terpilih.
+   Cron laporan yang diaktifkan operator4November tidak mencakup outbound email
+   atau follow-up. Jangan menyimpulkan otomatisasi outbound aktif dari status Cron itu.
 
 Pilihan penerima dipertahankan selama kampanye tetap terbuka, termasuk ketika
 mengubah bahasa. Saat pindah kampanye atau tab workspace, admin diperingatkan

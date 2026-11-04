@@ -2,6 +2,9 @@
 
 Untuk 5 November 2026 · disiapkan 4 November 2026.
 
+Panduan klik demi klik beserta contoh materi: [demo kampanye email dan iklan
+Instagram](tutorial-demo-kampanye-email-instagram-2026-11-05.md).
+
 Tujuan: admin dapat menjalankan satu perjalanan penjualan dan mengetahui siapa
 yang bertindak berikutnya. Ini uji penerimaan terbatas, bukan persetujuan blast,
 aktivasi scheduler atau pernyataan semua alur produksi sudah terbukti.

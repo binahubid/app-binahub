@@ -1,11 +1,59 @@
 # Rencana scheduler operasional BinaHub
 
+## Pembaruan 4 November 2026 — mengikuti pola SLJ
+
+Pemilik meminta memeriksa SLJ dan menggunakan caranya jika sesuai. Pemeriksaan
+source menunjukkan pola yang sesuai: Supabase Cron (`pg_cron`) memanggil HTTP
+melalui `pg_net`; fungsi terautentikasi mengambil pekerjaan dari database.
+Ini menjadi arah scheduler BinaHub, menggantikan ketergantungan jadwal pada
+migrasi Vercel Pro. Migrasi kepemilikan/hosting tetap pekerjaan terpisah, bukan
+dibatalkan atau dianggap selesai. Tidak ada scheduler produksi diaktifkan oleh
+pembaruan dokumen ini.
+
+Bukti source lokal SLJ:
+
+- `slj-binahub/supabase/cron-setup.sql`: jadwal `slj-send-user-reminders` per menit,
+  HTTP POST ke Edge Function dengan credential khusus reminder.
+- `slj-binahub/supabase/functions/send-user-reminders/index.ts`: pemeriksaan
+  `x-cron-secret`, pembuatan reminder, pengambilan antrean dan pengiriman Web Push.
+- `slj-binahub/src/lib/web-push.ts`: izin browser dan subscription perangkat.
+
+Yang diperiksa adalah kode/configuration template, bukan `cron.job` atau riwayat
+pengiriman produksi SLJ. Web Push adalah kanal pengiriman; Cron adalah pemicu
+waktu. Tidak perlu menambahkan Web Push ke BinaHub hanya untuk memakai Cron.
+
+Penerapan berikutnya:
+
+1. Supabase Cron memanggil worker BinaHub yang sudah ada, bukan menyalin fungsi
+   reminder SLJ atau membuat antrean kedua. `/api/assessment/worker` memakai GET
+   dengan Bearer `FOLLOW_UP_CRON_SECRET`; jangan menyalin POST/header SLJ mentah.
+2. Simpan credential khusus BinaHub di Vault; tidak menyalin secret, service-role
+   key, VAPID key atau konfigurasi project SLJ. Jangan memasukkan nilainya ke
+   Git, URL, chat atau SQL setup yang dipublikasikan. Batasi akses antrean HTTP
+   database yang dapat memuat header saat pengiriman.
+3. Mulai dari recovery laporan per menit setelah uji terisolasi, konfigurasi
+   tujuan/credential dan pemeriksaan kapasitas. Queue/lease/retry/heartbeat tetap
+   di worker/database. Jangan menganggap keberhasilan enqueue HTTP sebagai
+   keberhasilan analisis AI atau email diterima.
+4. Hanya satu scheduler per pekerjaan. Retensi PETA sudah tercantum di
+   `binahub-api/vercel.json` bulanan; jangan membuat salinan Supabase sebelum
+   pemindahan jadwal lama dikoordinasikan. AMS dan outreach tidak otomatis ikut
+   aktif ketika recovery laporan disiapkan.
+5. Pastikan HTTP worker, heartbeat, hasil pekerjaan dan kegagalan dapat ditinjau.
+   Cron yang berjalan tidak berarti seluruh job/email selesai. Tidak mengubah
+   batas hosting atau ketentuan penggunaan paket tempat API berjalan.
+
+Acuan resmi: [Supabase Cron](https://supabase.com/docs/guides/cron) dan
+[penjadwalan HTTP/Edge Functions dan Vault](https://supabase.com/docs/guides/functions/schedule-functions).
+
+## Riwayat keputusan 31 Oktober 2026
+
 Status 31 Oktober 2026: n8n lokal di laptop; API Vercel Hobby pada akun pribadi
 pemilik. Pemilik menyetujui Vercel Pro setelah migrasi ke akun/workspace BinaHub,
 yang belum dibuat. Persetujuan ini tidak mengizinkan upgrade atau migrasi sekarang.
 Dokumen ini bukan bukti worker produksi sudah berjalan.
 
-## Rekomendasi
+## Rekomendasi sebelumnya — digantikan pembaruan 4 November
 
 Gunakan Vercel Pro + Cron setelah project dipindahkan ke workspace BinaHub dan
 paket Pro dikonfirmasi aktif. Tidak perlu menjalankan VPS/n8n hanya

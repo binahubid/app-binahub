@@ -14,7 +14,8 @@ aktivasi scheduler atau pernyataan semua alur produksi sudah terbukti.
   operator. API0.47.14 sudah dipush; versi hosting tetap perlu diperiksa.
 - UI bersama app0.51.12 dan AMS0.11.5/web0.10.5 sedang dirilis terpisah dari
   API. Build dan tes lokal bukan bukti deployment, autentikasi/inbox produksi.
-- Scheduler tetap ditunda sampai migrasi workspace Vercel BinaHub + Pro.
+- Arah scheduler diperbarui 4 November: Supabase Cron mengikuti pola SLJ;
+  belum diaktifkan. Migrasi workspace Vercel BinaHub + Pro tetap terpisah.
   Tombol “Diizinkan”/kampanye aktif tidak membuktikan worker berjalan berkala.
 - Proposal indikatif bukan penawaran komersial final. Catatan meeting disimpan
   terpisah dari jawaban/laporan klien; bukan otomatis membuat/mengirim proposal
@@ -87,7 +88,7 @@ pengiriman nyata; tidak dapat digantikan oleh target waktu meeting.
 
 ### Bisa dibahas setelah uji, tidak perlu menghambat simulasi besok
 
-- Waktu migrasi Vercel/pro dan aktivasi scheduler yang sudah disetujui arahnya.
+- Waktu migrasi Vercel/Pro dan aktivasi Supabase Cron yang diperiksa terpisah.
 - Batas/anggaran pilot kecil, penanggung jawab insiden dan kanal alarm.
 - Kontrak proposal custom final serta serah terima operasional/AMS yang lebih lengkap.
 - Produk berbayar, refund, instrumen tambahan dan aturan skor final: jalur

@@ -22,7 +22,7 @@ Setiap bagian membedakan kode, tes sintetis, deployment dan bukti produksi.
 | --- | --- | --- | --- |
 | R01 | Patch dependensi API dan AMS | Selesai kode/regresi: API0.47.3, AMS0.11.1/web0.10.2; produksi belum diverifikasi | Audit penuh/runtime0, lockfile dan build/regresi lulus; versi deployment perlu diverifikasi terpisah |
 | R02 | Satu jalur deployment website, CI yang benar | Selesai lokal; deployment belum diverifikasi | Workflow non-destruktif, quality script tersedia, build Next sesuai konfigurasi Hostinger |
-| R03 | Scheduler dan pemulihan seluruh antrean | Pro + Cron disetujui; aktivasi menunggu migrasi ke workspace BinaHub | Kontrak pemanggilan terautentikasi, retry terbatas, bukti heartbeat; migrasi dan Pro aktif pada tujuan diverifikasi |
+| R03 | Scheduler dan pemulihan seluruh antrean | Arah 4 November: Supabase Cron mengikuti pola SLJ; belum diaktifkan | Target/credential khusus BinaHub, satu scheduler per pekerjaan, uji terisolasi dan bukti heartbeat/hasil; migrasi hosting tetap terpisah |
 | R04 | AI SPIN gagal → retry/needs-review, bukan selesai kosong | Kode dan regresi lokal selesai di API0.46.3; produksi belum diverifikasi | Jawaban/snapshot tetap, retry tidak menggandakan email; tes outage dan pulih |
 | R05 | Minimisasi data AI lintas jalur | Selesai kode/proyeksi aktif API0.47.4/AMS0.11.2; pengecualian dicatat, produksi belum diverifikasi | Kontak terstruktur/pola dibatasi; CV/impor profil bertujuan khusus tetap memiliki data identitas; bukan anonim penuh |
 | R06 | Kesiapan layanan dan alarm | Monitoring laporan API/admin selesai kode; alarm eksternal, AMS DB/antrean dan aktivasi scheduler belum | Liveness/readiness terpisah;4 antrean laporan dan heartbeat tampil; cakupan/unknown jelas, kanal alarm tetap perlu keputusan |
@@ -35,8 +35,8 @@ Setiap bagian membedakan kode, tes sintetis, deployment dan bukti produksi.
 
 ## Keputusan yang belum tersedia
 
-Waktu migrasi ke workspace Vercel BinaHub dan aktivasi Pro/scheduler (arah Pro + Cron
-sudah disetujui; akun tujuan belum dibuat); kanal/penerima alarm; aturan SJT RM per kompetensi dan
+Waktu migrasi ke workspace Vercel BinaHub dan aktivasi Pro (akun tujuan belum dibuat;
+scheduler diarahkan ke Supabase pada 4 November, belum aktif); kanal/penerima alarm; aturan SJT RM per kompetensi dan
 interpretasinya; keputusan akhir bobot, masa akses/retake/refund berbayar;
 instrumen LE/WBR; ketentuan pajak/biaya tambahan/custom; format proposal custom
 final; kebijakan pembagian laporan PETA ke pihak luar; standar layanan dan
@@ -50,6 +50,10 @@ bukan daftar status runtime terkini.
 
 ### Scheduler: kondisi yang dikonfirmasi pemilik
 
+- Pembaruan 4 November: pola Supabase Cron SLJ telah diperiksa dan sesuai untuk
+  pemicu recovery BinaHub. Arah scheduler tidak lagi wajib menunggu Vercel Pro;
+  migrasi hosting tetap terpisah. Catatan penundaan pada batch historis di bawah
+  tidak boleh dibaca sebagai keputusan scheduler terbaru. Aktivasi belum terjadi.
 - n8n berada di laptop/komputer lokal, bukan server yang selalu aktif.
 - API masih memakai paket Vercel Hobby. Jangan menambahkan jadwal per menit pada
   konfigurasi deployment aktif: paket tersebut menolak jadwal lebih dari harian.

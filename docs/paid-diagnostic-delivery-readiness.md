@@ -10,6 +10,33 @@ for a future paid capability, not promised by the 48-hour free result.
 Payments remain locked Coming soon. This document is a release specification,
 not evidence that paid delivery, recovery, retakes or comparisons are implemented.
 
+### Owner direction — 4 November 2026
+
+- Mayar business verification is in progress. Prepare implementation and test
+  orders/webhooks in the separate Mayar sandbox; do not activate real checkout
+  or treat sandbox evidence as production verification. Official references:
+  [API V2 sandbox](https://docs.mayar.id/api-reference-v2/introduction) and
+  [business verification](https://docs.mayar.id/businessverify).
+- Keep access/attempt/retention configuration simple; do not build a complex
+  policy wizard or delay sandbox development for a long commercial questionnaire.
+  One purchase/one completed attempt with resumable drafts is a proposed initial
+  model, not a silently approved entitlement. Exact validity/retention is not
+  decided by this instruction. Keep it configurable, disclose the launch values,
+  and snapshot purchased terms so later edits do not silently revoke old rights.
+  Preserve the separate free 48-hour policy.
+- Refund policy will be confirmed by the owner later; no non-refundable policy
+  is inferred. This does not prevent sandbox work.
+- Separate sale fees (platform + payment channel) from withdrawal fees. Whether
+  BinaHub absorbs a sale fee or adds an allowed, disclosed checkout fee remains
+  a commercial decision. No price, surcharge, withdrawal or settlement action
+  is performed by documenting this direction. References:
+  [Mayar pricing](https://mayar.id/pricing) and
+  [balance/withdrawal](https://docs.mayar.id/features/balance).
+- Scheduler direction is Supabase Cron following the SLJ pattern; see
+  `worker-scheduler-plan.md`. A verified payment webhook is event-driven, not
+  dependent on waiting for the next scheduled tick. Recovery/reconciliation
+  handles interrupted work separately; no scheduler is activated here.
+
 Already present: deterministic method scoring, temporary 50:50 display score,
 server-side behavior wording, routed providers including configured OpenRouter,
 timeouts, schema/anchor-copy validation, snapshot queue and email recovery worker.

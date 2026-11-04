@@ -22,7 +22,7 @@ Setiap bagian membedakan kode, tes sintetis, deployment dan bukti produksi.
 | --- | --- | --- | --- |
 | R01 | Patch dependensi API dan AMS | Selesai kode/regresi: API0.47.3, AMS0.11.1/web0.10.2; produksi belum diverifikasi | Audit penuh/runtime0, lockfile dan build/regresi lulus; versi deployment perlu diverifikasi terpisah |
 | R02 | Satu jalur deployment website, CI yang benar | Selesai lokal; deployment belum diverifikasi | Workflow non-destruktif, quality script tersedia, build Next sesuai konfigurasi Hostinger |
-| R03 | Scheduler dan pemulihan seluruh antrean | Arah 4 November: Supabase Cron mengikuti pola SLJ; belum diaktifkan | Target/credential khusus BinaHub, satu scheduler per pekerjaan, uji terisolasi dan bukti heartbeat/hasil; migrasi hosting tetap terpisah |
+| R03 | Scheduler dan pemulihan seluruh antrean | API0.47.15/SQL89: recovery laporan Supabase Cron siap kode, pemasangan/aktivasi operator belum; AMS/outreach terpisah | Vault/target/deployment, satu scheduler per pekerjaan dan bukti heartbeat/hasil; migrasi hosting terpisah, belum seluruh antrean diotomatisasi |
 | R04 | AI SPIN gagal → retry/needs-review, bukan selesai kosong | Kode dan regresi lokal selesai di API0.46.3; produksi belum diverifikasi | Jawaban/snapshot tetap, retry tidak menggandakan email; tes outage dan pulih |
 | R05 | Minimisasi data AI lintas jalur | Selesai kode/proyeksi aktif API0.47.4/AMS0.11.2; pengecualian dicatat, produksi belum diverifikasi | Kontak terstruktur/pola dibatasi; CV/impor profil bertujuan khusus tetap memiliki data identitas; bukan anonim penuh |
 | R06 | Kesiapan layanan dan alarm | Monitoring laporan API/admin selesai kode; alarm eksternal, AMS DB/antrean dan aktivasi scheduler belum | Liveness/readiness terpisah;4 antrean laporan dan heartbeat tampil; cakupan/unknown jelas, kanal alarm tetap perlu keputusan |
@@ -599,3 +599,27 @@ bukan daftar status runtime terkini.
 - Checklist UAT sales5November disiapkan di `docs/sales-uat-meeting-2026-11-05.md`.
   Jadwal/migrasi tetap ditunda; proposal final/custom dan handoff AMS otomatis
   tidak dinyatakan siap. Push dan deployment tetap dibuktikan terpisah.
+
+### Batch 18 - 4 November 2026: recovery laporan melalui Supabase Cron
+
+- Pemilik memilih pola SLJ. API0.47.15/SQL89 memasang satu job recovery laporan
+  per menit, **nonaktif pada pemasangan awal**. Kontrol/status operator-only,
+  secret existing disimpan di Vault, tujuan HTTPS tetap; tidak menyalin secret
+  atau konfigurasi project SLJ. Tidak menunggu Vercel Cron/Pro untuk pemicu ini.
+- Worker diagnosis tim/org, email individu dan rekomendasi program yang sudah
+  ada tetap dipakai. Request antre/in-flight dibatasi; reapply mempertahankan
+  job ID/status aktif-jeda. Probe HEAD405 tidak memproses pekerjaan; GET memakai
+  Bearer/no-store. Queue lease/backoff, hasil uncertain dan heartbeat tetap berlaku.
+- SQL89 membatasi browser/PUBLIC membaca header sementara di antrean pg_net.
+  Tidak membuat jadwal outreach, AMS atau PETA; retensi PETA tetap bulanan pada
+  konfigurasi existing. Retensi PE existing ikut worker setelah aktivasi,
+  bukan dijalankan oleh migration. Pemeriksaan status bukan probe provider.
+- Bukti lokal:46 tes terarah lulus; unit API1165 lulus/6 dilewati,152 file
+  lulus/4 dilewati; lint/types/build produksi lulus. PL/pgSQL/role/transaksi
+  diuji dengan PGlite, extension Cron/Net/Vault berupa fixture; bukan bukti
+  extension native atau scheduler/email/AI produksi telah berjalan.
+- Operator perlu menerapkan SQL89, mengisi Vault `binahub_report_worker_secret`
+  dari `FOLLOW_UP_CRON_SECRET` produksi API, memverifikasi deployment/antrean dan
+  mengaktifkan secara eksplisit. Tidak ada nama env baru. Panduan:
+  `binahub-api/docs/SUPABASE-REPORT-SCHEDULER.md`. Tidak mengaktifkan worker,
+  menjalankan SQL produksi, mengirim email/AI atau menyentuh PFA2026 saat tes.

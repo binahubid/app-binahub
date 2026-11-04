@@ -24,6 +24,12 @@ waktu. Tidak perlu menambahkan Web Push ke BinaHub hanya untuk memakai Cron.
 
 Penerapan berikutnya:
 
+Implementasi API0.47.15 / SQL89 disiapkan pada 4 November: satu job recovery
+laporan, nonaktif saat pertama dipasang, kontrol/status hanya operator database,
+credential Vault, target HTTPS tetap dan pembatasan request antre/in-flight.
+Lihat `binahub-api/docs/SUPABASE-REPORT-SCHEDULER.md` untuk setup sekali jalan.
+Ini kesiapan kode, bukan bukti SQL89/Vault/cron produksi sudah terpasang.
+
 1. Supabase Cron memanggil worker BinaHub yang sudah ada, bukan menyalin fungsi
    reminder SLJ atau membuat antrean kedua. `/api/assessment/worker` memakai GET
    dengan Bearer `FOLLOW_UP_CRON_SECRET`; jangan menyalin POST/header SLJ mentah.

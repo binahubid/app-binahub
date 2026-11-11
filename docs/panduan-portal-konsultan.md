@@ -1,0 +1,25 @@
+# Panduan Portal Konsultan BinaHub
+
+Portal tersedia di [app.binahub.id/konsultan](https://app.binahub.id/konsultan). Konsultan dapat membaca peluang, jadwal, tugas, checklist, proposal, dan riwayat seluruh tim. Konsultan yang ditugaskan dapat mengubah pekerjaannya. Admin mengelola penugasan dan dapat membantu pekerjaan mana pun.
+
+## Menyiapkan tim
+
+1. Buka **Admin → Tim Konsultan → Akses konsultan**.
+2. Untuk akun baru, isi nama dan email kerja, lalu tinjau dan kirim undangan. Konsultan membuka email, membuat kata sandi, lalu masuk ke portal. Untuk akun fasilitator yang sudah ada, pilih akun di **Beri akses ke akun yang sudah ada** dan aktifkan aksesnya.
+3. Buka **Penugasan**, cari peluang, lalu pilih **Kelola penugasan → Tetapkan konsultan**. Untuk booking Cal.com tanpa peluang, pilih peluang yang sesuai di **Booking yang belum terhubung**. Undang konsultan ke kalender meeting sesuai alur Cal.com BinaHub.
+4. Di tab **Materi**, unggah [Company Profile](../output/pdf/company-profile-binahub.pdf) dan [Product Knowledge](../output/pdf/product-knowledge-binahub.pdf). PDF disimpan di penyimpanan privat Supabase dan tersedia bagi anggota portal yang berwenang.
+
+## Menangani konsultasi
+
+1. Buka **Klien & peluang**. Gunakan filter **Tanggung jawab saya** untuk mencari penugasan sendiri atau **Semua** untuk melihat pekerjaan tim.
+2. Di detail peluang, lihat jadwal dan buka **Kebutuhan & meeting**. Jika tersedia, hubungkan pengisian rekomendasi dari klien. Lengkapi checklist, catat klarifikasi, dan pilih **Tandai selesai**.
+3. Buka **Proposal**, pilih program dan periksa durasi, jumlah peserta, format, lokasi, dan ruang lingkup. Buat draf, lalu unduh dan tinjau PDF. Estimasi memakai tarif harian katalog dikalikan jumlah hari. Tarif yang belum tersedia atau perlu pembahasan tampil sebagai tanda pisah.
+4. Di **Tindak lanjut**, pilih **Pengiriman proposal**, pilih revisi PDF, tulis pesan, lalu tinjau tujuan dan lampiran. Kosongkan jadwal untuk antrean berikutnya atau pilih waktu perangkat yang sesuai. Email memakai nama konsultan yang ditugaskan dan balasan diarahkan ke email kerjanya.
+5. Periksa **Riwayat pengiriman**. Status **Diterima penyedia email** berarti layanan email sudah menerima pengiriman. Jika status perlu diperiksa, cocokkan dengan riwayat penyedia sebelum mengantrekan ulang. Catat balasan klien agar tindak lanjut terjadwal yang belum diproses dapat dibatalkan.
+6. Setelah klien menyepakati proposal, buka **Ringkasan → Serah terima ke admin** dan catat kesepakatannya. Admin membuka catatan di **Tim Konsultan → Serah terima** dan meneruskan proses dari **Klien & Pelaksanaan**.
+
+## Rilis dan pengujian
+
+Terapkan `0090_consultant_portal.sql` pada database API BinaHub. Worker antrean menggunakan Supabase Cron yang sudah memanggil `/api/assessment/worker`. Konfigurasi pengirim bisnis, kunci Resend, dan tautan berhenti berlangganan memakai pengaturan email yang ada. Jika Supabase mengarahkan undangan ke halaman selain aplikasi, tambahkan `https://app.binahub.id/auth/consultant-invite` di daftar Redirect URLs proyek Auth.
+
+Untuk uji lokal, jalankan app dev dengan URL Supabase dan API `http://127.0.0.1:4389`, URL aplikasi `http://127.0.0.1:4390`, dan anon key sintetis. Jalankan `node scripts/test-consultant-portal-ui.mjs`. Skrip memasang server tiruan di port 4389 dan memeriksa akses, proposal, tugas, serta antrean pada empat ukuran layar. Uji SQL dan pengiriman tiruan ada di `binahub-api/src/lib/consultant`.

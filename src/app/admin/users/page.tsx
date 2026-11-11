@@ -19,6 +19,7 @@ interface UserRecord {
 }
 
 const ROLE_LABEL: Record<string, string> = {
+  consultant: "Konsultan",
   admin: "Admin",
   facilitator: "Fasilitator",
   client: "Klien",
@@ -26,6 +27,7 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 const ROLE_OPTIONS = [
+  { value: "consultant", label: "Konsultan" },
   { value: "admin", label: "Admin" },
   { value: "facilitator", label: "Fasilitator" },
   { value: "client", label: "Klien" },

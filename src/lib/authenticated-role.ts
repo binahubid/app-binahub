@@ -26,7 +26,8 @@ function isAppRole(value: unknown): value is Role {
   return value === "admin"
     || value === "client"
     || value === "facilitator"
-    || value === "peserta";
+    || value === "peserta"
+    || value === "consultant";
 }
 
 export async function fetchAuthenticatedRole(accessToken: string): Promise<AuthenticatedRoleResult> {

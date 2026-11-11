@@ -33,6 +33,11 @@ function AuthContent() {
   const [showEmailForm, setShowEmailForm] = useState(() => requestedSignup);
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.hash.slice(1)).get('type') === 'invite') {
+      // Supabase may fall back to the app Site URL when the activation path is not on its allowlist.
+      window.location.replace(`/auth/consultant-invite${window.location.hash}`);
+      return;
+    }
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         router.replace(destination);
@@ -241,7 +246,7 @@ function AuthContent() {
           {/* Header */}
           <div className="mb-7">
             <h1 className="text-xl font-bold tracking-tight text-slate-900">
-              {mode === 'signin' && 'Masuk ke akun Anda'}
+              {mode === 'signin' && (destination.startsWith('/konsultan') ? 'Masuk ke Portal Konsultan' : 'Masuk ke akun Anda')}
               {mode === 'signup' && 'Buat akun Anda'}
               {mode === 'forgot' && 'Reset Password Anda'}
             </h1>
@@ -590,6 +595,8 @@ function AuthContent() {
             )}
           </p>
         )}
+
+        {mode === 'signin' && !destination.startsWith('/konsultan') && <p className="mt-4 text-center text-sm"><Link href="/?mode=signin&next=/konsultan" className="font-semibold text-[#0B2C6B] underline-offset-4 hover:underline">Masuk sebagai Konsultan</Link></p>}
 
         {/* Legal links matching slj-binahub */}
         <p className="mt-4 flex items-center justify-center gap-3 text-[11px] text-slate-400">

@@ -29,6 +29,7 @@ const noStoreHeaders = [
 const sessionSensitiveRoutes = [
   "/",
   "/admin/:path*",
+  "/konsultan/:path*",
   "/auth/:path*",
   "/client/:path*",
   "/facilitator/:path*",
@@ -71,6 +72,8 @@ const nextConfig: NextConfig = {
       {source:"/insight/individual/result",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
       {source:"/discovery/:path*",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
       {source:"/peta/:path*",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
+      {source:"/konsultan/:path*",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
+      {source:"/auth/consultant-invite",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
     ];
   },
   turbopack: {

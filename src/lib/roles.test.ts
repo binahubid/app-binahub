@@ -8,6 +8,7 @@ describe("role routing", () => {
       client: "/client/program",
       facilitator: "/fasilitator/tbos",
       peserta: "/peserta/dashboard",
+      consultant: "/konsultan",
     });
   });
 

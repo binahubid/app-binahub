@@ -60,6 +60,7 @@ export const ADMIN_NAVIGATION: AdminNavigationGroup[] = [
       { href: "/admin/pipeline", label: "Pipeline Penjualan", shortLabel: "Pipeline", description: "Peluang, owner, dan next action.", icon: BarChart3 },
       { href: "/admin/assessments", label: "Self Diagnostic", shortLabel: "Self Diagnostic", description: "Hasil diagnostik dan tindak lanjut.", icon: ClipboardCheck },
       { href: "/admin/meetings", label: "Konsultasi", shortLabel: "Konsultasi", description: "Booking dan perubahan jadwal.", icon: CalendarDays },
+      { href: "/admin/consultants", label: "Tim Konsultan", shortLabel: "Konsultan", description: "Akses, penugasan, dan serah terima konsultasi.", icon: UsersRound },
       { href: "/admin/contacts", label: "Kontak & Lead", shortLabel: "Kontak", description: "Data kontak dan status hubungan.", icon: ContactRound },
       { href: "/admin/inquiries", label: "Inquiry Masuk", shortLabel: "Inquiry", description: "Pertanyaan baru dan tindak lanjut.", icon: Inbox },
     ],

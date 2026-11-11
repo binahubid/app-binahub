@@ -31,6 +31,7 @@ import { clearTbosLocalData } from "@/modules/tbos/api-client";
 import { HelpSidebar } from "@/components/help-sidebar";
 
 const navByRole: Record<Role, { href: string; label: string; icon: React.ReactNode }[]> = {
+  consultant: [{ href: '/konsultan', label: 'Portal Konsultan', icon: <UsersRound size={16} /> }],
   peserta: [
     { href: "/peserta/dashboard", label: "Dashboard", icon: <Home size={16} /> },
     { href: "/peserta/lep", label: "Evaluasi Program", icon: <ClipboardPenLine size={16} /> },

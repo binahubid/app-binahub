@@ -7,7 +7,7 @@ import { SpinFieldControl } from '@/components/spin-discovery';
 import { spinErrors, spinLabel, type SpinAnswers } from '@/lib/spin-form';
 import { hasMeetingAnswer, meetingEffective, meetingFields, meetingProgress, type MeetingContext, type MeetingChecklist } from '../_lib/spin-meeting';
 
-type Props = { id: string; onSaved: (checklist: MeetingChecklist) => void; onDirty: (dirty: boolean) => void };
+type Props = { id: string; onSaved: (checklist: MeetingChecklist) => void; onDirty: (dirty: boolean) => void; endpoint?: string; readOnly?: boolean };
 const button = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B2C6B] disabled:opacity-50';
 const serialize = (answers: SpinAnswers, notes: string, status: MeetingChecklist['status']) => JSON.stringify({ answers, notes, status });
 
@@ -17,17 +17,21 @@ export function SpinMeetingChecklist(props: Props) {
   const [reload, setReload] = useState(0);
   useEffect(() => {
     let active = true; const controller = new AbortController();
-    void apiFetch(`/api/admin/discovery/${props.id}/meeting`, { signal: controller.signal, cache: 'no-store' })
+    void apiFetch(props.endpoint || `/api/admin/discovery/${props.id}/meeting`, { signal: controller.signal, cache: 'no-store' })
       .then(async response => { const body = await response.json(); if (!response.ok) throw new Error(body.error || 'Checklist belum dapat dibuka.'); if (active) { setContext(body); setError(''); } })
       .catch(reason => { if (active) setError(reason instanceof Error ? reason.message : 'Checklist belum dapat dibuka.'); });
     return () => { active = false; controller.abort(); };
-  }, [props.id, reload]);
+  }, [props.id, props.endpoint, reload]);
   if (error) return <div role="alert" className="py-5 text-sm leading-6 text-red-700">{error} <button type="button" onClick={() => setReload(value => value + 1)} className={button + ' underline'}>Coba buka lagi</button></div>;
   if (!context) return <p role="status" className="flex items-center gap-2 py-6 text-sm text-slate-600"><LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />Memuat checklist meeting…</p>;
+  if (props.readOnly) {
+    const effective = meetingEffective(context, context.checklist.answers);
+    return <section aria-label="Checklist meeting · hanya baca" className="mt-5 space-y-4"><p className="text-sm text-slate-600">Kebutuhan dan catatan konsultasi · hanya baca</p>{context.definition.stages.map((stage, index) => <details key={stage} open={index === 0} className="rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer font-semibold text-[#0B2C6B]">{stage}</summary><dl className="mt-4 space-y-5">{meetingFields(context.definition, effective, index).map(field => <div key={field.key}><dt className="text-sm font-semibold text-slate-800">{field.label}</dt><dd className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">{spinLabel(context.definition, effective, field.key) || 'Belum diisi'}</dd></div>)}</dl></details>)}<h4 className="font-semibold">Catatan konsultasi</h4><p className="whitespace-pre-line text-sm leading-7 text-slate-600">{context.checklist.notes || 'Belum ada catatan.'}</p></section>;
+  }
   return <MeetingEditor key={props.id + ':' + reload} {...props} context={context} onReload={() => { setContext(null); setReload(value => value + 1); }} />;
 }
 
-function MeetingEditor({ id, context, onSaved, onDirty, onReload }: Props & { context: MeetingContext; onReload: () => void }) {
+function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint }: Props & { context: MeetingContext; onReload: () => void }) {
   const { definition, original, checklist } = context;
   const [additions, setAdditions] = useState(checklist.answers);
   const [notes, setNotes] = useState(checklist.notes);
@@ -66,7 +70,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload }: Props & { co
     const payload = { revision: revision.current, answers: additions, notes, status: targetStatus };
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const response = await apiFetch(`/api/admin/discovery/${id}/meeting`, { method: 'PATCH', signal: controller.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const response = await apiFetch(endpoint || `/api/admin/discovery/${id}/meeting`, { method: 'PATCH', signal: controller.signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const body = await response.json();
       if (!response.ok) { if (response.status === 409 && alive.current) setConflict(true); throw new Error(body.error || 'Perubahan belum tersimpan. Coba simpan lagi.'); }
       const result = body.checklist as MeetingChecklist;
@@ -78,7 +82,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload }: Props & { co
       }
     } catch (reason) { if (alive.current) setError(reason instanceof Error && reason.name === 'AbortError' ? 'Koneksi terlalu lama. Jawaban masih ada di halaman ini; coba simpan lagi.' : reason instanceof Error ? reason.message : 'Perubahan belum tersimpan.'); }
     finally { clearTimeout(timer); lock.current = false; if (alive.current) setSaving(false); }
-  }, [additions, conflict, context, definition, id, notes, onSaved, status]);
+  }, [additions, conflict, context, definition, id, notes, onSaved, status, endpoint]);
 
   useEffect(() => {
     if (!dirty || saving || error || conflict) return;

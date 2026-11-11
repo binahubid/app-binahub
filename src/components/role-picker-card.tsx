@@ -5,6 +5,7 @@ import { ArrowRight, ClipboardCheck, ShieldCheck, UserRound, UsersRound } from "
 import { roleHome } from "@/lib/roles";
 
 const roleOptions = [
+  { role: 'consultant' as const, label: 'Konsultan', icon: <UsersRound size={22} />, note: 'Konsultasi, proposal, dan tindak lanjut' },
   {
     role: "client" as const,
     label: "Client",
@@ -56,7 +57,7 @@ export function RolePickerCard() {
         </div>
       </div>
 
-      <div className="grid gap-3 p-4 sm:grid-cols-3 sm:p-6">
+      <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
         {roleOptions.map((option) => (
           <Link
             key={option.role}

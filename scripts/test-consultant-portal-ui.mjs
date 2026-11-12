@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { chromium } from "@playwright/test";
+import { createElement } from "react";
+import { Document, Page, Text, renderToBuffer } from "@react-pdf/renderer";
 
 const origin = "http://127.0.0.1:4390";
 const api = "http://127.0.0.1:4389";
@@ -10,6 +12,13 @@ const lead = "00000000-0000-4000-8000-000000000003";
 const peerLead = "00000000-0000-4000-8000-000000000004";
 const proposal = "00000000-0000-4000-8000-000000000005";
 const date = "2099-01-01T10:00:00.000Z";
+const material = await renderToBuffer(createElement(Document, null,
+  ...["Contoh halaman pertama", "Contoh halaman kedua"].map((label) =>
+    createElement(Page, { key: label, size: "A4", style: { padding: 40 } },
+      createElement(Text, null, label),
+    ),
+  ),
+));
 const user = {
   id: alice,
   email: "alice@example.invalid",
@@ -112,6 +121,7 @@ try {
       },
     ]);
     const page = await context.newPage();
+    let asAdmin = false, availabilityFailure = false;
     const pageErrors = [],
       writes = [];
     const local = { ...record },
@@ -149,14 +159,19 @@ try {
         `Bearer ${accessToken}`,
         path,
       );
+      if (asAdmin && path === "/api/admin/consultants" && url.searchParams.get("view") === "assignees") {
+        return availabilityFailure
+          ? reply({ error: "Daftar akun AMS belum dapat diperiksa." }, 503)
+          : reply({ members: [{ id: alice, name: members[0].name }] });
+      }
       if (path.startsWith("/api/admin"))
         throw new Error("Consultant UI called an admin API");
       if (path === "/api/konsultan/session")
         return reply({
           id: alice,
-          role: "consultant",
+          role: asAdmin ? "admin" : "consultant",
           name: members[0].name,
-          isAdmin: false,
+          isAdmin: asAdmin,
         });
       if (path === "/api/konsultan") {
         const owner = url.searchParams.get("owner");
@@ -259,7 +274,7 @@ try {
       if (path.endsWith("/pdf") || path.startsWith("/api/konsultan/materials/"))
         return route.fulfill({
           headers: { ...headers, "Content-Type": "application/pdf" },
-          body: "%PDF-1.4\n%%EOF",
+          body: path.startsWith("/api/konsultan/materials/") ? material : "%PDF-1.4\n%%EOF",
         });
       return reply({
         record: current,
@@ -382,6 +397,46 @@ try {
       ),
     );
     checks++;
+
+    await page.goto(`${origin}/konsultan/materials`);
+    let readerDownloads = 0;
+    page.on("download", () => { readerDownloads++; });
+    await page.getByRole("link", { name: "Baca Product Knowledge BinaHub di web" }).click();
+    await page.getByText("Halaman 1 dari 2").waitFor();
+    await page.getByText("Contoh halaman pertama", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Halaman berikutnya" }).click();
+    await page.getByText("Halaman 2 dari 2").waitFor();
+    await page.getByText("Contoh halaman kedua", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Perbesar" }).click();
+    await page.getByRole("button", { name: "Pas layar" }).waitFor();
+    await page.getByText("Contoh halaman kedua", { exact: true }).waitFor();
+    assert.equal(readerDownloads, 0);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.screenshot({ path: `tmp/consultant-material-${width}.png` });
+    const pdfDownload = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Unduh PDF", exact: true }).click();
+    assert.equal((await pdfDownload).suggestedFilename(), "BinaHub-product-knowledge.pdf");
+    await page.getByRole("link", { name: "Semua materi" }).click();
+    await page.getByRole("link", { name: "Baca Company Profile BinaHub di web" }).click();
+    await page.getByText("Contoh halaman pertama", { exact: true }).waitFor();
+    checks++;
+
+    if (width === 1440) {
+      asAdmin = true;
+      availabilityFailure = true;
+      await page.goto(`${origin}/konsultan/clients/${lead}`);
+      await page.getByRole("heading", { name: "Penugasan konsultan" }).waitFor();
+      const select = page.getByLabel("Penanggung jawab", { exact: true });
+      await page.getByRole("alert").getByText("Daftar akun AMS belum dapat diperiksa.").waitFor();
+      assert(await select.isDisabled());
+      availabilityFailure = false;
+      await page.getByRole("button", { name: "Coba lagi", exact: true }).click();
+      await select.getByRole("option", { name: members[0].name }).waitFor({ state: "attached" });
+      assert.equal(await select.getByRole("option", { name: members[1].name }).count(), 0);
+      assert(await select.isEnabled());
+      asAdmin = false;
+      checks++;
+    }
 
     await page.goto(`${origin}/admin/consultants`);
     await page.waitForURL(`${origin}/access-denied`);

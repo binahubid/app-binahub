@@ -75,6 +75,10 @@ export function ConsultantWork({ id }: { id: string }) {
   );
   const directory = useConsultantData<ConsultantList>("/api/konsultan");
   const session = useConsultant();
+  const assignees = useConsultantData<{ members: { id: string; name: string }[] }>(
+    session.isAdmin ? "/api/admin/consultants?view=assignees" : null,
+  );
+  const eligibleMembers = assignees.data?.members ?? [];
   const [checklistKey, setChecklistKey] = useState(0);
   const [savedChecklist, setSavedChecklist] = useState<MeetingChecklist | null>(
     null,
@@ -392,6 +396,22 @@ export function ConsultantWork({ id }: { id: string }) {
           {session.isAdmin && (
             <section className={s.panel}>
               <h2>Penugasan konsultan</h2>
+              <p className={s.muted} id="consultant-assignment-help">
+                Konsultan harus aktif di AMS dan Portal Konsultan dengan email yang sama.
+              </p>
+              {assignees.error ? (
+                <div className={s.actions}>
+                  <p role="alert" className={s.error}>{assignees.error}</p>
+                  <button type="button" className={s.button} onClick={assignees.reload}>Coba lagi</button>
+                </div>
+              ) : !assignees.data ? (
+                <p role="status" className={s.muted}>Memeriksa daftar akun AMS…</p>
+              ) : !eligibleMembers.length ? (
+                <p role="status" className={s.muted}>
+                  Belum ada akun yang siap ditugaskan.{" "}
+                  <Link className={s.textlink} href="/admin/consultants">Kelola akses konsultan</Link>
+                </p>
+              ) : null}
               <form
                 className={s.form}
                 onSubmit={(e) =>
@@ -412,13 +432,12 @@ export function ConsultantWork({ id }: { id: string }) {
                 <div className={s.two}>
                   <label className={s.field}>
                     Penanggung jawab
-                    <select name="userId" required defaultValue="">
+                    <select name="userId" required defaultValue="" disabled={!eligibleMembers.length || busy}
+                      aria-describedby="consultant-assignment-help">
                       <option value="" disabled>
                         Pilih konsultan aktif
                       </option>
-                      {directory.data?.members
-                        .filter((m) => m.active)
-                        .map((m) => (
+                      {eligibleMembers.map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.name}
                           </option>
@@ -430,7 +449,7 @@ export function ConsultantWork({ id }: { id: string }) {
                     <input name="note" maxLength={4000} />
                   </label>
                 </div>
-                <button className={s.primary} disabled={busy}>
+                <button className={s.primary} disabled={busy || !eligibleMembers.length}>
                   Tetapkan konsultan
                 </button>
               </form>

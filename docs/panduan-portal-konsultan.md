@@ -6,8 +6,8 @@ Portal tersedia di [app.binahub.id/konsultan](https://app.binahub.id/konsultan).
 
 1. Buka **Admin → Tim Konsultan → Akses konsultan**.
 2. Untuk akun baru, isi nama dan email kerja, lalu tinjau dan kirim undangan. Konsultan membuka email, membuat kata sandi, lalu masuk ke portal. Untuk akun fasilitator yang sudah ada, pilih akun di **Beri akses ke akun yang sudah ada** dan aktifkan aksesnya.
-3. Buka **Penugasan**, cari peluang, lalu pilih **Kelola penugasan → Tetapkan konsultan**. Untuk booking Cal.com tanpa peluang, pilih peluang yang sesuai di **Booking yang belum terhubung**. Undang konsultan ke kalender meeting sesuai alur Cal.com BinaHub.
-4. Di tab **Materi**, unggah [Company Profile](../output/pdf/company-profile-binahub.pdf) dan [Product Knowledge](../output/pdf/product-knowledge-binahub.pdf). PDF disimpan di penyimpanan privat Supabase dan tersedia bagi anggota portal yang berwenang.
+3. Buka **Penugasan**, cari peluang, lalu pilih **Kelola penugasan → Tetapkan konsultan**. Daftar hanya memuat akun yang aktif di AMS dan di Portal Konsultan dengan email login yang sama dan terverifikasi. Untuk booking Cal.com tanpa peluang, pilih peluang yang sesuai di **Booking yang belum terhubung**. Undang konsultan ke kalender meeting sesuai alur Cal.com BinaHub.
+4. Di tab **Materi**, unggah [Company Profile](../output/pdf/company-profile-binahub.pdf) dan [Product Knowledge](../output/pdf/product-knowledge-binahub.pdf). Di portal, pilih **Baca di web** untuk membacanya tanpa unduhan atau **Unduh PDF** untuk menyimpan salinannya. Keduanya membuka dokumen yang sama dari penyimpanan privat.
 
 ## Menangani konsultasi
 
@@ -20,6 +20,6 @@ Portal tersedia di [app.binahub.id/konsultan](https://app.binahub.id/konsultan).
 
 ## Rilis dan pengujian
 
-Terapkan `0090_consultant_portal.sql` pada database API BinaHub. Worker antrean menggunakan Supabase Cron yang sudah memanggil `/api/assessment/worker`. Konfigurasi pengirim bisnis, kunci Resend, dan tautan berhenti berlangganan memakai pengaturan email yang ada. Jika Supabase mengarahkan undangan ke halaman selain aplikasi, tambahkan `https://app.binahub.id/auth/consultant-invite` di daftar Redirect URLs proyek Auth.
+Terapkan `0090_consultant_portal.sql`, lalu `0092_consultant_ams_assignment.sql` pada database API BinaHub. Pemeriksaan akun memakai integrasi AMS yang sama dengan penugasan program. Pastikan endpoint pemeriksaan akun AMS sudah dirilis sebelum menguji penugasan baru. Worker antrean menggunakan Supabase Cron yang sudah memanggil `/api/assessment/worker`. Konfigurasi pengirim bisnis, kunci Resend, dan tautan berhenti berlangganan memakai pengaturan email yang ada. Jika Supabase mengarahkan undangan ke halaman selain aplikasi, tambahkan `https://app.binahub.id/auth/consultant-invite` di daftar Redirect URLs proyek Auth.
 
 Untuk uji lokal, jalankan app dev dengan URL Supabase dan API `http://127.0.0.1:4389`, URL aplikasi `http://127.0.0.1:4390`, dan anon key sintetis. Jalankan `node scripts/test-consultant-portal-ui.mjs`. Skrip memasang server tiruan di port 4389 dan memeriksa akses, proposal, tugas, serta antrean pada empat ukuran layar. Uji SQL dan pengiriman tiruan ada di `binahub-api/src/lib/consultant`.

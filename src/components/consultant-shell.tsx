@@ -106,6 +106,7 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
             />
           </Link>
           <p className={s.workspaceLabel}>Ruang konsultan</p>
+          <a href="https://ams.binahub.id/dashboard" className={s.textlink}>Kembali ke AMS</a>
           <nav aria-label="Portal konsultan">
             {nav.map((n) => (
               <Link

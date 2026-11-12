@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
+  ArrowUpRight,
   CircleHelp,
   LogOut,
   Menu,
@@ -265,6 +266,11 @@ export function AdminShell({
               <p className="mt-1 truncate text-sm font-bold text-slate-950 lg:hidden">{current.item.shortLabel}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              <a href="https://ams.binahub.id/admin" target="_blank" rel="noopener noreferrer"
+                aria-label="Buka AMS di tab baru"
+                className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-[#0B2C6B] transition hover:bg-blue-50">
+                AMS <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              </a>
               <button type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog" aria-expanded={guideOpen} aria-label="Buka cara kerja halaman" className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 hover:text-blue-950">
                 <CircleHelp className="h-4 w-4" aria-hidden="true" /> <span className="hidden sm:inline">Cara kerja</span>
               </button>

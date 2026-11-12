@@ -4,8 +4,8 @@ Portal tersedia di [app.binahub.id/konsultan](https://app.binahub.id/konsultan).
 
 ## Menyiapkan tim
 
-1. Buka **Admin → Tim Konsultan → Akses konsultan**.
-2. Untuk akun baru, isi nama dan email kerja, lalu tinjau dan kirim undangan. Konsultan membuka email, membuat kata sandi, lalu masuk ke portal. Untuk akun fasilitator yang sudah ada, pilih akun di **Beri akses ke akun yang sudah ada** dan aktifkan aksesnya.
+1. Buka **AMS → Tim Konsultan → Undang anggota**. Pilih associate aktif, tinjau perjanjian, dan lengkapi ketentuan kompensasi yang benar-benar disepakati.
+2. Associate membuka undangan di AMS, membaca perjanjian, lalu memilih **Setujui & Bergabung**. Tombol **Portal Konsultan** kemudian membuka App tanpa password kedua. Keanggotaan berlaku selama aktif dan tidak mengikuti tanggal selesai proyek. Admin menjeda atau mengakhiri keanggotaan dari AMS; App menampilkan status sebagai informasi baca saja.
 3. Buka **Penugasan**, cari peluang, lalu pilih **Kelola penugasan → Tetapkan konsultan**. Daftar hanya memuat akun yang aktif di AMS dan di Portal Konsultan dengan email login yang sama dan terverifikasi. Untuk booking Cal.com tanpa peluang, pilih peluang yang sesuai di **Booking yang belum terhubung**. Undang konsultan ke kalender meeting sesuai alur Cal.com BinaHub.
 4. Di tab **Materi**, unggah [Company Profile](../output/pdf/company-profile-binahub.pdf) dan [Product Knowledge](../output/pdf/product-knowledge-binahub.pdf). Di portal, pilih **Baca di web** untuk membacanya tanpa unduhan atau **Unduh PDF** untuk menyimpan salinannya. Keduanya membuka dokumen yang sama dari penyimpanan privat.
 
@@ -19,6 +19,8 @@ Portal tersedia di [app.binahub.id/konsultan](https://app.binahub.id/konsultan).
 6. Setelah klien menyepakati proposal, buka **Ringkasan → Serah terima ke admin** dan catat kesepakatannya. Admin membuka catatan di **Tim Konsultan → Serah terima** dan meneruskan proses dari **Klien & Pelaksanaan**.
 
 ## Rilis dan pengujian
+
+Pembaruan keanggotaan: setelah SQL90/92, terapkan SQL93 (0093_consultant_ams_membership.sql) di database API BinaHub dan migration 014 (014_consultant_team.sql) di database AMS. Kedua file tidak mengirim undangan atau mengasumsikan persetujuan akun lama. Akun yang sebelumnya diberi akses manual perlu menerima agreement AMS. Tidak ada env baru. Rilis API kedua sistem sebelum UI baru. Tombol **AMS** pada header admin membuka tab baru agar isian pekerjaan tetap tersedia.
 
 Terapkan `0090_consultant_portal.sql`, lalu `0092_consultant_ams_assignment.sql` pada database API BinaHub. Pemeriksaan akun memakai integrasi AMS yang sama dengan penugasan program. Pastikan endpoint pemeriksaan akun AMS sudah dirilis sebelum menguji penugasan baru. Worker antrean menggunakan Supabase Cron yang sudah memanggil `/api/assessment/worker`. Konfigurasi pengirim bisnis, kunci Resend, dan tautan berhenti berlangganan memakai pengaturan email yang ada. Jika Supabase mengarahkan undangan ke halaman selain aplikasi, tambahkan `https://app.binahub.id/auth/consultant-invite` di daftar Redirect URLs proyek Auth.
 

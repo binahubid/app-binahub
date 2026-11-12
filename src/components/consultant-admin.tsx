@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { AdminShell } from "@/components/admin-shell";
-import { ConfirmDialog } from "@/components/ui";
 import { apiFetch } from "@/lib/api-fetch";
 import {
   consultantDate,
@@ -18,6 +18,8 @@ type Member = {
   display_name: string;
   email: string;
   active: boolean;
+  ams_status?: string | null;
+  agreement_accepted_at?: string | null;
 };
 type AdminData = {
   members: Member[];
@@ -31,7 +33,7 @@ type AdminData = {
   }[];
 };
 const tabs = [
-  "Akses konsultan",
+  "Keanggotaan",
   "Penugasan",
   "Serah terima",
   "Materi",
@@ -39,18 +41,13 @@ const tabs = [
 const endpoint = "/api/admin/consultants";
 
 export function ConsultantAdmin() {
-  const [tab, setTab] = useState<(typeof tabs)[number]>("Akses konsultan");
+  const [tab, setTab] = useState<(typeof tabs)[number]>("Keanggotaan");
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [status, setStatus] = useState("");
   const [search, setSearch] = useState(""),
     [query, setQuery] = useState(""),
     [page, setPage] = useState(0);
-  const [invite, setInvite] = useState<{
-    email: string;
-    full_name: string;
-  } | null>(null);
-  const [revoke, setRevoke] = useState<Member | null>(null);
   const data = useConsultantData<AdminData>(endpoint);
   const leads = useConsultantData<ConsultantList>(
     "/api/konsultan?" +
@@ -61,11 +58,6 @@ export function ConsultantAdmin() {
       }),
   );
   const members = data.data?.members || [];
-  const available =
-    data.data?.accounts.filter(
-      (a) => !members.some((m) => m.user_id === a.id && m.active),
-    ) || [];
-
   async function run(action: () => Promise<unknown>, feedback: string) {
     setBusy(true);
     setError("");
@@ -80,21 +72,6 @@ export function ConsultantAdmin() {
     } finally {
       setBusy(false);
     }
-  }
-  function grant(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget,
-      f = new FormData(form),
-      userId = String(f.get("account") || "");
-    void run(async () => {
-      await consultantRequest(endpoint, {
-        action: "member",
-        userId,
-        name: f.get("displayName"),
-        active: true,
-      });
-      form.reset();
-    }, "Akses portal diaktifkan.");
   }
   function upload(e: FormEvent<HTMLFormElement>, slug: string) {
     e.preventDefault();
@@ -122,7 +99,7 @@ export function ConsultantAdmin() {
     <AdminShell
       eyebrow="Akuisisi & Penjualan"
       title="Tim Konsultan"
-      description="Kelola akses konsultan, bagi tanggung jawab, dan pantau serah terima ke tim pelaksanaan."
+      description="Bagi tanggung jawab klien, pantau pekerjaan konsultasi, dan lanjutkan serah terima ke tim pelaksanaan."
       actions={
         <Link href="/konsultan" className={s.primary}>
           Buka Portal Konsultan
@@ -158,127 +135,26 @@ export function ConsultantAdmin() {
           {status}
         </p>
       )}
-      {tab === "Akses konsultan" && (
-        <div className={s.grid}>
-          <section className={s.panel}>
-            <h2>Anggota tim</h2>
-            {!data.data && !data.error ? (
-              <p role="status">Memuat anggota…</p>
-            ) : !members.length ? (
-              <p className={s.empty}>Belum ada konsultan yang terdaftar.</p>
-            ) : (
-              members.map((m) => (
-                <div key={m.user_id} className={s.row}>
-                  <div>
-                    <h3>{m.display_name}</h3>
-                    <p className={s.muted}>
-                      {m.email} · {m.active ? "Aktif" : "Nonaktif"}
-                    </p>
-                  </div>
-                  {m.active ? (
-                    <button
-                      className={s.button}
-                      disabled={busy}
-                      onClick={() => setRevoke(m)}
-                    >
-                      Nonaktifkan
-                    </button>
-                  ) : (
-                    <button
-                      className={s.button}
-                      disabled={busy}
-                      onClick={() =>
-                        void run(
-                          () =>
-                            consultantRequest(endpoint, {
-                              action: "member",
-                              userId: m.user_id,
-                              name: m.display_name,
-                              active: true,
-                            }),
-                          "Akses diaktifkan kembali.",
-                        )
-                      }
-                    >
-                      Aktifkan
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </section>
-          <div>
-            <section className={s.panel}>
-              <h2>Undang konsultan baru</h2>
-              <p className={s.muted}>
-                Undangan akun akan dikirim ke alamat kerja konsultan.
-              </p>
-              <form
-                className={s.form}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const f = new FormData(e.currentTarget);
-                  setInvite({
-                    email: String(f.get("email")),
-                    full_name: String(f.get("name")),
-                  });
-                }}
-              >
-                <label className={s.field}>
-                  Nama konsultan
-                  <input name="name" required maxLength={200} />
-                </label>
-                <label className={s.field}>
-                  Email kerja
-                  <input name="email" type="email" required maxLength={254} />
-                </label>
-                <button className={s.primary} disabled={busy}>
-                  Tinjau undangan
-                </button>
-              </form>
-            </section>
-            <section className={s.panel}>
-              <h2>Beri akses ke akun yang sudah ada</h2>
-              <p className={s.muted}>
-                Fasilitator dapat memakai akun yang sama untuk membuka ruang
-                konsultan.
-              </p>
-              {available.length ? (
-                <form className={s.form} onSubmit={grant}>
-                  <label className={s.field}>
-                    Pilih akun
-                    <select name="account" defaultValue="" required>
-                      <option value="" disabled>
-                        Pilih akun BinaHub
-                      </option>
-                      {available.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.full_name || a.id} ·{" "}
-                          {a.role === "facilitator"
-                            ? "Fasilitator"
-                            : a.role === "admin"
-                              ? "Admin"
-                              : "Konsultan"}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={s.field}>
-                    Nama yang tampil pada email
-                    <input name="displayName" required maxLength={200} />
-                  </label>
-                  <button className={s.button} disabled={busy}>
-                    Aktifkan akses
-                  </button>
-                </form>
-              ) : (
-                <p className={s.muted}>
-                  Tidak ada akun yang dapat ditambahkan.
-                </p>
-              )}
-            </section>
+      {tab === "Keanggotaan" && (
+        <section className={s.panel}>
+          <div className={s.heading}>
+            <div>
+              <h2>Keanggotaan dari AMS</h2>
+              <p className={s.muted}>Undangan, perjanjian, dan status keanggotaan dikelola di AMS. Penugasan klien tetap dikelola di halaman ini.</p>
+            </div>
+            <a href="https://ams.binahub.id/admin/consultant-team" target="_blank" rel="noopener noreferrer" className={s.button}>Kelola keanggotaan di AMS <ArrowUpRight size={16} aria-hidden="true" /></a>
           </div>
-        </div>
+          {!data.data && !data.error ? <p role="status">Memuat anggota…</p> : !members.length ? (
+            <p className={s.empty}>Belum ada keanggotaan yang terhubung. Undang associate dari Tim Konsultan di AMS.</p>
+          ) : members.map((m) => (
+            <div key={m.user_id} className={s.row}>
+              <div><h3>{m.display_name}</h3><p className={s.muted}>{m.email}</p>
+                {m.agreement_accepted_at && <p className={s.muted}>Persetujuan diterima {consultantDate(m.agreement_accepted_at)}</p>}
+              </div>
+              <span className={s.muted}>{!m.ams_status ? "Perlu keanggotaan AMS" : m.active ? "Aktif" : m.ams_status === "paused" ? "Dijeda" : m.ams_status === "ended" ? "Keanggotaan berakhir" : "Belum aktif"}</span>
+            </div>
+          ))}
+        </section>
       )}
       {(tab === "Penugasan" || tab === "Serah terima") && (
         <section className={s.panel}>
@@ -428,58 +304,6 @@ export function ConsultantAdmin() {
           ))}
         </div>
       )}
-      <ConfirmDialog
-        open={!!invite}
-        onClose={() => setInvite(null)}
-        onConfirm={async () => {
-          if (!invite) return;
-          const payload = invite;
-          setInvite(null);
-          await run(
-            () =>
-              consultantRequest("/api/users", {
-                ...payload,
-                role: "consultant",
-              }),
-            `Undangan dikirim ke ${payload.email}.`,
-          );
-        }}
-        title="Kirim undangan akun?"
-        description={
-          invite
-            ? `${invite.full_name} akan menerima email untuk mengaktifkan akun konsultan di ${invite.email}.`
-            : ""
-        }
-        confirmLabel="Kirim undangan"
-        variant="info"
-      />
-      <ConfirmDialog
-        open={!!revoke}
-        onClose={() => setRevoke(null)}
-        onConfirm={async () => {
-          if (!revoke) return;
-          const member = revoke;
-          setRevoke(null);
-          await run(
-            () =>
-              consultantRequest(endpoint, {
-                action: "member",
-                userId: member.user_id,
-                name: member.display_name,
-                active: false,
-              }),
-            "Akses konsultan dinonaktifkan.",
-          );
-        }}
-        title="Nonaktifkan akses konsultan?"
-        description={
-          revoke
-            ? `Akses ${revoke.display_name} akan ditutup. Tinjau kembali penugasannya dan email yang masih terjadwal.`
-            : ""
-        }
-        confirmLabel="Nonaktifkan"
-        variant="warning"
-      />
     </AdminShell>
   );
 }

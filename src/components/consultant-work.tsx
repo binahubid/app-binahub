@@ -397,7 +397,7 @@ export function ConsultantWork({ id }: { id: string }) {
             <section className={s.panel}>
               <h2>Penugasan konsultan</h2>
               <p className={s.muted} id="consultant-assignment-help">
-                Konsultan harus aktif di AMS dan Portal Konsultan dengan email yang sama.
+                Pilih anggota tim konsultan yang sudah menyetujui perjanjian di AMS.
               </p>
               {assignees.error ? (
                 <div className={s.actions}>
@@ -409,7 +409,7 @@ export function ConsultantWork({ id }: { id: string }) {
               ) : !eligibleMembers.length ? (
                 <p role="status" className={s.muted}>
                   Belum ada akun yang siap ditugaskan.{" "}
-                  <Link className={s.textlink} href="/admin/consultants">Kelola akses konsultan</Link>
+                  <a className={s.textlink} href="https://ams.binahub.id/admin/consultant-team" target="_blank" rel="noopener noreferrer">Undang anggota di AMS</a>
                 </p>
               ) : null}
               <form

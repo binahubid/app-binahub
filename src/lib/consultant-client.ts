@@ -170,12 +170,16 @@ export async function consultantRequest<T>(
     );
   return v as T;
 }
-export async function downloadConsultantFile(path: string, filename: string) {
-  const r = await apiFetch(path, { cache: "no-store" });
+export async function fetchConsultantFile(path: string, signal?: AbortSignal) {
+  const r = await apiFetch(path, { cache: "no-store", signal });
   if (!r.ok) {
-    const b = await r.json();
-    throw new Error(b.error || "Dokumen belum tersedia.");
+    const b = await r.json().catch(() => null);
+    throw new Error(b?.error || "Dokumen belum tersedia.");
   }
+  return r;
+}
+export async function downloadConsultantFile(path: string, filename: string) {
+  const r = await fetchConsultantFile(path);
   const url = URL.createObjectURL(await r.blob()),
     a = document.createElement("a");
   a.href = url;

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
+  BookOpen,
   CalendarDays,
   Download,
   FileText,
@@ -19,9 +20,10 @@ import {
   type ConsultantMember,
   type Task,
 } from "@/lib/consultant-client";
+import { consultantMaterials } from "@/lib/consultant-materials";
 import s from "./consultant.module.css";
 
-export function useConsultantData<T>(url: string) {
+export function useConsultantData<T>(url: string | null) {
   const [state, setState] = useState<{
     url: string;
     data?: T;
@@ -29,6 +31,7 @@ export function useConsultantData<T>(url: string) {
   }>();
   const [revision, setRevision] = useState(0);
   useEffect(() => {
+    if (!url) return;
     const controller = new AbortController();
     void consultantRequest<T>(url, undefined, "GET", controller.signal)
       .then((data) => {
@@ -462,20 +465,7 @@ export function ConsultantMaterials() {
         </p>
       )}
       <section className={s.panel}>
-        {[
-          {
-            slug: "company-profile",
-            title: "Company Profile BinaHub",
-            description:
-              "Profil perusahaan, pendekatan 4A, tiga pilar, dan ekosistem BinaHub.",
-          },
-          {
-            slug: "product-knowledge",
-            title: "Product Knowledge BinaHub",
-            description:
-              "Panduan internal untuk memahami produk dan program dalam katalog.",
-          },
-        ].map((m) => (
+        {consultantMaterials.map((m) => (
           <div className={s.row} key={m.slug}>
             <div>
               <h3>
@@ -488,15 +478,22 @@ export function ConsultantMaterials() {
               </h3>
               <p className={s.muted}>{m.description}</p>
             </div>
-            <button
-              type="button"
-              className={s.button}
-              disabled={!!busy}
-              onClick={() => void download(m.slug)}
-            >
-              <Download size={16} aria-hidden="true" />
-              {busy === m.slug ? "Memuat…" : "Unduh PDF"}
-            </button>
+            <div className={s.actions}>
+              <Link className={s.primary} href={`/konsultan/materials/${m.slug}`}
+                aria-label={`Baca ${m.title} di web`}>
+                <BookOpen size={16} aria-hidden="true" /> Baca di web
+              </Link>
+              <button
+                type="button"
+                className={s.button}
+                aria-label={`Unduh PDF ${m.title}`}
+                disabled={!!busy}
+                onClick={() => void download(m.slug)}
+              >
+                <Download size={16} aria-hidden="true" />
+                {busy === m.slug ? "Memuat…" : "Unduh PDF"}
+              </button>
+            </div>
           </div>
         ))}
       </section>

@@ -1,22 +1,49 @@
-# Panduan Portal Konsultan BinaHub
+# SOP Konsultasi BinaHub
 
-Portal tersedia di [app.binahub.id/konsultan](https://app.binahub.id/konsultan). Konsultan dapat membaca peluang, jadwal, tugas, checklist, proposal, dan riwayat seluruh tim. Konsultan yang ditugaskan dapat mengubah pekerjaannya. Admin mengelola penugasan dan dapat membantu pekerjaan mana pun.
+Panduan ini digunakan admin dan konsultan sejak jadwal masuk sampai serah terima program. Buka [Portal Konsultan BinaHub](https://app.binahub.id/konsultan) melalui AMS. Konsultan bisa melihat jadwal, peluang, tugas, dan riwayat seluruh tim. Penanggung jawab aktif mengerjakan konsultasinya sendiri. Admin menetapkan atau mengganti penanggung jawab serta dapat membantu pekerjaan tim.
 
-## Menyiapkan tim
+## 1. Siapkan akses konsultan
 
-1. Buka **AMS → Tim Konsultan → Undang anggota**. Pilih associate aktif, tinjau perjanjian, dan lengkapi ketentuan kompensasi yang benar-benar disepakati.
-2. Associate membuka undangan di AMS, membaca perjanjian, lalu memilih **Setujui & Bergabung**. Tombol **Portal Konsultan** kemudian membuka App tanpa password kedua. Keanggotaan berlaku selama aktif dan tidak mengikuti tanggal selesai proyek. Admin menjeda atau mengakhiri keanggotaan dari AMS; App menampilkan status sebagai informasi baca saja.
-3. Buka **Penugasan**, cari peluang, lalu pilih **Kelola penugasan → Tetapkan konsultan**. Daftar hanya memuat akun yang aktif di AMS dan di Portal Konsultan dengan email login yang sama dan terverifikasi. Untuk booking Cal.com tanpa peluang, pilih peluang yang sesuai di **Booking yang belum terhubung**. Undang konsultan ke kalender meeting sesuai alur Cal.com BinaHub.
-4. Di tab **Materi**, unggah [Company Profile](../output/pdf/company-profile-binahub.pdf) dan [Product Knowledge](../output/pdf/product-knowledge-binahub.pdf). Di portal, pilih **Baca di web** untuk membacanya tanpa unduhan atau **Unduh PDF** untuk menyimpan salinannya. Keduanya membuka dokumen yang sama dari penyimpanan privat.
+1. Admin membuka **AMS → Tim Konsultan → Undang anggota**, lalu memilih associate aktif. Tinjau perjanjian sebelum mengirim undangan. Isi kompensasi jika sudah ada kesepakatan. Isian ini opsional.
+2. Associate masuk ke AMS, membuka undangan, membaca perjanjian, lalu memilih **Setujui & Bergabung**. Setelah keanggotaan aktif, tombol **Portal Konsultan** membuka ruang kerja dengan sesi AMS yang sama.
+3. Jika akun belum muncul di penugasan, periksa status anggota di AMS, sinkronisasi ke portal, dan kesamaan email login yang sudah terverifikasi. Keanggotaan berlaku selama statusnya aktif. Pengaturan jeda dan pengakhiran akses dilakukan di AMS.
 
-## Menangani konsultasi
+## 2. Terima jadwal dan tetapkan penanggung jawab
 
-1. Buka **Klien & peluang**. Gunakan filter **Tanggung jawab saya** untuk mencari penugasan sendiri atau **Semua** untuk melihat pekerjaan tim.
-2. Di detail peluang, lihat jadwal dan buka **Kebutuhan & meeting**. Jika tersedia, hubungkan pengisian rekomendasi dari klien. Lengkapi checklist, catat klarifikasi, dan pilih **Tandai selesai**.
-3. Buka **Proposal**, pilih program dan periksa durasi, jumlah peserta, format, lokasi, dan ruang lingkup. Buat draf, lalu unduh dan tinjau PDF. Estimasi memakai tarif harian katalog dikalikan jumlah hari. Tarif yang belum tersedia atau perlu pembahasan tampil sebagai tanda pisah.
-4. Di **Tindak lanjut**, pilih **Pengiriman proposal**, pilih revisi PDF, tulis pesan, lalu tinjau tujuan dan lampiran. Kosongkan jadwal untuk antrean berikutnya atau pilih waktu perangkat yang sesuai. Email memakai nama konsultan yang ditugaskan dan balasan diarahkan ke email kerjanya.
-5. Periksa **Riwayat pengiriman**. Status **Diterima penyedia email** berarti layanan email sudah menerima pengiriman. Jika status perlu diperiksa, cocokkan dengan riwayat penyedia sebelum mengantrekan ulang. Catat balasan klien agar tindak lanjut terjadwal yang belum diproses dapat dibatalkan.
-6. Setelah klien menyepakati proposal, buka **Ringkasan → Serah terima ke admin** dan catat kesepakatannya. Admin membuka catatan di **Tim Konsultan → Serah terima** dan meneruskan proses dari **Klien & Pelaksanaan**.
+1. Admin membuka **Konsultasi** di App BinaHub. Cocokkan nama, organisasi, jadwal, zona waktu, dan tautan meeting dari booking Cal.com. Konfirmasi kesiapan konsultan untuk jam tersebut.
+2. Buka **Tim Konsultan → Penugasan**. Cari peluang dan pilih **Kelola penugasan**. Pilih **Penanggung jawab**, lalu tekan **Tetapkan konsultan**. Jika booking belum terhubung, pilih peluang yang sesuai di bagian **Booking yang belum terhubung**, lalu tekan **Hubungkan booking**.
+3. Undang konsultan melalui kalender internal dengan jam dan tautan meeting yang sama. Jika konsultan berhalangan, utamakan pengganti untuk jam yang sudah dipilih klien. Perbarui penanggung jawab dan undangan kalender. Hubungi klien bila waktu meeting benar-benar harus berubah.
+
+## 3. Siapkan materi dan pandu meeting
+
+1. Di portal, buka **Materi** dan pilih versi Company Profile atau Product Knowledge. **Baca di web** membuka pembaca PDF di portal. **Unduh PDF** menyimpan versi yang dipilih. Admin dapat mengganti setiap versi dari **Tim Konsultan → Materi** dengan PDF berukuran maksimal 4 MB.
+2. Buka **Klien & peluang → Tanggung jawab saya**, lalu pilih peluang. Gunakan **Semua** untuk melihat pekerjaan tim. Buka **Kebutuhan & meeting** untuk meninjau checklist.
+3. Jika klien telah mengisi Rekomendasi Program, pilih pengisian yang sesuai dan tekan **Hubungkan jawaban**. Tinjau jawaban klien dan catat koreksi sebagai klarifikasi.
+4. Saat meeting, bahas kondisi tim, tantangan, dampak terhadap pekerjaan, dan hasil yang ingin dicapai. Tanyakan jumlah peserta, durasi, lokasi, dan pilihan indoor atau outdoor. Jika klien tertarik pada BinaPlay, gali perilaku atau dinamika tim yang ingin dilatih.
+5. Bacakan kembali kebutuhan dan sepakati langkah berikutnya. Pilih **Simpan sesi** jika masih ada informasi yang perlu diperoleh. Setelah isian wajib lengkap, pilih **Tandai selesai** agar checklist bisa digunakan untuk menyusun proposal.
+
+## 4. Buat dan tinjau proposal
+
+1. Buka tab **Proposal**. Pada **Susun proposal**, pilih program yang relevan, durasi, jumlah peserta, format, dan lokasi. Pilih **Buat draf proposal**.
+2. Buka revisi yang baru dibuat dan pilih **Unduh PDF**. Periksa nama organisasi, kebutuhan, program, durasi, jumlah peserta, lokasi, ruang lingkup, dan biaya sebelum menyiapkan email.
+3. Untuk program dengan tarif harian, estimasi dasar adalah tarif satu hari dikali jumlah hari. Pilihan indoor dan outdoor memakai tarif dasar yang sama. Jika tarif masih perlu dibahas, angka yang belum tersedia tampil sebagai tanda pisah. Konfirmasikan rincian tersebut sebelum menyampaikan komitmen biaya.
+4. Jika kebutuhan berubah, perbarui checklist dan buat revisi proposal berdasarkan checklist yang terbaru. Gunakan revisi yang sudah ditinjau sebagai lampiran.
+
+## 5. Kirim dan tindak lanjuti
+
+1. Buka **Tindak lanjut → Siapkan email**. Pilih **Pengiriman proposal** pada **Jenis email**, pilih revisi di **Lampiran proposal**, lalu isi subjek dan pesan.
+2. Isi **Jadwal kirim** jika email perlu dikirim pada waktu tertentu. Kosongkan jika ingin diproses pada giliran berikutnya. Pilih **Tinjau pengiriman**, periksa tujuan, nama konsultan, jadwal, serta lampiran, lalu pilih **Antrekan email**. Nama pengirim mengikuti konsultan yang ditugaskan dan balasan diarahkan ke email kerjanya.
+3. Pantau **Riwayat pengiriman**. **Menunggu jadwal** berarti email masih dalam antrean. **Diterima penyedia email** berarti layanan email sudah menerima pengiriman. Untuk status **Pengiriman perlu diperiksa**, cocokkan dengan riwayat penyedia sebelum mengirim ulang.
+4. Untuk pengingat berikutnya, pilih jenis email **Tindak lanjut** dan atur waktunya. Catat balasan klien di **Riwayat aktivitas** agar tindak lanjut yang masih terjadwal dapat dibatalkan.
+
+Contoh pesan setelah meeting
+
+> Selamat siang, Bu Rina. Saya Dimas dari BinaHub. Terima kasih sudah menjelaskan kebutuhan tim. Saya lampirkan usulan program untuk membantu tim memperbaiki koordinasi lintas fungsi. Saya akan menghubungi Ibu pada Kamis untuk membahas masukan dan pilihan jadwal.
+
+## 6. Serahkan program yang sudah disepakati
+
+1. Setelah proposal terkirim dan klien menyepakati program, buka **Ringkasan → Serah terima ke admin**. Catat program dan revisi yang disepakati, jumlah peserta, waktu, lokasi, dan hal yang masih perlu ditindaklanjuti. Pilih **Serahkan ke admin** dan konfirmasikan.
+2. Admin membuka **Tim Konsultan → Serah terima**, membaca kesepakatan, lalu melanjutkan pekerjaan dari **Klien & Pelaksanaan**. Status peluang menjadi **Disepakati** dan email yang masih terjadwal pada peluang tersebut dibatalkan.
 
 ## Rilis dan pengujian
 

@@ -20,7 +20,7 @@ import {
   type ConsultantMember,
   type Task,
 } from "@/lib/consultant-client";
-import { consultantMaterials } from "@/lib/consultant-materials";
+import { consultantMaterials, type ConsultantMaterial } from "@/lib/consultant-materials";
 import s from "./consultant.module.css";
 
 export function useConsultantData<T>(url: string | null) {
@@ -439,13 +439,13 @@ export function ConsultantAgenda() {
 export function ConsultantMaterials() {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState("");
-  async function download(slug: string) {
-    setBusy(slug);
+  async function download(material: ConsultantMaterial) {
+    setBusy(material.slug);
     setError("");
     try {
       await downloadConsultantFile(
-        `/api/konsultan/materials/${slug}`,
-        `BinaHub-${slug}.pdf`,
+        `/api/konsultan/materials/${material.slug}`,
+        material.filename,
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Dokumen belum tersedia.");
@@ -488,7 +488,7 @@ export function ConsultantMaterials() {
                 className={s.button}
                 aria-label={`Unduh PDF ${m.title}`}
                 disabled={!!busy}
-                onClick={() => void download(m.slug)}
+                onClick={() => void download(m)}
               >
                 <Download size={16} aria-hidden="true" />
                 {busy === m.slug ? "Memuat…" : "Unduh PDF"}

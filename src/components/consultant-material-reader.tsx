@@ -44,7 +44,7 @@ export function ConsultantMaterialReader({ material }: { material: ConsultantMat
     setDownloading(true);
     setDownloadError("");
     try {
-      await downloadConsultantFile(path, `BinaHub-${material.slug}.pdf`);
+      await downloadConsultantFile(path, material.filename);
     } catch (e) {
       setDownloadError(e instanceof Error ? e.message : "Dokumen belum tersedia.");
     } finally {

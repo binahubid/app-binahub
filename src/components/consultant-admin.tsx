@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { AdminShell } from "@/components/admin-shell";
 import { apiFetch } from "@/lib/api-fetch";
+import { consultantMaterials } from "@/lib/consultant-materials";
 import {
   consultantDate,
   consultantRequest,
@@ -277,14 +278,11 @@ export function ConsultantAdmin() {
       )}
       {tab === "Materi" && (
         <div className={s.grid}>
-          {[
-            { slug: "company-profile", title: "Company Profile BinaHub" },
-            { slug: "product-knowledge", title: "Product Knowledge BinaHub" },
-          ].map((m) => (
+          {consultantMaterials.map((m) => (
             <section key={m.slug} className={s.panel}>
               <h2>{m.title}</h2>
               <p className={s.muted}>
-                Unggahan menggantikan PDF yang tersedia bagi konsultan.
+                Unggahan menggantikan PDF untuk versi ini.
               </p>
               <form className={s.form} onSubmit={(e) => upload(e, m.slug)}>
                 <label className={s.field}>

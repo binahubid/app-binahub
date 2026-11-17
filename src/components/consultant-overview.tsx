@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Download,
   FileText,
+  Play,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -22,6 +23,7 @@ import {
 } from "@/lib/consultant-client";
 import { consultantMaterials, type ConsultantMaterial } from "@/lib/consultant-materials";
 import s from "./consultant.module.css";
+import tutorial from "./consultant-tutorials.module.css";
 
 export function useConsultantData<T>(url: string | null) {
   const [state, setState] = useState<{
@@ -457,14 +459,26 @@ export function ConsultantMaterials() {
     <>
       <ConsultantHeading
         title="Materi konsultan"
-        description="Dokumen untuk mempersiapkan konsultasi dan menjelaskan produk BinaHub."
+        description="Video panduan dan dokumen untuk mempersiapkan konsultasi."
       />
+      <section className={`${s.panel} ${tutorial.entry}`} aria-labelledby="tutorial-entry-title">
+        <div>
+          <h2 id="tutorial-entry-title">Video tutorial</h2>
+          <p className={s.muted}>Kenali fitur portal dan ikuti langkah kerja konsultan.</p>
+        </div>
+        {/* A document navigation applies the video page's Content Security Policy. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a className={s.primary} href="/konsultan/materials/tutorial">
+          <Play size={16} aria-hidden="true" /> Lihat video
+        </a>
+      </section>
       {error && (
         <p role="alert" className={s.error}>
           {error}
         </p>
       )}
-      <section className={s.panel}>
+      <section className={s.panel} aria-labelledby="materials-documents-title">
+        <h2 id="materials-documents-title">Dokumen</h2>
         {consultantMaterials.map((m) => (
           <div className={s.row} key={m.slug}>
             <div>

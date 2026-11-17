@@ -1,0 +1,166 @@
+.entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.library {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(288px, 35%);
+  align-items: start;
+  gap: 20px;
+}
+
+.player,
+.playlist {
+  min-width: 0;
+  border: 1px solid #e0e7f0;
+  border-radius: 14px;
+  background: white;
+}
+
+.player {
+  overflow: hidden;
+  scroll-margin-top: 72px;
+}
+
+.frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  background: #111a2b;
+}
+
+.details {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  padding: 20px;
+}
+
+.details h2,
+.playlist h2 {
+  color: var(--navy);
+  font-weight: 650;
+  text-wrap: balance;
+}
+
+.details h2 {
+  font-size: 20px;
+  line-height: 1.35;
+  margin-block: 4px;
+}
+
+.details p {
+  text-wrap: pretty;
+}
+
+.playlist {
+  padding: 16px;
+}
+
+.playlist h2 {
+  font-size: 16px;
+}
+
+.series {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 12px;
+}
+
+.series button {
+  flex: 1;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid #e0e7f0;
+  border-radius: 8px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.series button[aria-pressed="true"],
+.episode[aria-pressed="true"] {
+  border-color: #c7d8f0;
+  background: #eef3fb;
+  color: var(--navy);
+}
+
+.episodes {
+  display: grid;
+  gap: 4px;
+  margin: 12px -4px 0;
+  padding: 4px;
+  max-height: 460px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.episode {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 64px;
+  padding: 7px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  text-align: left;
+}
+
+.episode:hover,
+.series button:hover {
+  background: #f5f7fa;
+}
+
+.episode img {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  background: #eef3fb;
+}
+
+.episode strong {
+  display: block;
+  line-height: 1.4;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.episodeMeta,
+.empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.episodeMeta {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin-top: 14px;
+}
+
+@media (max-width: 1100px) {
+  .library {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .episodes {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 767px) {
+  .entry > a {
+    width: 100%;
+  }
+}

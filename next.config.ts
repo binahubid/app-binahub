@@ -9,6 +9,12 @@ const apiConnectOrigin = (() => {
   }
 })();
 
+function contentSecurityPolicy(frameSources: string) {
+  return `default-src 'self'; script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ${apiConnectOrigin} https://*.supabase.co wss://*.supabase.co; frame-src ${frameSources}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests`;
+}
+
+const defaultFrameSources = "'self' blob:";
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -17,8 +23,7 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
   {
     key: "Content-Security-Policy",
-    value:
-      `default-src 'self'; script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ${apiConnectOrigin} https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests`,
+    value: contentSecurityPolicy(defaultFrameSources),
   },
 ];
 
@@ -73,6 +78,13 @@ const nextConfig: NextConfig = {
       {source:"/discovery/:path*",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
       {source:"/peta/:path*",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
       {source:"/konsultan/:path*",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
+      {
+        source: "/konsultan/materials/tutorial",
+        headers: [{
+          key: "Content-Security-Policy",
+          value: contentSecurityPolicy(`${defaultFrameSources} https://drive.google.com/file/d/`),
+        }],
+      },
       {source:"/auth/consultant-invite",headers:[{key:"Referrer-Policy",value:"no-referrer"},{key:"X-Robots-Tag",value:"noindex, nofollow, noarchive"}]},
     ];
   },

@@ -15,7 +15,14 @@ const user = {
 const tokenPart = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
 const accessToken = `${tokenPart({ alg: "HS256", typ: "JWT" })}.${tokenPart({ sub: user.id, exp: 4102444800, role: "authenticated" })}.synthetic`;
 const session = { access_token: accessToken, refresh_token: "synthetic", expires_at: 4102444800, expires_in: 86400, token_type: "bearer", user };
-const catalog = JSON.parse(await readFile("src/app/konsultan/materials/tutorial/catalog/episodes.json", "utf8"));
+const catalog = [["F", "fitur", 21], ["S", "sop", 8]].flatMap(([prefix, series, count]) =>
+  Array.from({ length: count }, (_, index) => ({
+    id: prefix + String(index + 1).padStart(2, "0"), series,
+    title: `Tutorial ${prefix}${String(index + 1).padStart(2, "0")}`, description: "Episode sintetis untuk pengujian navigasi.",
+    duration: "0:04", drive: { fileId: `synthetic-file-0000000000-${prefix}${index + 1}` },
+  })),
+);
+const videoBytes = await readFile("tools/fixtures/tutorial-test.mp4");
 const status = { membership: 200 };
 const requests = [];
 const server = createServer((request, response) => {
@@ -25,11 +32,11 @@ const server = createServer((request, response) => {
   response.setHeader("Access-Control-Allow-Credentials", "true");
   response.setHeader("Access-Control-Allow-Headers", "authorization, content-type, x-request-id");
   if (request.method === "OPTIONS") return response.writeHead(204).end();
-  if (request.url === "/api/konsultan/session") {
+  if (request.url === "/api/konsultan/session" || request.url === "/api/konsultan/materials/catalog") {
     const code = request.headers.authorization === `Bearer ${accessToken}` ? status.membership : 401;
     response.writeHead(code);
     return response.end(JSON.stringify(code === 200
-      ? { id: user.id, name: "Konsultan BinaHub", role: "consultant", isAdmin: false }
+      ? request.url.endsWith("/catalog") ? catalog : { id: user.id, name: "Konsultan BinaHub", role: "consultant", isAdmin: false }
       : { error: "Synthetic session failure" }));
   }
   if (request.url === "/auth/v1/user") return response.end(JSON.stringify(user));
@@ -60,10 +67,10 @@ try {
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    // Keep UI regression checks deterministic. Live Drive playback is checked
-    // separately against the real provider using the same preview URLs.
-    await page.route("https://drive.google.com/file/d/**", (route) => route.fulfill({
-      contentType: "text/html", body: "<!doctype html><title>Drive player fixture</title><p>Video preview</p>",
+    // Use a valid synthetic MP4 so native controls and playback are exercised.
+    // The authenticated media route and real Drive ranges are checked separately.
+    await page.route(origin + "/konsultan/materials/tutorial/media/**", (route) => route.fulfill({
+      contentType: "video/mp4", body: videoBytes,
     }));
     const materials = await page.goto(origin + "/konsultan/materials");
     assert.equal(materials.status(), 200);
@@ -78,24 +85,28 @@ try {
       throw error;
     }
     assert.equal(await page.getByRole("link", { name: /Baca .* di web/ }).count(), 4);
-    const tutorialNavigation = page.waitForEvent("response", (response) =>
-      response.request().isNavigationRequest() && response.url() === origin + "/konsultan/materials/tutorial");
     await page.getByRole("link", { name: "Lihat video" }).click();
-    const tutorialResponse = await tutorialNavigation;
-    assert(tutorialResponse.headers()["content-security-policy"].includes("frame-src 'self' blob: https://drive.google.com/file/d/"));
-    await page.locator("iframe[title^='Video F01']").waitFor();
+    await page.waitForURL(origin + "/konsultan/materials/tutorial");
+    const player = page.locator("video");
+    await player.waitFor();
+    await player.evaluate((video) => video.play());
+    await page.waitForFunction(() => document.querySelector("video").currentTime > 0.1);
+    assert(await player.evaluate((video) => video.controls && video.playsInline && video.videoWidth === 640));
+    assert.equal(await player.evaluate((video) => getComputedStyle(video).objectFit), "contain");
+    const frame = await player.boundingBox();
+    assert(Math.abs(frame.width / frame.height - 16 / 9) < 0.01);
     assert.equal(await page.locator("section[aria-labelledby=tutorial-playlist] li").count(), 21);
-    assert.equal(await page.locator("iframe").count(), 1);
-    assert.equal(await page.locator("iframe").getAttribute("src"), `https://drive.google.com/file/d/${catalog[0].drive.fileId}/preview`);
+    assert.equal(await page.locator("iframe").count(), 0);
+    assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/F01");
 
     await page.getByRole("group", { name: "Seri tutorial" }).getByRole("button", { name: "Alur kerja" }).click();
     assert.equal(await page.locator("section[aria-labelledby=tutorial-playlist] li").count(), 8);
     await page.getByRole("button", { name: /S06/ }).click();
     await page.getByRole("heading", { name: catalog.find((item) => item.id === "S06").title }).waitFor();
     const selected = catalog.find((item) => item.id === "S06");
-    assert.equal(await page.locator("iframe").getAttribute("src"), `https://drive.google.com/file/d/${selected.drive.fileId}/preview`);
+    assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/S06");
     assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).getAttribute("href"), `https://drive.google.com/file/d/${selected.drive.fileId}/view`);
-    assert.equal(await page.locator("iframe").count(), 1);
+    assert.equal(await page.locator("video").count(), 1);
 
     const search = page.getByRole("searchbox", { name: "Cari episode" });
     await search.fill("S08");
@@ -119,7 +130,7 @@ try {
     await context.close();
   }
   assert(requests.every((request) => ["GET", "OPTIONS"].includes(request.method)));
-  console.log("Verified private catalog access, 29 Drive links, document entry, scoped CSP, search, series, player replacement, and mobile layout at four widths.");
+  console.log("Verified private catalog access, 29 episodes, native playback, contained 16:9 video, navigation, search, player replacement, and four viewport widths.");
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

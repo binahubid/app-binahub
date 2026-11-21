@@ -29,9 +29,26 @@
 .frame {
   display: block;
   width: 100%;
+  height: auto;
   aspect-ratio: 16 / 9;
+  object-fit: contain;
   border: 0;
   background: #111a2b;
+}
+
+.playerError {
+  padding: 14px 20px;
+  color: #8b2d2d;
+  background: #fff5f5;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.playerError button {
+  margin-top: 6px;
+  min-height: 44px;
+  padding-inline: 12px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
 }
 
 .details {

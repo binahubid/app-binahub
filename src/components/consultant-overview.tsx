@@ -466,11 +466,9 @@ export function ConsultantMaterials() {
           <h2 id="tutorial-entry-title">Video tutorial</h2>
           <p className={s.muted}>Kenali fitur portal dan ikuti langkah kerja konsultan.</p>
         </div>
-        {/* A document navigation applies the video page's Content Security Policy. */}
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a className={s.primary} href="/konsultan/materials/tutorial">
+        <Link className={s.primary} href="/konsultan/materials/tutorial">
           <Play size={16} aria-hidden="true" /> Lihat video
-        </a>
+        </Link>
       </section>
       {error && (
         <p role="alert" className={s.error}>

@@ -5,6 +5,7 @@ import { ExternalLink } from "lucide-react";
 import { useRef, useState } from "react";
 import { tutorialDriveUrl, type ConsultantTutorial } from "@/lib/consultant-tutorials";
 import { useConsultantData } from "./consultant-overview";
+import { ConsultantVideoPlayer } from "./consultant-video-player";
 import portal from "./consultant.module.css";
 import s from "./consultant-tutorials.module.css";
 
@@ -33,15 +34,7 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
   return (
     <div className={s.library}>
       <section ref={player} className={s.player} aria-labelledby="tutorial-now-playing">
-        <iframe
-          key={episode.id}
-          className={s.frame}
-          title={`Video ${episode.id} · ${episode.title}`}
-          src={tutorialDriveUrl(episode, "preview")}
-          allow="fullscreen"
-          allowFullScreen
-          referrerPolicy="no-referrer"
-        />
+        <ConsultantVideoPlayer key={episode.id} episode={episode} />
         <div className={s.details}>
           <div aria-live="polite">
             <p className={s.episodeMeta}>{episode.id} · {episode.duration}</p>

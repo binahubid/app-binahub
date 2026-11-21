@@ -282,7 +282,7 @@ export function ConsultantAdmin() {
             <section key={m.slug} className={s.panel}>
               <h2>{m.title}</h2>
               <p className={s.muted}>
-                Unggahan menggantikan PDF untuk versi ini.
+                Unggahan menggantikan PDF yang tersedia di Materi.
               </p>
               <form className={s.form} onSubmit={(e) => upload(e, m.slug)}>
                 <label className={s.field}>

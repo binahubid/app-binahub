@@ -84,7 +84,7 @@ try {
       await page.screenshot({path:'tmp/consultant-drive/ui-error.png'});
       throw error;
     }
-    assert.equal(await page.getByRole("link", { name: /Baca .* di web/ }).count(), 4);
+    assert.equal(await page.getByRole("link", { name: /Baca .* di web/ }).count(), 2);
     await page.getByRole("link", { name: "Lihat video" }).click();
     await page.waitForURL(origin + "/konsultan/materials/tutorial");
     const player = page.locator("video");

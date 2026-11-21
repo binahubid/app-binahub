@@ -12,16 +12,13 @@ const lead = "00000000-0000-4000-8000-000000000003";
 const peerLead = "00000000-0000-4000-8000-000000000004";
 const proposal = "00000000-0000-4000-8000-000000000005";
 const date = "2099-01-01T10:00:00.000Z";
-const materials = Object.fromEntries(await Promise.all([1, 2].map(async edition => [
-  edition,
-  await renderToBuffer(createElement(Document, null,
-    ...["pertama", "kedua"].map((label) =>
-      createElement(Page, { key: label, size: "A4", style: { padding: 40 } },
-        createElement(Text, null, `Contoh halaman ${label} — Versi ${edition}`),
-      ),
+const material = await renderToBuffer(createElement(Document, null,
+  ...["pertama", "kedua"].map((label) =>
+    createElement(Page, { key: label, size: "A4", style: { padding: 40 } },
+      createElement(Text, null, `Contoh halaman ${label} — Versi 3`),
     ),
-  )),
-])));
+  ),
+));
 const user = {
   id: alice,
   email: "alice@example.invalid",
@@ -278,7 +275,7 @@ try {
         return route.fulfill({
           headers: { ...headers, "Content-Type": "application/pdf" },
           body: path.startsWith("/api/konsultan/materials/")
-            ? materials[path.endsWith("-v1") ? 1 : 2]
+            ? material
             : "%PDF-1.4\n%%EOF",
         });
       return reply({
@@ -409,29 +406,28 @@ try {
       await page.getByRole("link", { name: /^Baca .* di web$/ }).evaluateAll(
         links => links.map(link => link.getAttribute("href")),
       ),
-      ["/konsultan/materials/company-profile-v1", "/konsultan/materials/company-profile",
-        "/konsultan/materials/product-knowledge-v1", "/konsultan/materials/product-knowledge"],
+      ["/konsultan/materials/company-profile", "/konsultan/materials/product-knowledge"],
     );
     let readerDownloads = 0;
     page.on("download", () => { readerDownloads++; });
-    await page.getByRole("link", { name: "Baca Product Knowledge BinaHub — Versi 2 di web" }).click();
+    await page.getByRole("link", { name: "Baca Product Knowledge BinaHub di web" }).click();
     await page.getByText("Halaman 1 dari 2").waitFor();
-    await page.getByText("Contoh halaman pertama — Versi 2", { exact: true }).waitFor();
+    await page.getByText("Contoh halaman pertama — Versi 3", { exact: true }).waitFor();
     await page.getByRole("button", { name: "Halaman berikutnya" }).click();
     await page.getByText("Halaman 2 dari 2").waitFor();
-    await page.getByText("Contoh halaman kedua — Versi 2", { exact: true }).waitFor();
+    await page.getByText("Contoh halaman kedua — Versi 3", { exact: true }).waitFor();
     await page.getByRole("button", { name: "Perbesar" }).click();
     await page.getByRole("button", { name: "Pas layar" }).waitFor();
-    await page.getByText("Contoh halaman kedua — Versi 2", { exact: true }).waitFor();
+    await page.getByText("Contoh halaman kedua — Versi 3", { exact: true }).waitFor();
     assert.equal(readerDownloads, 0);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: `tmp/consultant-material-${width}.png` });
     const pdfDownload = page.waitForEvent("download");
     await page.getByRole("button", { name: "Unduh PDF", exact: true }).click();
-    assert.equal((await pdfDownload).suggestedFilename(), "BinaHub-product-knowledge-v2.pdf");
+    assert.equal((await pdfDownload).suggestedFilename(), "BinaHub-product-knowledge-v3.pdf");
     await page.getByRole("link", { name: "Semua materi" }).click();
-    await page.getByRole("link", { name: "Baca Company Profile BinaHub — Versi 1 di web" }).click();
-    await page.getByText("Contoh halaman pertama — Versi 1", { exact: true }).waitFor();
+    await page.getByRole("link", { name: "Baca Company Profile BinaHub di web" }).click();
+    await page.getByText("Contoh halaman pertama — Versi 3", { exact: true }).waitFor();
     checks++;
 
     if (width === 1440) {

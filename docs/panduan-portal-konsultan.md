@@ -16,7 +16,7 @@ Panduan ini digunakan admin dan konsultan sejak jadwal masuk sampai serah terima
 
 ## 3. Siapkan materi dan pandu meeting
 
-1. Di portal, buka **Materi** dan pilih versi Company Profile atau Product Knowledge. **Baca di web** membuka pembaca PDF di portal. **Unduh PDF** menyimpan versi yang dipilih. Admin dapat mengganti setiap versi dari **Tim Konsultan → Materi** dengan PDF berukuran maksimal 4 MB.
+1. Di portal, buka **Materi** dan pilih **Company Profile BinaHub** atau **Product Knowledge BinaHub**. Pilih **Baca di web** untuk membuka PDF, atau **Unduh PDF** untuk menyimpannya. Admin dapat memperbarui dokumen dari **Tim Konsultan → Materi** di App BinaHub dengan PDF berukuran maksimal 4 MB.
 2. Buka **Klien & peluang → Tanggung jawab saya**, lalu pilih peluang. Gunakan **Semua** untuk melihat pekerjaan tim. Buka **Kebutuhan & meeting** untuk meninjau checklist.
 3. Jika klien telah mengisi Rekomendasi Program, pilih pengisian yang sesuai dan tekan **Hubungkan jawaban**. Tinjau jawaban klien dan catat koreksi sebagai klarifikasi.
 4. Saat meeting, bahas kondisi tim, tantangan, dampak terhadap pekerjaan, dan hasil yang ingin dicapai. Tanyakan jumlah peserta, durasi, lokasi, dan pilihan indoor atau outdoor. Jika klien tertarik pada BinaPlay, gali perilaku atau dinamika tim yang ingin dilatih.

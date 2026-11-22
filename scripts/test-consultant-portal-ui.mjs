@@ -103,7 +103,7 @@ const testServer = createServer((req, res) => {
   res.end("{}");
 });
 await new Promise((resolve) => testServer.listen(4389, "127.0.0.1", resolve));
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ channel: "chrome", headless: true });
 let checks = 0;
 
 try {
@@ -122,6 +122,8 @@ try {
     ]);
     const page = await context.newPage();
     let asAdmin = false, availabilityFailure = false;
+    let sessionChecks = 0, defaultReads = 0, firstSessionReady = false, readStartedInParallel = false;
+    const requests = [];
     const pageErrors = [],
       writes = [];
     const local = { ...record },
@@ -129,6 +131,10 @@ try {
       messages = [],
       tasks = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
+    page.on("request", (request) => {
+      const url = new URL(request.url());
+      if (url.origin === api) requests.push([request.method(), url.pathname, url.search]);
+    });
     await page.route("**/*", async (route) => {
       const url = new URL(route.request().url());
       if (url.origin === origin) return route.continue();
@@ -166,14 +172,24 @@ try {
       }
       if (path.startsWith("/api/admin"))
         throw new Error("Consultant UI called an admin API");
-      if (path === "/api/konsultan/session")
+      if (path === "/api/konsultan/session") {
+        sessionChecks++;
+        if (sessionChecks === 1) {
+          await new Promise((resolve) => setTimeout(resolve, 750));
+          firstSessionReady = true;
+        }
         return reply({
           id: alice,
           role: asAdmin ? "admin" : "consultant",
           name: members[0].name,
           isAdmin: asAdmin,
         });
+      }
       if (path === "/api/konsultan") {
+        if (!url.search) {
+          defaultReads++;
+          if (!firstSessionReady) readStartedInParallel = true;
+        }
         const owner = url.searchParams.get("owner");
         const records =
           owner === "mine"
@@ -295,11 +311,28 @@ try {
       });
     });
 
-    await page.goto(`${origin}/konsultan`);
-    await page.getByRole("heading", { name: "Beranda konsultan" }).waitFor();
+    await page.goto(`${origin}/konsultan`, { waitUntil: "domcontentloaded" });
+    try {
+      await page.getByText("Memverifikasi akses Anda…", { exact: true }).waitFor();
+      await page.getByRole("heading", { name: "Beranda konsultan" }).waitFor({ timeout: 18_000 });
+    } catch (error) {
+      console.error("Portal fixture", { sessionChecks, defaultReads, readStartedInParallel, pageErrors, requests });
+      console.error("Portal text", (await page.locator("body").innerText()).slice(0, 1500));
+      throw error;
+    }
     await page
       .getByRole("link", { name: "PT Uji Konsultasi", exact: true })
       .waitFor();
+    const portalNav = page.getByRole("navigation", { name: "Portal konsultan" });
+    await portalNav.getByRole("link", { name: "Klien & peluang" }).click();
+    await page.getByRole("heading", { name: "Klien & peluang" }).waitFor();
+    await page.getByRole("link", { name: "PT Uji Konsultasi", exact: true }).waitFor();
+    await portalNav.getByRole("link", { name: "Beranda", exact: true }).click();
+    await page.getByRole("heading", { name: "Beranda konsultan" }).waitFor();
+    await page.getByRole("link", { name: "PT Uji Konsultasi", exact: true }).waitFor();
+    assert.equal(sessionChecks, 1, "Switching portal pages must reuse the verified shell session");
+    assert.equal(defaultReads, 1, "Home and Clients must share the default list within the session");
+    assert(readStartedInParallel, "The initial data request must not wait for the shell access check");
     assert(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -402,6 +435,27 @@ try {
 
     await page.goto(`${origin}/konsultan/materials`);
     await page.getByRole("heading", { name: "Materi konsultan" }).waitFor();
+    const documents = page.getByRole("region", { name: "Dokumen" });
+    assert.equal(await documents.getByRole("article").count(), 2);
+    if (width <= 390) {
+      for (const card of await documents.getByRole("article").all()) {
+        const title = await card.getByRole("heading").boundingBox();
+        const read = await card.getByRole("link").boundingBox();
+        const downloadButton = await card.getByRole("button").boundingBox();
+        assert(title.y < read.y && read.y === downloadButton.y, "Document actions must sit below the title");
+        assert(read.x >= 0 && downloadButton.x + downloadButton.width <= width, "Both actions must fit inside the viewport");
+      }
+      assert(await page.getByRole("link", { name: "Kembali ke AMS" }).filter({ visible: true }).isVisible());
+    }
+    await page.getByRole("combobox", { name: "Bahasa tampilan" }).selectOption("en");
+    await page.getByRole("heading", { name: "Consultant materials" }).waitFor();
+    await page.getByRole("link", { name: "Read Company Profile BinaHub online" }).waitFor();
+    await page.reload();
+    await page.getByRole("heading", { name: "Consultant materials" }).waitFor();
+    assert.equal(await page.getByRole("combobox", { name: "Display language" }).inputValue(), "en");
+    await page.getByRole("combobox", { name: "Display language" }).selectOption("id");
+    await page.getByRole("heading", { name: "Materi konsultan" }).waitFor();
+    await page.screenshot({ path: `tmp/consultant-materials-grid-${width}.png` });
     assert.deepEqual(
       await page.getByRole("link", { name: /^Baca .* di web$/ }).evaluateAll(
         links => links.map(link => link.getAttribute("href")),
@@ -447,8 +501,9 @@ try {
       checks++;
     }
 
-    await page.goto(`${origin}/admin/consultants`);
-    await page.waitForURL(`${origin}/access-denied`);
+    const adminResponse = await context.request.get(`${origin}/admin/consultants`, { maxRedirects: 0 });
+    assert.equal(adminResponse.status(), 303);
+    assert.equal(new URL(adminResponse.headers().location, origin).pathname, "/access-denied");
     assert.deepEqual(pageErrors, []);
     checks++;
     await context.close();

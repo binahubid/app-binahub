@@ -7,6 +7,7 @@ import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask, TextLayer } 
 import { downloadConsultantFile, fetchConsultantFile } from "@/lib/consultant-client";
 import type { ConsultantMaterial } from "@/lib/consultant-materials";
 import { ConsultantHeading } from "./consultant-overview";
+import { ConsultantPending } from "./consultant-data";
 import s from "./consultant.module.css";
 import { useConsultantLocale } from "@/components/consultant-language";
 
@@ -70,7 +71,7 @@ export function ConsultantMaterialReader({ material }: { material: ConsultantMat
           {state?.error ? <>
             <p role="alert" className={s.error}>{t(state.error)}</p>
             <button className={s.button} type="button" onClick={() => { setSource(undefined); setRetry((n) => n + 1); }}>{t("Coba lagi")}</button>
-          </> : <p role="status" className={s.muted}>{t("Memuat dokumen…")}</p>}
+          </> : <ConsultantPending message="Memuat dokumen…" />}
         </section>
       )}
     </>

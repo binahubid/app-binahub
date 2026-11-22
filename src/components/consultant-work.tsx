@@ -21,8 +21,8 @@ import {
   AgendaRows,
   ConsultantHeading,
   Pager,
-  useConsultantData,
 } from "./consultant-overview";
+import { ConsultantPending, consultantDirectoryUrl, useConsultantData } from "./consultant-data";
 import { useConsultant } from "./consultant-shell";
 import { ConsultantContext } from "./consultant-context";
 import s from "./consultant.module.css";
@@ -76,7 +76,7 @@ export function ConsultantWork({ id }: { id: string }) {
   const work = useConsultantData<ConsultantDetail>(
     `${endpoint}?page=${history}`,
   );
-  const directory = useConsultantData<ConsultantList>("/api/konsultan");
+  const directory = useConsultantData<ConsultantList>(consultantDirectoryUrl);
   const session = useConsultant();
   const assignees = useConsultantData<{ members: { id: string; name: string }[] }>(
     session.isAdmin ? "/api/admin/consultants?view=assignees" : null,
@@ -218,7 +218,7 @@ export function ConsultantWork({ id }: { id: string }) {
             <button className={s.button} onClick={work.reload}>{t("Coba lagi")}</button>
           </div>
         ) : (
-          <p role="status">{t("Memuat peluang…")}</p>
+          <ConsultantPending message="Memuat peluang…" />
         )}
       </>
     );
@@ -832,6 +832,7 @@ export function ConsultantWork({ id }: { id: string }) {
               ))}
             </ol>
             <Pager
+              translate={t}
               page={history}
               total={data.activityTotal}
               pageSize={30}

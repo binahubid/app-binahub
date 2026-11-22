@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ArrowRight,
   BookOpen,
@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import {
   consultantDate,
-  consultantRequest,
   downloadConsultantFile,
   stageLabels,
   type Booking,
@@ -22,38 +21,12 @@ import {
   type Task,
 } from "@/lib/consultant-client";
 import { consultantMaterials, type ConsultantMaterial } from "@/lib/consultant-materials";
+import { ConsultantPending, consultantDirectoryUrl, useConsultantData } from "./consultant-data";
+import { consultantTranslator } from "@/lib/consultant-locale";
 import s from "./consultant.module.css";
 import tutorial from "./consultant-tutorials.module.css";
+const translateIndonesian = consultantTranslator("id");
 import { useConsultantLocale } from "@/components/consultant-language";
-
-export function useConsultantData<T>(url: string | null) {
-  const [state, setState] = useState<{
-    url: string;
-    data?: T;
-    error?: string;
-  }>();
-  const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    if (!url) return;
-    const controller = new AbortController();
-    void consultantRequest<T>(url, undefined, "GET", controller.signal)
-      .then((data) => {
-        if (!controller.signal.aborted) setState({ url, data });
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted)
-          setState({
-            url,
-            error: e instanceof Error ? e.message : "Data belum tersedia.",
-          });
-      });
-    return () => controller.abort();
-  }, [url, revision]);
-  return {
-    ...(state?.url === url ? state : {}),
-    reload: () => setRevision((v) => v + 1),
-  };
-}
 
 export function ConsultantHeading({
   title,
@@ -108,13 +81,14 @@ export function Pager({
   total,
   pageSize,
   onChange,
+  translate: t = translateIndonesian,
 }: {
   page: number;
   total: number;
   pageSize: number;
   onChange: (v: number) => void;
+  translate?: typeof translateIndonesian;
 }) {
-  const { t } = useConsultantLocale();
   if (total <= pageSize && page === 0) return null;
   return (
     <nav aria-label={t("Halaman hasil")} className={s.pager}>
@@ -181,10 +155,10 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
     [query, setQuery] = useState(""),
     [page, setPage] = useState(0),
     [view, setView] = useState("all");
-  const { data, error, reload } = useConsultantData<ConsultantList>(
-    "/api/konsultan?" +
-      new URLSearchParams({ owner, search: query, page: String(page), view }),
-  );
+  const directoryUrl = owner === "all" && !query && page === 0 && view === "all"
+    ? consultantDirectoryUrl
+    : consultantDirectoryUrl + "?" + new URLSearchParams({ owner, search: query, page: String(page), view });
+  const { data, error, reload } = useConsultantData<ConsultantList>(directoryUrl);
   return (
     <>
       <ConsultantHeading
@@ -249,7 +223,7 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
           {t(error)}
         </p>
       )}
-      {!error && !data && <p role="status">{t("Memuat pekerjaan tim…")}</p>}
+      {!error && !data && <ConsultantPending message="Memuat pekerjaan tim…" />}
       {data && (
         <>
           {!clients && (
@@ -323,6 +297,7 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
               )}
               {clients ? (
                 <Pager
+                  translate={t}
                   page={page}
                   pageSize={data.pageSize}
                   total={data.total}
@@ -359,7 +334,7 @@ export function ConsultantAgenda() {
   const [owner, setOwner] = useState("all"),
     [kind, setKind] = useState("tasks"),
     [page, setPage] = useState(0);
-  const directory = useConsultantData<ConsultantList>("/api/konsultan");
+  const directory = useConsultantData<ConsultantList>(consultantDirectoryUrl);
   const { data, error, reload } = useConsultantData<{
     records: (Task | Booking)[];
     total: number;
@@ -413,6 +388,7 @@ export function ConsultantAgenda() {
           <>
             <AgendaRows records={data.records} />
             <Pager
+              translate={t}
               page={page}
               total={data.total}
               pageSize={data.pageSize}
@@ -420,7 +396,7 @@ export function ConsultantAgenda() {
             />
           </>
         ) : (
-          <p role="status">{t("Memuat agenda…")}</p>
+          <ConsultantPending message="Memuat agenda…" />
         )}
       </section>
     </>
@@ -467,19 +443,15 @@ export function ConsultantMaterials() {
       <section className={`${s.panel} ${s.materialDocuments}`} aria-labelledby="materials-documents-title">
         <h2 id="materials-documents-title">{t("Dokumen")}</h2>
         {consultantMaterials.map((m) => (
-          <div className={`${s.row} ${s.materialRow}`} key={m.slug}>
-            <div>
-              <h3>
-                <FileText
-                  size={16}
-                  aria-hidden="true"
-                  className="mr-2 inline"
-                />
-                {m.title}
-              </h3>
-              <p className={s.muted}>{t(m.description)}</p>
+          <article className={s.materialRow} key={m.slug}>
+            <div className={s.materialCopy}>
+              <FileText size={20} aria-hidden="true" />
+              <div>
+                <h3>{m.title}</h3>
+                <p className={s.muted}>{t(m.description)}</p>
+              </div>
             </div>
-            <div className={s.actions}>
+            <div className={s.materialActions}>
               <Link className={s.primary} href={`/konsultan/materials/${m.slug}`}
                 aria-label={t("Baca {0} di web", [m.title])}>
                 <BookOpen size={16} aria-hidden="true" /> {t("Baca di web")}</Link>
@@ -494,7 +466,7 @@ export function ConsultantMaterials() {
                 {busy === m.slug ? t("Memuat…") : t("Unduh PDF")}
               </button>
             </div>
-          </div>
+          </article>
         ))}
       </section>
     </>

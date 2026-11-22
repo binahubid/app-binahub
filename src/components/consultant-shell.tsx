@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useEffectEvent, useState, type MouseEvent } from "react";
 import {
   LayoutDashboard,
   UsersRound,
@@ -18,6 +18,10 @@ import {
 import { supabase } from "@/lib/supabase";
 import s from "./consultant.module.css";
 import { ConsultantLanguageSelect, useConsultantLocale } from "@/components/consultant-language";
+import {
+  ConsultantPending, ConsultantReads, consultantAgendaUrl, consultantDirectoryUrl,
+  consultantTutorialUrl, createConsultantReads,
+} from "./consultant-data";
 const Session = createContext<ConsultantSession | null>(null);
 export function useConsultant() {
   const a = useContext(Session);
@@ -30,49 +34,113 @@ const nav = [
   { href: "/konsultan/tasks", label: "Tugas & jadwal", icon: CalendarDays },
   { href: "/konsultan/materials", label: "Materi", icon: BookOpen },
 ];
+const amsOrigin = "https://ams.binahub.id";
+const pageReads: Record<string, readonly string[]> = {
+  "/konsultan": [consultantDirectoryUrl],
+  "/konsultan/clients": [consultantDirectoryUrl],
+  "/konsultan/tasks": [consultantDirectoryUrl, consultantAgendaUrl],
+  "/konsultan/materials/tutorial": [consultantTutorialUrl],
+};
+
 export function ConsultantShell({ children }: { children: React.ReactNode }) {
   const { locale, t } = useConsultantLocale();
   const [session, setSession] = useState<ConsultantSession | null>(null),
     [error, setError] = useState(""),
     [retry, setRetry] = useState(0);
+  const [reads] = useState(createConsultantReads);
+  const [returning, setReturning] = useState(false);
   const pathname = usePathname(),
     router = useRouter();
+  const signIn = useEffectEvent(() => {
+    router.replace("/?mode=signin&next=" + encodeURIComponent(pathname));
+  });
+
   useEffect(() => {
-    let active = true;
-    void (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        router.replace("/?mode=signin&next=" + encodeURIComponent(pathname));
-        return;
-      }
+    const controller = new AbortController();
+    let authUser: string | undefined;
+    let checking = false;
+    let verifiedAt = 0;
+
+    async function verify(preload = false) {
+      if (checking || controller.signal.aborted) return;
+      checking = true;
       try {
-        const a = await consultantRequest<ConsultantSession>(
-          "/api/konsultan/session",
+        const { data } = await supabase.auth.getSession();
+        if (controller.signal.aborted) return;
+        if (!data.session) {
+          reads.clear();
+          setSession(null);
+          signIn();
+          return;
+        }
+        authUser = data.session.user.id;
+        if (preload) {
+          for (const url of pageReads[window.location.pathname] ?? []) {
+            void reads.load(url).catch(() => {});
+          }
+        }
+        const verified = await consultantRequest<ConsultantSession>(
+          "/api/konsultan/session", undefined, "GET",
+          AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]),
         );
-        if (active) {
-          setSession(a);
+        if (!controller.signal.aborted) {
+          verifiedAt = Date.now();
+          setSession(verified);
           setError("");
         }
       } catch (e) {
-        if (active) {
+        if (!controller.signal.aborted) {
+          reads.clear();
           setSession(null);
           setError(
-            e instanceof Error ? e.message : "Portal belum dapat dibuka.",
+            e instanceof Error && e.name !== "TimeoutError"
+              ? e.message
+              : "Portal belum dapat dibuka. Coba lagi.",
           );
         }
+      } finally {
+        checking = false;
       }
-    })();
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        setSession(null);
-        router.replace("/?mode=signin&next=/konsultan");
+    }
+    void verify(true);
+    const refreshOnReturn = () => {
+      if (document.visibilityState === "visible" && Date.now() - verifiedAt >= 30_000) {
+        void verify();
       }
+    };
+    window.addEventListener("focus", refreshOnReturn);
+    document.addEventListener("visibilitychange", refreshOnReturn);
+    const { data: listener } = supabase.auth.onAuthStateChange((event, next) => {
+      if (event !== "SIGNED_OUT" && (!authUser || !next || next.user.id === authUser)) return;
+      controller.abort();
+      reads.clear();
+      setSession(null);
+      if (event === "SIGNED_OUT") signIn();
+      else setRetry((value) => value + 1);
     });
     return () => {
-      active = false;
+      controller.abort();
       listener.subscription.unsubscribe();
+      window.removeEventListener("focus", refreshOnReturn);
+      document.removeEventListener("visibilitychange", refreshOnReturn);
     };
-  }, [pathname, retry, router]);
+  }, [reads, retry]);
+
+  useEffect(() => {
+    const restore = () => setReturning(false);
+    window.addEventListener("pageshow", restore);
+    return () => window.removeEventListener("pageshow", restore);
+  }, []);
+
+  function goToAms(event: MouseEvent<HTMLAnchorElement>) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    setReturning(true);
+  }
+
+  function warmPage(href: string) {
+    for (const url of pageReads[href] ?? []) void reads.load(url).catch(() => {});
+  }
+
   if (!session)
     return (
       <main className={s.access} lang={locale}>
@@ -89,13 +157,15 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
             >{t("Ganti akun")}</button>
           </>
         ) : (
-          <p role="status">{t("Memverifikasi akses Anda…")}</p>
+          <ConsultantPending message="Memverifikasi akses Anda…" />
         )}
       </main>
     );
   return (
     <Session.Provider value={session}>
+      <ConsultantReads.Provider value={reads}>
       <div className={s.shell} lang={locale}>
+        <link rel="preconnect" href={amsOrigin} />
         <aside className={s.sidebar}>
           <Link href="/konsultan" aria-label={t("Beranda konsultan BinaHub")}>
             <Image
@@ -107,12 +177,18 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
             />
           </Link>
           <p className={s.workspaceLabel}>{t("Ruang konsultan")}</p>
-          <a href="https://ams.binahub.id/dashboard" className={s.textlink}>{t("Kembali ke AMS")}</a>
+          <a href={amsOrigin + "/dashboard"} className={s.textlink} onClick={goToAms}>
+            {returning ? t("Membuka AMS…") : t("Kembali ke AMS")}
+          </a>
           <nav aria-label={t("Portal konsultan")}>
             {nav.map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
+                prefetch
+                onMouseEnter={() => warmPage(n.href)}
+                onFocus={() => warmPage(n.href)}
+                onPointerDown={() => warmPage(n.href)}
                 aria-current={
                   pathname === n.href ||
                   (n.href !== "/konsultan" && pathname.startsWith(n.href + "/"))
@@ -144,7 +220,11 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
           <header className={s.topbar}>
             <span>{t("Portal Konsultan")}</span>
             <div className={s.actions}>
-              <span>{session.name}</span>
+              <span className={s.topbarAccount}>{session.name}</span>
+              <a href={amsOrigin + "/dashboard"} className={s.amsBackMobile}
+                onClick={goToAms} aria-label={t("Kembali ke AMS")}>
+                <ArrowLeft size={15} aria-hidden="true" /> AMS
+              </a>
               <ConsultantLanguageSelect />
               <button
                 className={s.mobileAccount}
@@ -156,10 +236,12 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <main className={s.main} id="main-content">
+            {returning && <ConsultantPending message="Membuka AMS…" />}
             {children}
           </main>
         </div>
       </div>
+      </ConsultantReads.Provider>
     </Session.Provider>
   );
 }

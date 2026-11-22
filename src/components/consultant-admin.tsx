@@ -11,7 +11,8 @@ import {
   consultantRequest,
   type ConsultantList,
 } from "@/lib/consultant-client";
-import { Pager, useConsultantData } from "./consultant-overview";
+import { Pager } from "./consultant-overview";
+import { useConsultantData } from "./consultant-data";
 import s from "./consultant.module.css";
 
 type Member = {

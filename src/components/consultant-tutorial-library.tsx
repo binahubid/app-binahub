@@ -12,7 +12,7 @@ import {
   type ConsultantTutorial,
   type TutorialVersion,
 } from "@/lib/consultant-tutorials";
-import { useConsultantData } from "./consultant-overview";
+import { ConsultantPending, consultantTutorialUrl, useConsultantData } from "./consultant-data";
 import { ConsultantVideoPlayer } from "./consultant-video-player";
 import portal from "./consultant.module.css";
 import s from "./consultant-tutorials.module.css";
@@ -159,7 +159,7 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
 export function ConsultantTutorialLibrary() {
   const { t } = useConsultantLocale();
   const { data, error, reload } = useConsultantData<ConsultantTutorial[]>(
-    "/konsultan/materials/tutorial/catalog",
+    consultantTutorialUrl,
   );
   if (error) {
     return (
@@ -169,6 +169,6 @@ export function ConsultantTutorialLibrary() {
       </section>
     );
   }
-  if (!data) return <p role="status">{t("Memuat daftar video…")}</p>;
+  if (!data) return <ConsultantPending message="Memuat daftar video…" />;
   return <TutorialPlaylist episodes={data} />;
 }

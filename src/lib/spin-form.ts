@@ -3,6 +3,9 @@ export type SpinAnswers = Record<string, SpinValue>;
 export type SpinOption = { value: string; label: string; exclusive?: boolean };
 export type SpinField = { key: string; questionId: string; label: string; type: string; required: boolean; options?: SpinOption[]; optionGroups?: Record<string, SpinOption[]>; optionGroupKey?: string; commonOptions?: SpinOption[]; mirrorKey?: string; maxSelected?: number; maxLength?: number; max?: number; when?: {key: string; values: string[]} };
 export type SpinDefinition = { version: string; stages: string[]; fields: SpinField[]; screens: string[][] };
+export type SpinCopy = (message: string, values?: readonly unknown[]) => string;
+export const formatSpinCopy: SpinCopy = (message, values = []) =>
+  values.length ? message.replace(/\{(\d+)\}/g, (_, index) => String(values[Number(index)] ?? "")) : message;
 export const SPIN_NOTICE_VERSION = 'spin-processing-indefinite-v1';
 export const SPIN_PRIVACY_NOTICE = 'AI kami membantu mencocokkan kebutuhan Anda dengan program BinaHub, tanpa menyertakan nama, alamat email, atau nomor telepon dari kolom kontak dalam analisis. Hindari data pribadi dan informasi rahasia dalam jawaban. Tim BinaHub dapat meninjau pengisian untuk memberikan rekomendasi dan menindaklanjuti kebutuhan Anda. Anda dapat meminta akses untuk koreksi jawaban atau penghapusan data melalui admin@binahub.id.';
 export const spinArray = (a:SpinAnswers,k:string) => Array.isArray(a[k]) ? a[k] as string[] : [];

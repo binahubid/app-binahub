@@ -16,6 +16,7 @@ import { useConsultantData } from "./consultant-overview";
 import { ConsultantVideoPlayer } from "./consultant-video-player";
 import portal from "./consultant.module.css";
 import s from "./consultant-tutorials.module.css";
+import { useConsultantLocale } from "@/components/consultant-language";
 
 const seriesOptions = [
   { id: "fitur", title: "Fitur portal" },
@@ -30,6 +31,7 @@ function videosForVersion(episodes: ConsultantTutorial[], version: TutorialVersi
 }
 
 function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
+  const { t } = useConsultantLocale();
   const [episode, setEpisode] = useState(episodes[0]);
   const [series, setSeries] = useState(episodes[0].series);
   const [version, setVersion] = useState<TutorialVersion>("id");
@@ -78,15 +80,14 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <ExternalLink size={16} aria-hidden="true" /> Buka di Drive
-          </a>
+            <ExternalLink size={16} aria-hidden="true" /> {t("Buka di Drive")}</a>
         </div>
       </section>
       <section className={s.playlist} aria-labelledby="tutorial-playlist">
-        <h2 id="tutorial-playlist">Daftar episode</h2>
+        <h2 id="tutorial-playlist">{t("Daftar episode")}</h2>
         {versions.length > 1 && (
           <label className={`${portal.field} ${s.version}`}>
-            <span>Versi video</span>
+            <span>{t("Versi video")}</span>
             <select
               value={version}
               onChange={(event) => {
@@ -94,11 +95,11 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
                 if (isTutorialVersion(value)) selectVersion(value);
               }}
             >
-              {versions.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
+              {versions.map(({ id, label }) => <option key={id} value={id}>{t(label)}</option>)}
             </select>
           </label>
         )}
-        <div className={s.series} role="group" aria-label="Seri tutorial">
+        <div className={s.series} role="group" aria-label={t("Seri tutorial")}>
           {availableSeries.map((option) => (
             <button
               key={option.id}
@@ -109,15 +110,15 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
                 setQuery("");
               }}
             >
-              {option.title}
+              {t(option.title)}
             </button>
           ))}
         </div>
         <label className={portal.field}>
-          <span className="sr-only">Cari episode</span>
+          <span className="sr-only">{t("Cari episode")}</span>
           <input
             type="search"
-            placeholder="Cari episode…"
+            placeholder={t("Cari episode…")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -148,7 +149,7 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
             ))}
           </ul>
         ) : (
-          <p className={s.empty} role="status">Tidak ada episode yang cocok. Coba judul atau kode lain.</p>
+          <p className={s.empty} role="status">{t("Tidak ada episode yang cocok. Coba judul atau kode lain.")}</p>
         )}
       </section>
     </div>
@@ -156,17 +157,18 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
 }
 
 export function ConsultantTutorialLibrary() {
+  const { t } = useConsultantLocale();
   const { data, error, reload } = useConsultantData<ConsultantTutorial[]>(
     "/konsultan/materials/tutorial/catalog",
   );
   if (error) {
     return (
       <section className={portal.panel}>
-        <p role="alert">{error}</p>
-        <button type="button" className={portal.button} onClick={reload}>Coba lagi</button>
+        <p role="alert">{t(error)}</p>
+        <button type="button" className={portal.button} onClick={reload}>{t("Coba lagi")}</button>
       </section>
     );
   }
-  if (!data) return <p role="status">Memuat daftar video…</p>;
+  if (!data) return <p role="status">{t("Memuat daftar video…")}</p>;
   return <TutorialPlaylist episodes={data} />;
 }

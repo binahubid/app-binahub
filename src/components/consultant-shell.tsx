@@ -17,6 +17,7 @@ import {
 } from "@/lib/consultant-client";
 import { supabase } from "@/lib/supabase";
 import s from "./consultant.module.css";
+import { ConsultantLanguageSelect, useConsultantLocale } from "@/components/consultant-language";
 const Session = createContext<ConsultantSession | null>(null);
 export function useConsultant() {
   const a = useContext(Session);
@@ -30,6 +31,7 @@ const nav = [
   { href: "/konsultan/materials", label: "Materi", icon: BookOpen },
 ];
 export function ConsultantShell({ children }: { children: React.ReactNode }) {
+  const { locale, t } = useConsultantLocale();
   const [session, setSession] = useState<ConsultantSession | null>(null),
     [error, setError] = useState(""),
     [retry, setRetry] = useState(0);
@@ -73,30 +75,29 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
   }, [pathname, retry, router]);
   if (!session)
     return (
-      <main className={s.access}>
+      <main className={s.access} lang={locale}>
         <Image src="/full-logo.png" alt="BinaHub" width={160} height={50} />
-        <h1>Portal Konsultan</h1>
+        <h1>{t("Portal Konsultan")}</h1>
+        <ConsultantLanguageSelect />
         {error ? (
           <>
-            <p role="alert">{error}</p>
-            <button onClick={() => setRetry((v) => v + 1)}>Coba lagi</button>
-            <Link href="/home">Kembali ke ruang kerja</Link>
+            <p role="alert">{t(error)}</p>
+            <button onClick={() => setRetry((v) => v + 1)}>{t("Coba lagi")}</button>
+            <Link href="/home">{t("Kembali ke ruang kerja")}</Link>
             <button
               onClick={() => void supabase.auth.signOut({ scope: "local" })}
-            >
-              Ganti akun
-            </button>
+            >{t("Ganti akun")}</button>
           </>
         ) : (
-          <p role="status">Memverifikasi akses Anda…</p>
+          <p role="status">{t("Memverifikasi akses Anda…")}</p>
         )}
       </main>
     );
   return (
     <Session.Provider value={session}>
-      <div className={s.shell}>
+      <div className={s.shell} lang={locale}>
         <aside className={s.sidebar}>
-          <Link href="/konsultan" aria-label="Beranda konsultan BinaHub">
+          <Link href="/konsultan" aria-label={t("Beranda konsultan BinaHub")}>
             <Image
               src="/full-logo.png"
               alt="BinaHub"
@@ -105,9 +106,9 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
               priority
             />
           </Link>
-          <p className={s.workspaceLabel}>Ruang konsultan</p>
-          <a href="https://ams.binahub.id/dashboard" className={s.textlink}>Kembali ke AMS</a>
-          <nav aria-label="Portal konsultan">
+          <p className={s.workspaceLabel}>{t("Ruang konsultan")}</p>
+          <a href="https://ams.binahub.id/dashboard" className={s.textlink}>{t("Kembali ke AMS")}</a>
+          <nav aria-label={t("Portal konsultan")}>
             {nav.map((n) => (
               <Link
                 key={n.href}
@@ -120,36 +121,34 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
                 }
               >
                 <n.icon size={19} aria-hidden="true" />
-                <span>{n.label}</span>
+                <span>{t(n.label)}</span>
               </Link>
             ))}
           </nav>
           <div className={s.account}>
             <strong>{session.name}</strong>
             <span>
-              {session.isAdmin ? "Admin · Konsultasi" : "Konsultan BinaHub"}
+              {session.isAdmin ? t("Admin · Konsultasi") : t("Konsultan BinaHub")}
             </span>
             {session.isAdmin && (
               <Link href="/admin/consultants">
-                <ArrowLeft size={16} /> Kelola tim
-              </Link>
+                <ArrowLeft size={16} /> {t("Kelola tim")}</Link>
             )}
             <button
               onClick={() => void supabase.auth.signOut({ scope: "local" })}
             >
-              <LogOut size={16} />
-              Keluar
-            </button>
+              <LogOut size={16} />{t("Keluar")}</button>
           </div>
         </aside>
         <div className={s.body}>
           <header className={s.topbar}>
-            <span>Portal Konsultan</span>
+            <span>{t("Portal Konsultan")}</span>
             <div className={s.actions}>
               <span>{session.name}</span>
+              <ConsultantLanguageSelect />
               <button
                 className={s.mobileAccount}
-                aria-label="Keluar dari Portal Konsultan"
+                aria-label={t("Keluar dari Portal Konsultan")}
                 onClick={() => void supabase.auth.signOut({ scope: "local" })}
               >
                 <LogOut size={18} aria-hidden="true" />

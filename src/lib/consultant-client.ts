@@ -6,6 +6,11 @@ export type ConsultantSession = {
   role: string;
 };
 export type ConsultantMember = { id: string; name: string; active: boolean };
+export type ConsultantOrigin = {
+  kind: "recommendation" | "assessment_team" | "assessment_individual" | "inquiry" | "consultation" | "outbound" | "unknown";
+  label: string;
+  status: "recorded" | "unrecorded" | "unavailable";
+};
 export type ConsultantLead = {
   id: string;
   name: string;
@@ -23,6 +28,7 @@ export type ConsultantLead = {
   updatedAt: string;
   nextAction: string | null;
   nextActionDueAt: string | null;
+  origin?: ConsultantOrigin;
 };
 export type Program = {
   code: string;

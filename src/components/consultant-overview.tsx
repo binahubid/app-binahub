@@ -24,6 +24,7 @@ import {
 import { consultantMaterials, type ConsultantMaterial } from "@/lib/consultant-materials";
 import s from "./consultant.module.css";
 import tutorial from "./consultant-tutorials.module.css";
+import { useConsultantLocale } from "@/components/consultant-language";
 
 export function useConsultantData<T>(url: string | null) {
   const [state, setState] = useState<{
@@ -83,17 +84,18 @@ export function OwnerFilter({
   onChange: (v: string) => void;
   members: ConsultantMember[];
 }) {
+  const { t } = useConsultantLocale();
   return (
     <label className={s.field}>
-      Penanggung jawab
-      <select value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="all">Semua</option>
-        <option value="mine">Tanggung jawab saya</option>
-        <option value="unassigned">Belum ditugaskan</option>
+      {t("Penanggung jawab")}
+      <select aria-label={t("Penanggung jawab")} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="all">{t("Semua")}</option>
+        <option value="mine">{t("Tanggung jawab saya")}</option>
+        <option value="unassigned">{t("Belum ditugaskan")}</option>
         {members.map((m) => (
           <option key={m.id} value={m.id}>
             {m.name}
-            {m.active ? "" : " · nonaktif"}
+            {m.active ? "" : t(" · nonaktif")}
           </option>
         ))}
       </select>
@@ -112,35 +114,33 @@ export function Pager({
   pageSize: number;
   onChange: (v: number) => void;
 }) {
+  const { t } = useConsultantLocale();
   if (total <= pageSize && page === 0) return null;
   return (
-    <nav aria-label="Halaman hasil" className={s.pager}>
+    <nav aria-label={t("Halaman hasil")} className={s.pager}>
       <button
         className={s.button}
         disabled={!page}
         onClick={() => onChange(page - 1)}
-      >
-        Sebelumnya
-      </button>
+      >{t("Sebelumnya")}</button>
       <span>
         {total
-          ? `${Math.min(page * pageSize + 1, total)}–${Math.min((page + 1) * pageSize, total)} dari ${total}`
-          : "0 hasil"}
+          ? t("{0}–{1} dari {2}", [Math.min(page * pageSize + 1, total), Math.min((page + 1) * pageSize, total), total])
+          : t("0 hasil")}
       </span>
       <button
         className={s.button}
         disabled={(page + 1) * pageSize >= total}
         onClick={() => onChange(page + 1)}
-      >
-        Berikutnya
-      </button>
+      >{t("Berikutnya")}</button>
     </nav>
   );
 }
 
 export function AgendaRows({ records }: { records: (Task | Booking)[] }) {
+  const { t } = useConsultantLocale();
   if (!records.length)
-    return <p className={s.empty}>Belum ada agenda pada pilihan ini.</p>;
+    return <p className={s.empty}>{t("Belum ada agenda pada pilihan ini.")}</p>;
   return (
     <ul>
       {records.map((r) => {
@@ -152,7 +152,7 @@ export function AgendaRows({ records }: { records: (Task | Booking)[] }) {
               <h3>
                 {lead ? (
                   <Link href={`/konsultan/clients/${lead}`}>
-                    {r.title || "Konsultasi klien"}
+                    {r.title || t("Konsultasi klien")}
                   </Link>
                 ) : (
                   r.title
@@ -175,6 +175,7 @@ export function AgendaRows({ records }: { records: (Task | Booking)[] }) {
 }
 
 export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
+  const { t } = useConsultantLocale();
   const [owner, setOwner] = useState("all"),
     [search, setSearch] = useState(""),
     [query, setQuery] = useState(""),
@@ -187,17 +188,15 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
   return (
     <>
       <ConsultantHeading
-        title={clients ? "Klien & peluang" : "Beranda konsultan"}
+        title={clients ? t("Klien & peluang") : t("Beranda konsultan")}
         description={
           clients
-            ? "Lihat tahap, jadwal, dan penanggung jawab setiap peluang konsultasi."
-            : "Pantau pekerjaan dan agenda konsultasi seluruh tim."
+            ? t("Lihat tahap, jadwal, dan penanggung jawab setiap peluang konsultasi.")
+            : t("Pantau pekerjaan dan agenda konsultasi seluruh tim.")
         }
       >
         <button type="button" className={s.button} onClick={reload}>
-          <RefreshCw size={16} aria-hidden="true" />
-          Perbarui
-        </button>
+          <RefreshCw size={16} aria-hidden="true" />{t("Perbarui")}</button>
       </ConsultantHeading>
       <form
         className={s.filters}
@@ -208,14 +207,12 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
         }}
       >
         {clients && (
-          <label className={`${s.field} ${s.search}`}>
-            Cari klien
-            <input
+          <label className={`${s.field} ${s.search}`}>{t("Cari klien")}<input
               type="search"
               maxLength={150}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nama, perusahaan, atau email"
+              placeholder={t("Nama, perusahaan, atau email")}
             />
           </label>
         )}
@@ -229,32 +226,30 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
         />
         {clients && (
           <>
-            <label className={s.field}>
-              Tahap
-              <select
+            <label className={s.field}>{t("Tahap")}<select
                 value={view}
                 onChange={(e) => {
                   setView(e.target.value);
                   setPage(0);
                 }}
               >
-                <option value="all">Semua tahap</option>
-                <option value="active">Peluang terbuka</option>
-                <option value="won">Disepakati</option>
-                <option value="lost">Tidak dilanjutkan</option>
-                <option value="handoff">Serah terima</option>
+                <option value="all">{t("Semua tahap")}</option>
+                <option value="active">{t("Peluang terbuka")}</option>
+                <option value="won">{t("Disepakati")}</option>
+                <option value="lost">{t("Tidak dilanjutkan")}</option>
+                <option value="handoff">{t("Serah terima")}</option>
               </select>
             </label>
-            <button className={s.primary}>Cari</button>
+            <button className={s.primary}>{t("Cari")}</button>
           </>
         )}
       </form>
       {error && (
         <p role="alert" className={s.error}>
-          {error}
+          {t(error)}
         </p>
       )}
-      {!error && !data && <p role="status">Memuat pekerjaan tim…</p>}
+      {!error && !data && <p role="status">{t("Memuat pekerjaan tim…")}</p>}
       {data && (
         <>
           {!clients && (
@@ -269,22 +264,22 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
               ).map(([label, count]) => (
                 <div className={s.stat} key={label}>
                   <strong>{count}</strong>
-                  <span>{label}</span>
+                  <span>{t(label)}</span>
                 </div>
               ))}
             </div>
           )}
           <div className={clients ? undefined : s.grid}>
             <section className={s.panel}>
-              <h2>{clients ? "Daftar peluang" : "Peluang tim"}</h2>
+              <h2>{clients ? t("Daftar peluang") : t("Peluang tim")}</h2>
               {data.records.length ? (
                 <table className={s.table}>
                   <thead>
                     <tr>
-                      <th>Klien</th>
-                      <th>Tahap</th>
-                      <th>Penanggung jawab</th>
-                      <th>Akses</th>
+                      <th>{t("Klien")}</th>
+                      <th>{t("Tahap")}</th>
+                      <th>{t("Penanggung jawab")}</th>
+                      <th>{t("Akses")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -304,20 +299,18 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
                             </small>
                           </td>
                           <td>
-                            <span className={s.mobileLabel}>Tahap</span>
-                            {stageLabels[r.stage] || r.stage}
+                            <span className={s.mobileLabel}>{t("Tahap")}</span>
+                            {t(stageLabels[r.stage] || r.stage)}
                           </td>
                           <td>
-                            <span className={s.mobileLabel}>
-                              Penanggung jawab
-                            </span>
+                            <span className={s.mobileLabel}>{t("Penanggung jawab")}</span>
                             {r.assigneeName}
                           </td>
                           <td>
                             <span
                               className={`${s.badge} ${r.canEdit ? "" : s.readonly}`}
                             >
-                              {r.canEdit ? "Dapat dikelola" : "Hanya baca"}
+                              {r.canEdit ? t("Dapat dikelola") : t("Hanya baca")}
                             </span>
                           </td>
                         </tr>
@@ -326,7 +319,7 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
                   </tbody>
                 </table>
               ) : (
-                <p className={s.empty}>Belum ada peluang yang cocok.</p>
+                <p className={s.empty}>{t("Belum ada peluang yang cocok.")}</p>
               )}
               {clients ? (
                 <Pager
@@ -336,8 +329,7 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
                   onChange={setPage}
                 />
               ) : (
-                <Link className={s.textlink} href="/konsultan/clients">
-                  Lihat semua peluang{" "}
+                <Link className={s.textlink} href="/konsultan/clients">{t("Lihat semua peluang")}{" "}
                   <ArrowRight size={14} className="inline" />
                 </Link>
               )}
@@ -345,14 +337,12 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
             {!clients && (
               <div>
                 <section className={s.panel}>
-                  <h2>Tugas terdekat</h2>
+                  <h2>{t("Tugas terdekat")}</h2>
                   <AgendaRows records={data.tasks.slice(0, 4)} />
-                  <Link className={s.textlink} href="/konsultan/tasks">
-                    Buka tugas & jadwal
-                  </Link>
+                  <Link className={s.textlink} href="/konsultan/tasks">{t("Buka tugas & jadwal")}</Link>
                 </section>
                 <section className={s.panel}>
-                  <h2>Jadwal konsultasi</h2>
+                  <h2>{t("Jadwal konsultasi")}</h2>
                   <AgendaRows records={data.bookings.slice(0, 4)} />
                 </section>
               </div>
@@ -365,6 +355,7 @@ export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
 }
 
 export function ConsultantAgenda() {
+  const { t } = useConsultantLocale();
   const [owner, setOwner] = useState("all"),
     [kind, setKind] = useState("tasks"),
     [page, setPage] = useState(0);
@@ -380,13 +371,11 @@ export function ConsultantAgenda() {
   return (
     <>
       <ConsultantHeading
-        title="Tugas & jadwal"
-        description="Lihat agenda seluruh tim. Buka peluang untuk mengelola tugas yang menjadi tanggung jawab Anda."
+        title={t("Tugas & jadwal")}
+        description={t("Lihat agenda seluruh tim. Buka peluang untuk mengelola tugas yang menjadi tanggung jawab Anda.")}
       >
         <button className={s.button} onClick={reload}>
-          <RefreshCw size={16} aria-hidden="true" />
-          Perbarui
-        </button>
+          <RefreshCw size={16} aria-hidden="true" />{t("Perbarui")}</button>
       </ConsultantHeading>
       <div className={s.filters}>
         <OwnerFilter
@@ -398,7 +387,7 @@ export function ConsultantAgenda() {
           }}
         />
         <label className={s.field}>
-          Tampilkan
+          {t("Tampilkan")}
           <select
             value={kind}
             onChange={(e) => {
@@ -406,19 +395,19 @@ export function ConsultantAgenda() {
               setPage(0);
             }}
           >
-            <option value="tasks">Tugas terbuka</option>
-            <option value="bookings">Jadwal konsultasi</option>
+            <option value="tasks">{t("Tugas terbuka")}</option>
+            <option value="bookings">{t("Jadwal konsultasi")}</option>
           </select>
         </label>
       </div>
       <section className={s.panel}>
         <h2>
           <CalendarDays size={18} className="mr-2 inline" aria-hidden="true" />
-          {kind === "tasks" ? "Tugas terbuka" : "Jadwal konsultasi"}
+          {kind === "tasks" ? t("Tugas terbuka") : t("Jadwal konsultasi")}
         </h2>
         {error ? (
           <p role="alert" className={s.error}>
-            {error}
+            {t(error)}
           </p>
         ) : data ? (
           <>
@@ -431,7 +420,7 @@ export function ConsultantAgenda() {
             />
           </>
         ) : (
-          <p role="status">Memuat agenda…</p>
+          <p role="status">{t("Memuat agenda…")}</p>
         )}
       </section>
     </>
@@ -439,6 +428,7 @@ export function ConsultantAgenda() {
 }
 
 export function ConsultantMaterials() {
+  const { t } = useConsultantLocale();
   const [error, setError] = useState(""),
     [busy, setBusy] = useState("");
   async function download(material: ConsultantMaterial) {
@@ -458,27 +448,26 @@ export function ConsultantMaterials() {
   return (
     <>
       <ConsultantHeading
-        title="Materi konsultan"
-        description="Video panduan dan dokumen untuk mempersiapkan konsultasi."
+        title={t("Materi konsultan")}
+        description={t("Video panduan dan dokumen untuk mempersiapkan konsultasi.")}
       />
       <section className={`${s.panel} ${tutorial.entry}`} aria-labelledby="tutorial-entry-title">
         <div>
-          <h2 id="tutorial-entry-title">Video tutorial</h2>
-          <p className={s.muted}>Kenali fitur portal dan ikuti langkah kerja konsultan.</p>
+          <h2 id="tutorial-entry-title">{t("Video tutorial")}</h2>
+          <p className={s.muted}>{t("Kenali fitur portal dan ikuti langkah kerja konsultan.")}</p>
         </div>
         <Link className={s.primary} href="/konsultan/materials/tutorial">
-          <Play size={16} aria-hidden="true" /> Lihat video
-        </Link>
+          <Play size={16} aria-hidden="true" /> {t("Lihat video")}</Link>
       </section>
       {error && (
         <p role="alert" className={s.error}>
-          {error}
+          {t(error)}
         </p>
       )}
-      <section className={s.panel} aria-labelledby="materials-documents-title">
-        <h2 id="materials-documents-title">Dokumen</h2>
+      <section className={`${s.panel} ${s.materialDocuments}`} aria-labelledby="materials-documents-title">
+        <h2 id="materials-documents-title">{t("Dokumen")}</h2>
         {consultantMaterials.map((m) => (
-          <div className={s.row} key={m.slug}>
+          <div className={`${s.row} ${s.materialRow}`} key={m.slug}>
             <div>
               <h3>
                 <FileText
@@ -488,22 +477,21 @@ export function ConsultantMaterials() {
                 />
                 {m.title}
               </h3>
-              <p className={s.muted}>{m.description}</p>
+              <p className={s.muted}>{t(m.description)}</p>
             </div>
             <div className={s.actions}>
               <Link className={s.primary} href={`/konsultan/materials/${m.slug}`}
-                aria-label={`Baca ${m.title} di web`}>
-                <BookOpen size={16} aria-hidden="true" /> Baca di web
-              </Link>
+                aria-label={t("Baca {0} di web", [m.title])}>
+                <BookOpen size={16} aria-hidden="true" /> {t("Baca di web")}</Link>
               <button
                 type="button"
                 className={s.button}
-                aria-label={`Unduh PDF ${m.title}`}
+                aria-label={t("Unduh PDF {0}", [m.title])}
                 disabled={!!busy}
                 onClick={() => void download(m)}
               >
                 <Download size={16} aria-hidden="true" />
-                {busy === m.slug ? "Memuat…" : "Unduh PDF"}
+                {busy === m.slug ? t("Memuat…") : t("Unduh PDF")}
               </button>
             </div>
           </div>

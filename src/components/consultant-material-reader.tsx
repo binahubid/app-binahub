@@ -8,10 +8,12 @@ import { downloadConsultantFile, fetchConsultantFile } from "@/lib/consultant-cl
 import type { ConsultantMaterial } from "@/lib/consultant-materials";
 import { ConsultantHeading } from "./consultant-overview";
 import s from "./consultant.module.css";
+import { useConsultantLocale } from "@/components/consultant-language";
 
 type LoadedPdf = { pdf: PDFDocumentProxy; lib: typeof import("pdfjs-dist") };
 
 export function ConsultantMaterialReader({ material }: { material: ConsultantMaterial }) {
+  const { t } = useConsultantLocale();
   const path = `/api/konsultan/materials/${material.slug}`;
   const [source, setSource] = useState<{ path: string; document?: LoadedPdf; error?: string }>();
   const [retry, setRetry] = useState(0);
@@ -54,24 +56,21 @@ export function ConsultantMaterialReader({ material }: { material: ConsultantMat
   return (
     <>
       <Link href="/konsultan/materials" className={s.readerBack}>
-        <ArrowLeft size={16} aria-hidden="true" /> Semua materi
-      </Link>
-      <ConsultantHeading title={material.title} description={material.description}>
+        <ArrowLeft size={16} aria-hidden="true" /> {t("Semua materi")}</Link>
+      <ConsultantHeading title={material.title} description={t(material.description)}>
         <button className={s.button} type="button" disabled={downloading} onClick={() => void download()}>
-          <Download size={16} aria-hidden="true" /> {downloading ? "Memuat…" : "Unduh PDF"}
+          <Download size={16} aria-hidden="true" /> {downloading ? t("Memuat…") : t("Unduh PDF")}
         </button>
       </ConsultantHeading>
-      {downloadError && <p role="alert" className={s.error}>{downloadError}</p>}
+      {downloadError && <p role="alert" className={s.error}>{t(downloadError)}</p>}
       {state?.document ? (
         <PdfPages key={path} document={state.document} title={material.title} />
       ) : (
         <section className={s.panel}>
           {state?.error ? <>
-            <p role="alert" className={s.error}>{state.error}</p>
-            <button className={s.button} type="button" onClick={() => { setSource(undefined); setRetry((n) => n + 1); }}>
-              Coba lagi
-            </button>
-          </> : <p role="status" className={s.muted}>Memuat dokumen…</p>}
+            <p role="alert" className={s.error}>{t(state.error)}</p>
+            <button className={s.button} type="button" onClick={() => { setSource(undefined); setRetry((n) => n + 1); }}>{t("Coba lagi")}</button>
+          </> : <p role="status" className={s.muted}>{t("Memuat dokumen…")}</p>}
         </section>
       )}
     </>
@@ -79,6 +78,7 @@ export function ConsultantMaterialReader({ material }: { material: ConsultantMat
 }
 
 function PdfPages({ document: { pdf, lib }, title }: { document: LoadedPdf; title: string }) {
+  const { t } = useConsultantLocale();
   const [number, setNumber] = useState(1);
   const [zoom, setZoom] = useState(false);
   const [width, setWidth] = useState(0);
@@ -144,27 +144,27 @@ function PdfPages({ document: { pdf, lib }, title }: { document: LoadedPdf; titl
   }
   const ready = rendered === renderKey && failed !== renderKey;
   return (
-    <section className={s.reader} aria-label={`Pembaca ${title}`}>
+    <section className={s.reader} aria-label={t("Pembaca {0}", [title])}>
       <div className={s.readerBar}>
-        <div className={s.actions} role="group" aria-label="Navigasi halaman dokumen">
-          <button className={s.button} type="button" aria-label="Halaman sebelumnya" disabled={number <= 1}
+        <div className={s.actions} role="group" aria-label={t("Navigasi halaman dokumen")}>
+          <button className={s.button} type="button" aria-label={t("Halaman sebelumnya")} disabled={number <= 1}
             onClick={() => goTo(number - 1)}>
             <ChevronLeft size={17} aria-hidden="true" />
           </button>
-          <output className={s.readerPage}>Halaman {number} dari {pdf.numPages}</output>
-          <button className={s.button} type="button" aria-label="Halaman berikutnya" disabled={number >= pdf.numPages}
+          <output className={s.readerPage}>{t("Halaman")} {number} {t("dari")} {pdf.numPages}</output>
+          <button className={s.button} type="button" aria-label={t("Halaman berikutnya")} disabled={number >= pdf.numPages}
             onClick={() => goTo(number + 1)}>
             <ChevronRight size={17} aria-hidden="true" />
           </button>
         </div>
         <button className={s.button} type="button" onClick={() => setZoom((value) => !value)}>
           {zoom ? <ZoomOut size={16} aria-hidden="true" /> : <ZoomIn size={16} aria-hidden="true" />}
-          {zoom ? "Pas layar" : "Perbesar"}
+          {t(zoom ? "Pas layar" : "Perbesar")}
         </button>
       </div>
-      <div className={s.readerViewport} ref={scroll} tabIndex={0} role="region" aria-label={`Isi halaman ${number}`}>
+      <div className={s.readerViewport} ref={scroll} tabIndex={0} role="region" aria-label={t("Isi halaman {0}", [number])}>
         {!ready && <p className={s.readerNotice} role={failed === renderKey ? "alert" : "status"}>
-          {failed === renderKey ? "Halaman ini belum dapat ditampilkan. Coba buka halaman lain atau unduh PDF." : "Menyiapkan halaman…"}
+          {failed === renderKey ? t("Halaman ini belum dapat ditampilkan. Coba buka halaman lain atau unduh PDF.") : t("Menyiapkan halaman…")}
         </p>}
         <div className={s.readerSheet} ref={sheet} style={{ visibility: ready ? "visible" : "hidden" }}>
           <canvas ref={canvas} aria-hidden="true" />

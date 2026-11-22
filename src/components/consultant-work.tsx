@@ -24,7 +24,9 @@ import {
   useConsultantData,
 } from "./consultant-overview";
 import { useConsultant } from "./consultant-shell";
+import { ConsultantContext } from "./consultant-context";
 import s from "./consultant.module.css";
+import { useConsultantLocale } from "@/components/consultant-language";
 
 const sections = [
   "Ringkasan",
@@ -52,6 +54,7 @@ const value = (f: FormData, key: string) => String(f.get(key) || "");
 const iso = (date: string) => new Date(date).toISOString();
 
 export function ConsultantWork({ id }: { id: string }) {
+  const { locale, t } = useConsultantLocale();
   const [section, setSection] =
     useState<(typeof sections)[number]>("Ringkasan");
   const [history, setHistory] = useState(0),
@@ -179,7 +182,12 @@ export function ConsultantWork({ id }: { id: string }) {
     setConfirm({
       title: when ? "Jadwalkan email ini?" : "Masukkan email ke antrean?",
       label: when ? "Jadwalkan email" : "Antrekan email",
-      description: `Tujuan ${data?.record.email}. Pengirim ${data?.record.assigneeName}. ${proposal ? `Lampiran proposal revisi ${proposal.revision}. ` : ""}${when ? `Jadwal ${consultantDate(request.at)}.` : "Worker akan memprosesnya pada giliran berikutnya."}`,
+      description: t("Tujuan {0}. Pengirim {1}. {2}{3}", [
+        data?.record.email,
+        data?.record.assigneeName,
+        proposal ? t("Lampiran proposal revisi {0}.", [proposal.revision]) + " " : "",
+        when ? t("Jadwal {0}.", [consultantDate(request.at)]) : t("Worker akan memprosesnya pada giliran berikutnya."),
+      ]),
       action: async () => {
         setConfirm(null);
         await run(async () => {
@@ -203,18 +211,14 @@ export function ConsultantWork({ id }: { id: string }) {
     return (
       <>
         <Link className={s.back} href="/konsultan/clients">
-          <ArrowLeft size={16} />
-          Klien & peluang
-        </Link>
+          <ArrowLeft size={16} />{t("Klien & peluang")}</Link>
         {work.error ? (
           <div className={s.error} role="alert">
-            {work.error}{" "}
-            <button className={s.button} onClick={work.reload}>
-              Coba lagi
-            </button>
+            {t(work.error)}{" "}
+            <button className={s.button} onClick={work.reload}>{t("Coba lagi")}</button>
           </div>
         ) : (
-          <p role="status">Memuat peluang…</p>
+          <p role="status">{t("Memuat peluang…")}</p>
         )}
       </>
     );
@@ -235,34 +239,31 @@ export function ConsultantWork({ id }: { id: string }) {
   return (
     <>
       <Link className={s.back} href="/konsultan/clients">
-        <ArrowLeft size={16} aria-hidden="true" />
-        Klien & peluang
-      </Link>
+        <ArrowLeft size={16} aria-hidden="true" />{t("Klien & peluang")}</Link>
       <ConsultantHeading
         title={r.company || r.name}
-        description={[r.name, stageLabels[r.stage], r.assigneeName]
+        description={[r.name, r.assigneeName]
           .filter(Boolean)
           .join(" · ")}
       >
         <span className={`${s.badge} ${canOperate ? "" : s.readonly}`}>
-          {canOperate ? "Dapat dikelola" : "Hanya baca"}
+          {canOperate ? t("Dapat dikelola") : t("Hanya baca")}
         </span>
         <button
           className={s.button}
           disabled={dirty || busy}
           onClick={work.reload}
-        >
-          Perbarui
-        </button>
+        >{t("Perbarui")}</button>
       </ConsultantHeading>
+      <ConsultantContext record={r} />
       {!canOperate && (
         <p className={s.notice}>
           {r.assigneeId
-            ? `Pekerjaan ini dikelola oleh ${r.assigneeName}. Anda dapat membaca kebutuhan, proposal, tugas, dan riwayatnya.`
-            : "Admin dapat menugaskan konsultan untuk mulai mengelola peluang ini."}
+            ? t("Pekerjaan ini dikelola oleh {0}. Anda dapat membaca kebutuhan, proposal, tugas, dan riwayatnya.", [r.assigneeName])
+            : t("Admin dapat menugaskan konsultan untuk mulai mengelola peluang ini.")}
         </p>
       )}
-      <nav aria-label="Detail peluang" className={s.tabs}>
+      <nav aria-label={t("Detail peluang")} className={s.tabs}>
         {sections.map((tab) => (
           <button
             key={tab}
@@ -271,28 +272,28 @@ export function ConsultantWork({ id }: { id: string }) {
             disabled={section !== tab && (dirty || busy)}
             onClick={() => move(tab)}
           >
-            {tab}
+            {t(tab)}
           </button>
         ))}
       </nav>
       {error && (
         <p className={s.error} role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
       {message && (
         <p className={s.success} role="status">
-          {message}
+          {t(message)}
         </p>
       )}
       {section === "Ringkasan" && (
         <>
           <div className={s.grid}>
             <section className={s.panel}>
-              <h2>Kontak dan status</h2>
+              <h2>{t("Kontak dan status")}</h2>
               <dl className="mt-4 grid gap-3 text-sm">
                 <div>
-                  <dt className={s.muted}>Kontak</dt>
+                  <dt className={s.muted}>{t("Kontak")}</dt>
                   <dd>{r.name}</dd>
                 </div>
                 <div>
@@ -300,12 +301,12 @@ export function ConsultantWork({ id }: { id: string }) {
                   <dd className="break-all">{r.email || "—"}</dd>
                 </div>
                 <div>
-                  <dt className={s.muted}>Telepon</dt>
+                  <dt className={s.muted}>{t("Telepon")}</dt>
                   <dd>{r.phone || "—"}</dd>
                 </div>
                 <div>
-                  <dt className={s.muted}>Langkah berikutnya</dt>
-                  <dd>{r.nextAction || "Belum dicatat"}</dd>
+                  <dt className={s.muted}>{t("Langkah berikutnya")}</dt>
+                  <dd>{r.nextAction || t("Belum dicatat")}</dd>
                 </div>
               </dl>
               {canOperate && (
@@ -323,32 +324,26 @@ export function ConsultantWork({ id }: { id: string }) {
                     )
                   }
                 >
-                  <label className={s.field}>
-                    Ubah tahap
-                    <select name="stage" defaultValue={r.stage} key={r.stage}>
+                  <label className={s.field}>{t("Ubah tahap")}<select name="stage" defaultValue={r.stage} key={r.stage}>
                       {Object.entries(stageLabels).map(([v, label]) => (
                         <option key={v} value={v}>
-                          {label}
+                          {t(label)}
                         </option>
                       ))}
                     </select>
                   </label>
-                  <label className={s.field}>
-                    Catatan tahap
-                    <input
+                  <label className={s.field}>{t("Catatan tahap")}<input
                       name="note"
                       maxLength={4000}
-                      placeholder="Isi alasan jika peluang tidak dilanjutkan"
+                      placeholder={t("Isi alasan jika peluang tidak dilanjutkan")}
                     />
                   </label>
-                  <button className={s.button} disabled={busy}>
-                    Simpan tahap
-                  </button>
+                  <button className={s.button} disabled={busy}>{t("Simpan tahap")}</button>
                 </form>
               )}
             </section>
             <section className={s.panel}>
-              <h2>Jadwal konsultasi</h2>
+              <h2>{t("Jadwal konsultasi")}</h2>
               <AgendaRows records={data.bookings} />
               {data.bookings.map((b) => {
                 const url = b.meetingUrl;
@@ -360,8 +355,7 @@ export function ConsultantWork({ id }: { id: string }) {
                       href={url}
                       rel="noreferrer"
                       target="_blank"
-                    >
-                      Buka meeting · {consultantDate(b.startTime)}
+                    >{t("Buka meeting ·")} {consultantDate(b.startTime)}
                     </a>
                   </p>
                 ) : null;
@@ -377,39 +371,32 @@ export function ConsultantWork({ id }: { id: string }) {
                     )
                   }
                 >
-                  <label className={s.field}>
-                    Butuh konsultan pengganti?
-                    <input
+                  <label className={s.field}>{t("Butuh konsultan pengganti?")}<input
                       name="note"
                       required
                       maxLength={4000}
-                      placeholder="Alasan dan jadwal terkait"
+                      placeholder={t("Alasan dan jadwal terkait")}
                     />
                   </label>
-                  <button className={s.button} disabled={busy}>
-                    Minta pengganti
-                  </button>
+                  <button className={s.button} disabled={busy}>{t("Minta pengganti")}</button>
                 </form>
               )}
             </section>
           </div>
           {session.isAdmin && (
             <section className={s.panel}>
-              <h2>Penugasan konsultan</h2>
-              <p className={s.muted} id="consultant-assignment-help">
-                Pilih anggota tim konsultan yang sudah menyetujui perjanjian di AMS.
-              </p>
+              <h2>{t("Penugasan konsultan")}</h2>
+              <p className={s.muted} id="consultant-assignment-help">{t("Pilih anggota tim konsultan yang sudah menyetujui perjanjian di AMS.")}</p>
               {assignees.error ? (
                 <div className={s.actions}>
-                  <p role="alert" className={s.error}>{assignees.error}</p>
-                  <button type="button" className={s.button} onClick={assignees.reload}>Coba lagi</button>
+                  <p role="alert" className={s.error}>{t(assignees.error)}</p>
+                  <button type="button" className={s.button} onClick={assignees.reload}>{t("Coba lagi")}</button>
                 </div>
               ) : !assignees.data ? (
-                <p role="status" className={s.muted}>Memeriksa daftar akun AMS…</p>
+                <p role="status" className={s.muted}>{t("Memeriksa daftar akun AMS…")}</p>
               ) : !eligibleMembers.length ? (
-                <p role="status" className={s.muted}>
-                  Belum ada akun yang siap ditugaskan.{" "}
-                  <a className={s.textlink} href="https://ams.binahub.id/admin/consultant-team" target="_blank" rel="noopener noreferrer">Undang anggota di AMS</a>
+                <p role="status" className={s.muted}>{t("Belum ada akun yang siap ditugaskan.")}{" "}
+                  <a className={s.textlink} href="https://ams.binahub.id/admin/consultant-team" target="_blank" rel="noopener noreferrer">{t("Undang anggota di AMS")}</a>
                 </p>
               ) : null}
               <form
@@ -430,13 +417,9 @@ export function ConsultantWork({ id }: { id: string }) {
                 }
               >
                 <div className={s.two}>
-                  <label className={s.field}>
-                    Penanggung jawab
-                    <select name="userId" required defaultValue="" disabled={!eligibleMembers.length || busy}
+                  <label className={s.field}>{t("Penanggung jawab")}<select name="userId" required defaultValue="" disabled={!eligibleMembers.length || busy}
                       aria-describedby="consultant-assignment-help">
-                      <option value="" disabled>
-                        Pilih konsultan aktif
-                      </option>
+                      <option value="" disabled>{t("Pilih konsultan aktif")}</option>
                       {eligibleMembers.map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.name}
@@ -444,19 +427,15 @@ export function ConsultantWork({ id }: { id: string }) {
                         ))}
                     </select>
                   </label>
-                  <label className={s.field}>
-                    Catatan penugasan
-                    <input name="note" maxLength={4000} />
+                  <label className={s.field}>{t("Catatan penugasan")}<input name="note" maxLength={4000} />
                   </label>
                 </div>
-                <button className={s.primary} disabled={busy || !eligibleMembers.length}>
-                  Tetapkan konsultan
-                </button>
+                <button className={s.primary} disabled={busy || !eligibleMembers.length}>{t("Tetapkan konsultan")}</button>
               </form>
             </section>
           )}
           <section className={s.panel}>
-            <h2>Serah terima ke admin</h2>
+            <h2>{t("Serah terima ke admin")}</h2>
             {handoff ? (
               <>
                 <p className={s.muted}>{consultantDate(handoff.requestedAt)}</p>
@@ -465,15 +444,11 @@ export function ConsultantWork({ id }: { id: string }) {
                   <Link
                     className={s.textlink}
                     href={`/admin/clients?lead=${id}`}
-                  >
-                    Lanjutkan ke Klien & Pelaksanaan
-                  </Link>
+                  >{t("Lanjutkan ke Klien & Pelaksanaan")}</Link>
                 )}
               </>
             ) : (
-              <p className={s.muted}>
-                Tersedia setelah proposal dikirim dan klien menyepakati program.
-              </p>
+              <p className={s.muted}>{t("Tersedia setelah proposal dikirim dan klien menyepakati program.")}</p>
             )}
             {canOperate &&
               readyProposals.some((p) => p.status === "sent") &&
@@ -498,13 +473,9 @@ export function ConsultantWork({ id }: { id: string }) {
                     });
                   }}
                 >
-                  <label className={s.field}>
-                    Kesepakatan klien dan arahan pelaksanaan
-                    <textarea name="note" required maxLength={4000} rows={3} />
+                  <label className={s.field}>{t("Kesepakatan klien dan arahan pelaksanaan")}<textarea name="note" required maxLength={4000} rows={3} />
                   </label>
-                  <button className={s.primary} disabled={busy}>
-                    Tinjau serah terima
-                  </button>
+                  <button className={s.primary} disabled={busy}>{t("Tinjau serah terima")}</button>
                 </form>
               )}
           </section>
@@ -512,7 +483,7 @@ export function ConsultantWork({ id }: { id: string }) {
       )}
       {section === "Kebutuhan & meeting" && (
         <section className={s.panel}>
-          <h2>Kebutuhan & meeting</h2>
+          <h2>{t("Kebutuhan & meeting")}</h2>
           {canOperate &&
             data.sources.length > 0 &&
             !data.workspace?.source_id && (
@@ -529,12 +500,8 @@ export function ConsultantWork({ id }: { id: string }) {
                   )
                 }
               >
-                <label className={s.field}>
-                  Gunakan jawaban rekomendasi program
-                  <select required name="sourceId" defaultValue="">
-                    <option value="" disabled>
-                      Pilih pengisian klien
-                    </option>
+                <label className={s.field}>{t("Gunakan jawaban rekomendasi program")}<select required name="sourceId" defaultValue="">
+                    <option value="" disabled>{t("Pilih pengisian klien")}</option>
                     {data.sources.map((x) => (
                       <option key={x.id} value={x.id}>
                         {x.company} · {consultantDate(x.submittedAt)}
@@ -542,9 +509,7 @@ export function ConsultantWork({ id }: { id: string }) {
                     ))}
                   </select>
                 </label>
-                <button className={s.button} disabled={busy || dirty}>
-                  Hubungkan jawaban
-                </button>
+                <button className={s.button} disabled={busy || dirty}>{t("Hubungkan jawaban")}</button>
               </form>
             )}
           <SpinMeetingChecklist
@@ -552,6 +517,8 @@ export function ConsultantWork({ id }: { id: string }) {
             id={id}
             endpoint={`${endpoint}/meeting`}
             readOnly={!canOperate}
+            locale={locale}
+            translate={t}
             onSaved={onSaved}
             onDirty={setDirty}
           />
@@ -560,18 +527,18 @@ export function ConsultantWork({ id }: { id: string }) {
       {section === "Proposal" && (
         <>
           <section className={s.panel}>
-            <h2>Riwayat proposal</h2>
+            <h2>{t("Riwayat proposal")}</h2>
             {data.proposals.length ? (
               data.proposals.map((p) => (
                 <details className={s.details} key={p.id}>
                   <summary>
-                    Revisi {p.revision} ·{" "}
-                    {p.status === "sent" ? "Terkirim" : "Draf"} ·{" "}
+                    {t("Revisi {0}", [p.revision])} ·{" "}
+                    {t(p.status === "sent" ? "Terkirim" : "Draf")} ·{" "}
                     {consultantMoney(p.snapshot.total)}
                   </summary>
                   <p>
-                    {consultantDate(p.created_at)} · {p.snapshot.days} hari ·{" "}
-                    {p.snapshot.participants} peserta · {p.snapshot.venue}
+                    {consultantDate(p.created_at)} · {p.snapshot.days} {t("hari ·")}{" "}
+                    {p.snapshot.participants} {t("peserta ·")} {p.snapshot.venue}
                     {p.snapshot.location && ` · ${p.snapshot.location}`}
                   </p>
                   <ul className={s.list}>
@@ -587,26 +554,19 @@ export function ConsultantWork({ id }: { id: string }) {
                     disabled={busy}
                     onClick={() => download(p)}
                   >
-                    <Download size={16} aria-hidden="true" />
-                    Unduh PDF
-                  </button>
+                    <Download size={16} aria-hidden="true" />{t("Unduh PDF")}</button>
                 </details>
               ))
             ) : (
-              <p className={s.empty}>Belum ada proposal untuk peluang ini.</p>
+              <p className={s.empty}>{t("Belum ada proposal untuk peluang ini.")}</p>
             )}
           </section>
           {canOperate && (
             <section className={s.panel}>
-              <h2>Susun proposal</h2>
-              <p className={s.muted}>
-                Pilih program, durasi, jumlah peserta, dan lokasi. Ringkasan
-                kebutuhan diambil dari checklist konsultasi.
-              </p>
+              <h2>{t("Susun proposal")}</h2>
+              <p className={s.muted}>{t("Pilih program, durasi, jumlah peserta, dan lokasi. Ringkasan kebutuhan diambil dari checklist konsultasi.")}</p>
               {(savedChecklist?.status || r.checklistStatus) !== "completed" ? (
-                <p className={s.notice}>
-                  Selesaikan checklist kebutuhan terlebih dahulu.
-                </p>
+                <p className={s.notice}>{t("Selesaikan checklist kebutuhan terlebih dahulu.")}</p>
               ) : (
                 <form
                   className={s.form}
@@ -628,9 +588,7 @@ export function ConsultantWork({ id }: { id: string }) {
                   }
                 >
                   <fieldset>
-                    <legend className="mb-2 font-semibold">
-                      Program yang dipilih
-                    </legend>
+                    <legend className="mb-2 font-semibold">{t("Program yang dipilih")}</legend>
                     <div className={s.catalog}>
                       {programs.map((p) => (
                         <label key={p.code}>
@@ -645,8 +603,8 @@ export function ConsultantWork({ id }: { id: string }) {
                             <span className={s.muted}>
                               {p.code} ·{" "}
                               {p.dailyRateIdr
-                                ? `${consultantMoney(p.dailyRateIdr)} / hari`
-                                : "Tarif dikonfirmasi"}
+                                ? t("{0} / hari", [consultantMoney(p.dailyRateIdr)])
+                                : t("Tarif dikonfirmasi")}
                             </span>
                           </span>
                         </label>
@@ -654,9 +612,7 @@ export function ConsultantWork({ id }: { id: string }) {
                     </div>
                   </fieldset>
                   <div className={s.two}>
-                    <label className={s.field}>
-                      Durasi (hari)
-                      <input
+                    <label className={s.field}>{t("Durasi (hari)")}<input
                         name="days"
                         type="number"
                         min={1}
@@ -665,9 +621,7 @@ export function ConsultantWork({ id }: { id: string }) {
                         required
                       />
                     </label>
-                    <label className={s.field}>
-                      Jumlah peserta
-                      <input
+                    <label className={s.field}>{t("Jumlah peserta")}<input
                         name="participants"
                         type="number"
                         min={1}
@@ -685,35 +639,27 @@ export function ConsultantWork({ id }: { id: string }) {
                         defaultValue={data.proposalDefaults?.venue || ""}
                         required
                       >
-                        <option value="" disabled>
-                          Pilih format
-                        </option>
+                        <option value="" disabled>{t("Pilih format")}</option>
                         <option value="indoor">Indoor</option>
                         <option value="outdoor">Outdoor</option>
                         <option value="hybrid">Indoor & outdoor</option>
                         <option value="online">Online</option>
                       </select>
                     </label>
-                    <label className={s.field}>
-                      Lokasi
-                      <input
+                    <label className={s.field}>{t("Lokasi")}<input
                         name="location"
                         maxLength={300}
                         defaultValue={data.proposalDefaults?.location}
-                        placeholder="Kota atau tempat pelaksanaan"
+                        placeholder={t("Kota atau tempat pelaksanaan")}
                       />
                     </label>
                   </div>
-                  <label className={s.field}>
-                    Ruang lingkup untuk klien
-                    <textarea name="scope" rows={3} maxLength={4000} />
+                  <label className={s.field}>{t("Ruang lingkup untuk klien")}<textarea name="scope" rows={3} maxLength={4000} />
                   </label>
                   <button
                     className={s.primary}
                     disabled={busy || !programs.length}
-                  >
-                    Buat draf proposal
-                  </button>
+                  >{t("Buat draf proposal")}</button>
                 </form>
               )}
             </section>
@@ -723,19 +669,19 @@ export function ConsultantWork({ id }: { id: string }) {
       {section === "Tindak lanjut" && (
         <>
           <section className={s.panel}>
-            <h2>Tugas</h2>
+            <h2>{t("Tugas")}</h2>
             {data.tasks.length ? (
               <ul>
-                {data.tasks.map((t) => (
-                  <li className={s.row} key={t.id}>
+                {data.tasks.map((task) => (
+                  <li className={s.row} key={task.id}>
                     <div>
-                      <h3>{t.title}</h3>
+                      <h3>{task.title}</h3>
                       <p className={s.muted}>
-                        {consultantDate(t.due_at)} ·{" "}
-                        {t.status === "completed" ? "Selesai" : "Terbuka"}
+                        {consultantDate(task.due_at)} ·{" "}
+                        {task.status === "completed" ? t("Selesai") : t("Terbuka")}
                       </p>
                     </div>
-                    {canOperate && t.status === "open" && (
+                    {canOperate && task.status === "open" && (
                       <button
                         className={s.button}
                         disabled={busy}
@@ -743,21 +689,19 @@ export function ConsultantWork({ id }: { id: string }) {
                           void run(
                             () =>
                               save("complete_task", {
-                                taskId: t.id,
-                                revision: t.revision,
+                                taskId: task.id,
+                                revision: task.revision,
                               }),
                             "Tugas ditandai selesai.",
                           )
                         }
-                      >
-                        Tandai selesai
-                      </button>
+                      >{t("Tandai selesai")}</button>
                     )}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className={s.muted}>Belum ada tugas.</p>
+              <p className={s.muted}>{t("Belum ada tugas.")}</p>
             )}
             {canOperate && (
               <form
@@ -776,76 +720,57 @@ export function ConsultantWork({ id }: { id: string }) {
                 }
               >
                 <div className={s.two}>
-                  <label className={s.field}>
-                    Tugas baru
-                    <input name="title" required maxLength={240} />
+                  <label className={s.field}>{t("Tugas baru")}<input name="title" required maxLength={240} />
                   </label>
-                  <label className={s.field}>
-                    Tenggat (waktu perangkat)
-                    <input name="dueAt" type="datetime-local" required />
+                  <label className={s.field}>{t("Tenggat (waktu perangkat)")}<input name="dueAt" type="datetime-local" required />
                   </label>
                 </div>
-                <button className={s.button} disabled={busy}>
-                  Tambah tugas
-                </button>
+                <button className={s.button} disabled={busy}>{t("Tambah tugas")}</button>
               </form>
             )}
           </section>
           {canSend && (
             <section className={s.panel}>
-              <h2>Siapkan email</h2>
-              <p className={s.muted}>
-                Kepada {r.email} · Atas nama {r.assigneeName}
+              <h2>{t("Siapkan email")}</h2>
+              <p className={s.muted}>{t("Kepada")} {r.email} {t("· Atas nama")} {r.assigneeName}
               </p>
               <form className={s.form} onSubmit={reviewEmail}>
                 <div className={s.two}>
-                  <label className={s.field}>
-                    Jenis email
-                    <select name="kind">
-                      <option value="follow_up">Tindak lanjut</option>
-                      <option value="proposal">Pengiriman proposal</option>
+                  <label className={s.field}>{t("Jenis email")}<select name="kind">
+                      <option value="follow_up">{t("Tindak lanjut")}</option>
+                      <option value="proposal">{t("Pengiriman proposal")}</option>
                     </select>
                   </label>
-                  <label className={s.field}>
-                    Lampiran proposal
-                    <select name="proposalId">
-                      <option value="">Tanpa lampiran</option>
+                  <label className={s.field}>{t("Lampiran proposal")}<select name="proposalId">
+                      <option value="">{t("Tanpa lampiran")}</option>
                       {readyProposals.map((p) => (
                         <option key={p.id} value={p.id}>
-                          Revisi {p.revision} · {consultantDate(p.created_at)}
+                          {t("Revisi {0}", [p.revision])} · {consultantDate(p.created_at)}
                         </option>
                       ))}
                     </select>
                   </label>
                 </div>
                 <label className={s.field}>
-                  Subjek
+                  {t("Subjek")}
                   <input name="subject" maxLength={180} required />
                 </label>
-                <label className={s.field}>
-                  Isi pesan
-                  <textarea name="body" rows={6} maxLength={10000} required />
+                <label className={s.field}>{t("Isi pesan")}<textarea name="body" rows={6} maxLength={10000} required />
                 </label>
-                <label className={s.field}>
-                  Jadwal kirim (waktu perangkat)
-                  <input name="when" type="datetime-local" />
-                  <span className={s.muted}>
-                    Kosongkan untuk diproses pada giliran worker berikutnya.
-                  </span>
+                <label className={s.field}>{t("Jadwal kirim (waktu perangkat)")}<input name="when" type="datetime-local" />
+                  <span className={s.muted}>{t("Kosongkan untuk diproses pada giliran worker berikutnya.")}</span>
                 </label>
-                <button className={s.primary} disabled={busy}>
-                  Tinjau pengiriman
-                </button>
+                <button className={s.primary} disabled={busy}>{t("Tinjau pengiriman")}</button>
               </form>
             </section>
           )}
           <section className={s.panel}>
-            <h2>Riwayat pengiriman</h2>
+            <h2>{t("Riwayat pengiriman")}</h2>
             {data.messages.length ? (
               data.messages.map((m) => (
                 <details className={s.details} key={m.id}>
                   <summary>
-                    {m.envelope.subject} · {messageLabels[m.status] || m.status}
+                    {m.envelope.subject} · {t(messageLabels[m.status] || m.status)}
                   </summary>
                   <p>
                     {consultantDate(m.scheduled_at)} · {m.envelope.senderName} →{" "}
@@ -853,9 +778,7 @@ export function ConsultantWork({ id }: { id: string }) {
                   </p>
                   <p>{m.envelope.body}</p>
                   {m.status === "uncertain" && (
-                    <p>
-                      Periksa status pada penyedia email sebelum mengirim ulang.
-                    </p>
+                    <p>{t("Periksa status pada penyedia email sebelum mengirim ulang.")}</p>
                   )}
                   {canOperate && m.status === "queued" && (
                     <button
@@ -867,18 +790,16 @@ export function ConsultantWork({ id }: { id: string }) {
                           "Pengiriman dibatalkan.",
                         )
                       }
-                    >
-                      Batalkan pengiriman
-                    </button>
+                    >{t("Batalkan pengiriman")}</button>
                   )}
                 </details>
               ))
             ) : (
-              <p className={s.muted}>Belum ada pengiriman.</p>
+              <p className={s.muted}>{t("Belum ada pengiriman.")}</p>
             )}
           </section>
           <section className={s.panel}>
-            <h2>Riwayat aktivitas</h2>
+            <h2>{t("Riwayat aktivitas")}</h2>
             {canOperate && (
               <form
                 className={s.form}
@@ -890,23 +811,16 @@ export function ConsultantWork({ id }: { id: string }) {
                   )
                 }
               >
-                <label className={s.field}>
-                  Catat balasan klien
-                  <textarea name="note" required maxLength={4000} rows={3} />
+                <label className={s.field}>{t("Catat balasan klien")}<textarea name="note" required maxLength={4000} rows={3} />
                 </label>
-                <p className={s.muted}>
-                  Tindak lanjut terjadwal dibatalkan agar tim dapat meninjau
-                  balasan ini terlebih dahulu.
-                </p>
-                <button className={s.button} disabled={busy}>
-                  Simpan balasan
-                </button>
+                <p className={s.muted}>{t("Tindak lanjut terjadwal dibatalkan agar tim dapat meninjau balasan ini terlebih dahulu.")}</p>
+                <button className={s.button} disabled={busy}>{t("Simpan balasan")}</button>
               </form>
             )}
             <ol>
               {data.activities.map((a) => (
                 <li className={s.event} key={a.id}>
-                  <h3>{events[a.event_type] || "Aktivitas peluang"}</h3>
+                  <h3>{t(events[a.event_type] || "Aktivitas peluang")}</h3>
                   <time dateTime={a.created_at}>
                     {consultantDate(a.created_at)}
                     {directory.data?.members.find((m) => m.id === a.actor)?.name
@@ -930,9 +844,10 @@ export function ConsultantWork({ id }: { id: string }) {
         open={!!confirm}
         onClose={() => setConfirm(null)}
         onConfirm={() => confirm?.action()}
-        title={confirm?.title || ""}
-        description={confirm?.description}
-        confirmLabel={confirm?.label}
+        title={t(confirm?.title || "")}
+        description={t(confirm?.description)}
+        confirmLabel={t(confirm?.label)}
+        cancelLabel={t("Batal")}
         variant="info"
       />
     </>

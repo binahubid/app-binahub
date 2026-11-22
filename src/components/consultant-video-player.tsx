@@ -1,15 +1,20 @@
 "use client";
 import { useState } from "react";
-import type { ConsultantTutorial } from "@/lib/consultant-tutorials";
+import { tutorialThumbnail, type ConsultantTutorial, type TutorialVersion } from "@/lib/consultant-tutorials";
 import s from "./consultant-tutorials.module.css";
 
-export function ConsultantVideoPlayer({ episode }: { episode: ConsultantTutorial }) {
+export function ConsultantVideoPlayer({ episode, version }: {
+  episode: ConsultantTutorial;
+  version: TutorialVersion;
+}) {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const mediaPath = `/konsultan/materials/tutorial/media/${episode.id}`;
+  const src = version === "id" ? mediaPath : `${mediaPath}?version=${version}`;
   return <>
-    <video key={attempt} className={s.frame} controls playsInline preload="metadata"
-      aria-label={`Video ${episode.id} · ${episode.title}`} poster={`/consultant/tutorials/${episode.id}.webp`}
-      src={`/konsultan/materials/tutorial/media/${episode.id}`}
+    <video key={attempt} className={version === "mobile" ? `${s.frame} ${s.portraitFrame}` : s.frame}
+      controls playsInline preload="metadata" aria-label={`Video ${episode.id} · ${episode.title}`}
+      poster={tutorialThumbnail(episode.id, version, true)} src={src}
       onError={() => setFailed(true)} onLoadedMetadata={() => setFailed(false)}>
       Browser Anda belum mendukung pemutar video ini. Gunakan tombol Buka di Drive.
     </video>

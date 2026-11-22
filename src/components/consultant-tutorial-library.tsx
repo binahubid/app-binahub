@@ -3,7 +3,15 @@
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import { useRef, useState } from "react";
-import { tutorialDriveUrl, type ConsultantTutorial } from "@/lib/consultant-tutorials";
+import {
+  isTutorialVersion,
+  tutorialDriveUrl,
+  tutorialThumbnail,
+  tutorialVersions,
+  tutorialVideo,
+  type ConsultantTutorial,
+  type TutorialVersion,
+} from "@/lib/consultant-tutorials";
 import { useConsultantData } from "./consultant-overview";
 import { ConsultantVideoPlayer } from "./consultant-video-player";
 import portal from "./consultant.module.css";
@@ -14,15 +22,38 @@ const seriesOptions = [
   { id: "sop", title: "Alur kerja" },
 ] as const;
 
+function videosForVersion(episodes: ConsultantTutorial[], version: TutorialVersion) {
+  return episodes.flatMap((episode) => {
+    const video = tutorialVideo(episode, version);
+    return video ? [video] : [];
+  });
+}
+
 function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
   const [episode, setEpisode] = useState(episodes[0]);
   const [series, setSeries] = useState(episodes[0].series);
+  const [version, setVersion] = useState<TutorialVersion>("id");
   const [query, setQuery] = useState("");
   const player = useRef<HTMLElement>(null);
-  const search = query.trim().toLocaleLowerCase("id");
-  const visible = episodes.filter((item) =>
-    item.series === series && `${item.id} ${item.title}`.toLocaleLowerCase("id").includes(search),
+  const versions = tutorialVersions.filter(({ id }) => episodes.some((item) => tutorialVideo(item, id)));
+  const videos = videosForVersion(episodes, version);
+  const availableSeries = seriesOptions.filter(({ id }) => videos.some((item) => item.series === id));
+  const locale = version === "en" ? "en" : "id";
+  const search = query.trim().toLocaleLowerCase(locale);
+  const visible = videos.filter((item) =>
+    item.series === series && `${item.id} ${item.title}`.toLocaleLowerCase(locale).includes(search),
   );
+
+  function selectVersion(next: TutorialVersion) {
+    const choices = videosForVersion(episodes, next);
+    const inSeries = choices.filter((item) => item.series === series);
+    const first = inSeries.find((item) => item.id === episode.id) ?? inSeries[0] ?? choices[0];
+    if (!first) return;
+    setVersion(next);
+    setEpisode(first);
+    setSeries(first.series);
+    setQuery("");
+  }
 
   function selectEpisode(item: ConsultantTutorial) {
     setEpisode(item);
@@ -34,7 +65,7 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
   return (
     <div className={s.library}>
       <section ref={player} className={s.player} aria-labelledby="tutorial-now-playing">
-        <ConsultantVideoPlayer key={episode.id} episode={episode} />
+        <ConsultantVideoPlayer key={episode.drive.fileId} episode={episode} version={version} />
         <div className={s.details}>
           <div aria-live="polite">
             <p className={s.episodeMeta}>{episode.id} · {episode.duration}</p>
@@ -53,8 +84,22 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
       </section>
       <section className={s.playlist} aria-labelledby="tutorial-playlist">
         <h2 id="tutorial-playlist">Daftar episode</h2>
+        {versions.length > 1 && (
+          <label className={`${portal.field} ${s.version}`}>
+            <span>Versi video</span>
+            <select
+              value={version}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (isTutorialVersion(value)) selectVersion(value);
+              }}
+            >
+              {versions.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
+            </select>
+          </label>
+        )}
         <div className={s.series} role="group" aria-label="Seri tutorial">
-          {seriesOptions.map((option) => (
+          {availableSeries.map((option) => (
             <button
               key={option.id}
               type="button"
@@ -78,7 +123,7 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
           />
         </label>
         {visible.length ? (
-          <ul className={s.episodes} key={series}>
+          <ul className={s.episodes} key={`${version}-${series}`}>
             {visible.map((item) => (
               <li key={item.id}>
                 <button
@@ -88,7 +133,7 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
                   onClick={() => selectEpisode(item)}
                 >
                   <Image
-                    src={`/consultant/tutorials/${item.id}.webp`}
+                    src={tutorialThumbnail(item.id, version)}
                     width={320}
                     height={180}
                     alt=""

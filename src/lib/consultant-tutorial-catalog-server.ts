@@ -6,6 +6,11 @@ export class TutorialCatalogError extends Error {
 }
 export const tutorialPrivateHeaders = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer" };
 
+function hasDriveFile(value: Pick<ConsultantTutorial, "drive">) {
+  return typeof value.drive?.fileId === "string"
+    && /^[\w-]{20,100}$/.test(value.drive.fileId);
+}
+
 export async function readTutorialCatalog(authorization: string | null) {
   if (!authorization) throw new TutorialCatalogError(401);
   const response = await fetch(publicApiUrl("/api/konsultan/materials/catalog"), {
@@ -16,7 +21,10 @@ export async function readTutorialCatalog(authorization: string | null) {
   const rows: unknown = await response.json();
   if (!Array.isArray(rows) || !rows.length || !rows.every((row) =>
     row && typeof row.id === "string" && /^[FS]\d{2}$/.test(row.id)
-    && typeof row.drive?.fileId === "string" && /^[\w-]{20,100}$/.test(row.drive.fileId),
+    && hasDriveFile(row)
+    && [row.versions?.en, row.versions?.mobile].every((variant) =>
+      variant === undefined || (variant && hasDriveFile(variant)),
+    ),
   )) throw new TutorialCatalogError(503);
   return rows as ConsultantTutorial[];
 }

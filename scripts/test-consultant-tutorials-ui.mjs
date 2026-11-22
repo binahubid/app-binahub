@@ -23,6 +23,21 @@ const catalog = [["F", "fitur", 21], ["S", "sop", 8]].flatMap(([prefix, series, 
   })),
 );
 const videoBytes = await readFile("tools/fixtures/tutorial-test.mp4");
+for (const episode of catalog) {
+  episode.versions = {
+    en: {
+      title: "English episode " + episode.id,
+      duration: "0:04",
+      drive: { fileId: "synthetic-english-000000000-" + episode.id },
+    },
+  };
+  if (episode.series === "sop") {
+    episode.versions.mobile = {
+      duration: "0:05",
+      drive: { fileId: "synthetic-mobile-000000000-" + episode.id },
+    };
+  }
+}
 const status = { membership: 200 };
 const requests = [];
 const server = createServer((request, response) => {
@@ -124,13 +139,33 @@ try {
       assert(playerTop >= 50 && playerTop < 150, `Selected player not visible on ${width}px: ${playerTop}`);
     }
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    const version = page.getByRole("combobox", { name: "Versi video" });
+    await version.selectOption("en");
+    await page.getByRole("heading", { name: "English episode S01" }).waitFor();
+    assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/S01?version=en");
+    assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).getAttribute("href"),
+      "https://drive.google.com/file/d/synthetic-english-000000000-S01/view");
+    await page.getByRole("button", { name: "Fitur portal" }).click();
+    assert.equal(await page.locator("section[aria-labelledby=tutorial-playlist] li").count(), 21);
+    await page.getByRole("button", { name: /English episode F02/ }).click();
+    assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/F02?version=en");
+    await version.selectOption("mobile");
+    await page.getByRole("heading", { name: "Tutorial S01" }).waitFor();
+    assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/S01?version=mobile");
+    assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).getAttribute("href"),
+      "https://drive.google.com/file/d/synthetic-mobile-000000000-S01/view");
+    assert.equal(await page.getByRole("button", { name: "Fitur portal" }).count(), 0);
+    assert.equal(await page.locator("section[aria-labelledby=tutorial-playlist] li").count(), 8);
+    const portrait = await player.boundingBox();
+    assert(Math.abs(portrait.width / portrait.height - 9 / 16) < 0.01);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await page.screenshot({ path: `tmp/consultant-drive/library-${width}.png`, fullPage: width >= 1100 });
     assert.deepEqual(errors, []);
     await context.close();
   }
   assert(requests.every((request) => ["GET", "OPTIONS"].includes(request.method)));
-  console.log("Verified private catalog access, 29 episodes, native playback, contained 16:9 video, navigation, search, player replacement, and four viewport widths.");
+  console.log("Verified private catalog access, native playback, all three video versions, series, search, and portrait layout at four viewport widths.");
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

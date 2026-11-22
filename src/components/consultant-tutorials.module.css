@@ -36,6 +36,17 @@
   background: #111a2b;
 }
 
+.portraitFrame {
+  width: min(100%, 39vh, 360px);
+  width: min(100%, 39dvh, 360px);
+  aspect-ratio: 9 / 16;
+  margin-inline: auto;
+}
+
+.version {
+  margin-top: 12px;
+}
+
 .playerError {
   padding: 14px 20px;
   color: #8b2d2d;

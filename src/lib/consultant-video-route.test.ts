@@ -2,7 +2,13 @@ import { afterEach, expect, it, vi } from "vitest";
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { getSession: async () => ({ data: { session: null } }) } }) }));
 import { GET, HEAD } from "@/app/konsultan/materials/tutorial/media/[id]/route";
 
-const episode = { id: "F01", drive: { fileId: "public-file-0000000000001" } };
+const episode = {
+  id: "F01",
+  drive: { fileId: "public-file-0000000000001" },
+  versions: {
+    en: { drive: { fileId: "english-file-000000000001", resourceKey: "sample-resource-key" } },
+  },
+};
 const context = { params: Promise.resolve({ id: "F01" }) };
 afterEach(() => vi.unstubAllGlobals());
 
@@ -53,6 +59,20 @@ it("rejects invalid ranges and unknown episodes before reaching the provider", a
   }
   expect((await GET(request("bytes=0-1"), { params: Promise.resolve({ id: "UNKNOWN" }) })).status).toBe(404);
   expect(transfers).toHaveLength(0);
+});
+
+it("selects the requested Drive version and refuses unavailable or invalid choices", async () => {
+  const transfers = provider();
+  const base = "https://app.example.invalid/media";
+  const headers = { Authorization: "Bearer synthetic", Range: "bytes=0-15" };
+  expect((await GET(new Request(base + "?version=mobile", { headers }), context)).status).toBe(404);
+  expect((await GET(new Request(base + "?version=unknown", { headers }), context)).status).toBe(404);
+  expect(transfers).toHaveLength(0);
+  const response = await GET(new Request(base + "?version=en", { headers }), context);
+  expect(response.status).toBe(206);
+  const upstream = new URL(transfers[0].url);
+  expect(upstream.searchParams.get("id")).toBe(episode.versions.en.drive.fileId);
+  expect(upstream.searchParams.get("resourcekey")).toBe(episode.versions.en.drive.resourceKey);
 });
 
 it("supports metadata HEAD and refuses HTML or oversized responses as video", async () => {

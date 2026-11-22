@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { readTutorialCatalog, TutorialCatalogError, tutorialFailure, tutorialPrivateHeaders } from "@/lib/consultant-tutorial-catalog-server";
+import { isTutorialVersion, tutorialVideo } from "@/lib/consultant-tutorials";
 
 const chunkSize = 2 * 1024 * 1024;
 const maxFileSize = 50 * 1024 * 1024;
@@ -27,15 +28,18 @@ async function media(request: Request, context: { params: Promise<{ id: string }
     const catalog = await readTutorialCatalog(authorization);
     const { id } = await context.params;
     const episode = catalog.find((row) => row.id === id);
-    if (!episode) throw new TutorialCatalogError(404);
+    const version = new URL(request.url).searchParams.get("version") ?? "id";
+    if (!episode || !isTutorialVersion(version)) throw new TutorialCatalogError(404);
+    const video = tutorialVideo(episode, version);
+    if (!video) throw new TutorialCatalogError(404);
     const requestedRange = request.headers.get("Range");
     const range = request.method === "HEAD" ? "bytes=0-0" : requestedRange ? boundedRange(requestedRange) : undefined;
     if (range === null) return new Response(null, { status: 416, headers: tutorialPrivateHeaders });
     const url = new URL("https://drive.usercontent.google.com/download");
-    url.searchParams.set("id", episode.drive.fileId);
+    url.searchParams.set("id", video.drive.fileId);
     url.searchParams.set("export", "download");
     url.searchParams.set("confirm", "t");
-    if (episode.drive.resourceKey) url.searchParams.set("resourcekey", episode.drive.resourceKey);
+    if (video.drive.resourceKey) url.searchParams.set("resourcekey", video.drive.resourceKey);
     const upstream = await fetch(url, {
       headers: { Accept: "video/mp4", ...(range ? { Range: range } : {}) },
       signal: AbortSignal.any([request.signal, AbortSignal.timeout(45_000)]),

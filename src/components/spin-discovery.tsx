@@ -4,12 +4,16 @@ import Link from 'next/link';
 import { ArrowLeft,ArrowRight,Check,ChevronDown,FileText,LoaderCircle,Mail,MessageSquare,RefreshCw,ShieldCheck,Target,TrendingUp } from 'lucide-react';
 import { DiagnosisShell } from './diagnosis-shell';
 import styles from './diagnosis.module.css';
-import { SPIN_NOTICE_VERSION,SPIN_PRIVACY_NOTICE,formatSpinCopy,spinArray,spinConflicts,spinErrors,spinOptions,spinLabel,spinSanitize,spinStage,spinSummary,spinVisible,type SpinAnswers,type SpinCopy,type SpinDefinition,type SpinField } from '@/lib/spin-form';
+import { SPIN_NOTICE_VERSION,SPIN_PRIVACY_NOTICE,spinArray,spinConflicts,spinErrors,spinOptions,spinLabel,spinSanitize,spinStage,spinSummary,spinVisible,type SpinAnswers,type SpinDefinition,type SpinField } from '@/lib/spin-form';
 import { spinNewKey,spinRequest,type SpinAttempt,type SpinConfirmation } from '@/lib/spin-client';
 import {spinSummaryPoints} from '@/lib/spin-summary-points';
 const inputClass=styles.input;
 const buttonClass=styles.primaryButton;
 const STORAGE='binahub-spin-draft-v1';
+export type SpinCopy = (message: string, values?: readonly unknown[]) => string;
+export const formatSpinCopy: SpinCopy = (message, values = []) =>
+  values.length ? message.replace(/\{(\d+)\}/g, (_, index) => String(values[Number(index)] ?? "")) : message;
+
 function Frame({children}:{children:React.ReactNode}){return <DiagnosisShell organization><div className={styles.discoveryLayout}>{children}</div></DiagnosisShell>;}
 
 export function DiscoverySteps({stages,active=0}:{stages:string[];active?:number}) {

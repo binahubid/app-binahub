@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, CheckCircle2, LoaderCircle, RotateCcw, Save } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
-import { SpinFieldControl } from '@/components/spin-discovery';
-import { formatSpinCopy, spinErrors, spinLabel, type SpinAnswers, type SpinCopy, type SpinOption } from '@/lib/spin-form';
+import { formatSpinCopy, SpinFieldControl, type SpinCopy } from '@/components/spin-discovery';
+import { spinErrors, spinLabel, type SpinAnswers, type SpinOption } from '@/lib/spin-form';
 import { hasMeetingAnswer, meetingEffective, meetingFields, meetingProgress, type MeetingContext, type MeetingChecklist } from '../_lib/spin-meeting';
 
 type Props = { id: string; onSaved: (checklist: MeetingChecklist) => void; onDirty: (dirty: boolean) => void; endpoint?: string; readOnly?: boolean; translate?: SpinCopy; locale?: 'id' | 'en' };

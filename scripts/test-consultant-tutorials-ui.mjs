@@ -100,6 +100,10 @@ try {
       throw error;
     }
     assert.equal(await page.getByRole("link", { name: /Baca .* di web/ }).count(), 2);
+    await page.getByRole("link", { name: /^Persiapan meeting/ }).click();
+    await page.getByRole("heading", { name: "Tutorial S03" }).waitFor();
+    assert.equal(await page.locator("video").getAttribute("src"), "/konsultan/materials/tutorial/media/S03");
+    await page.goBack();
     await page.getByRole("link", { name: "Lihat video" }).click();
     await page.waitForURL(origin + "/konsultan/materials/tutorial");
     const player = page.locator("video");
@@ -132,11 +136,12 @@ try {
     await page.getByRole("button", { name: /S01/ }).click();
     if (width < 1100) {
       await page.waitForFunction(() => {
-        const top = document.querySelector("section[aria-labelledby=tutorial-now-playing]").getBoundingClientRect().top;
-        return top >= 50 && top < 150;
+        const player = document.querySelector("section[aria-labelledby=tutorial-now-playing]");
+        const { top, bottom } = player.querySelector("video").getBoundingClientRect();
+        const bar = document.querySelector("header");
+        const visibleTop = bar && getComputedStyle(bar).position === "sticky" ? bar.getBoundingClientRect().bottom : 0;
+        return player === document.activeElement && top >= visibleTop - 1 && top < visibleTop + 150 && bottom <= innerHeight;
       });
-      const playerTop = await page.locator("section[aria-labelledby=tutorial-now-playing]").evaluate((element) => element.getBoundingClientRect().top);
-      assert(playerTop >= 50 && playerTop < 150, `Selected player not visible on ${width}px: ${playerTop}`);
     }
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     const version = page.getByRole("combobox", { name: "Versi video" });

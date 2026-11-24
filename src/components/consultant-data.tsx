@@ -6,9 +6,12 @@ import { useConsultantLocale } from "./consultant-language";
 import s from "./consultant.module.css";
 
 export const consultantDirectoryUrl = "/api/konsultan";
-export const consultantAgendaUrl = "/api/konsultan/agenda?owner=all&kind=tasks&page=0";
+export const consultantMyDirectoryUrl = consultantDirectoryUrl + "?owner=mine";
+export const agendaUrl = (owner: string, kind: string, page: number) =>
+  "/api/konsultan/agenda?" + new URLSearchParams({ owner, kind, page: String(page) });
+export const consultantAgendaUrl = agendaUrl("mine", "tasks", 0);
 export const consultantTutorialUrl = "/konsultan/materials/tutorial/catalog";
-const warmUrls = [consultantDirectoryUrl, consultantAgendaUrl, consultantTutorialUrl];
+const warmUrls = [consultantDirectoryUrl, consultantMyDirectoryUrl, consultantAgendaUrl, consultantTutorialUrl];
 const freshForMs = 20_000;
 
 type Entry = { promise: Promise<unknown>; value?: unknown; expiresAt: number };
@@ -44,6 +47,21 @@ export function createConsultantReads() {
 }
 
 export const ConsultantReads = createContext<ReturnType<typeof createConsultantReads> | null>(null);
+export const ConsultantDirectorySearch = createContext<[string, (value: string) => void]>(["", () => {}]);
+
+export function useConsultantClock() {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    const timer = window.setInterval(tick, 60_000);
+    window.addEventListener("focus", tick);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", tick);
+    };
+  }, []);
+  return now;
+}
 
 export function useConsultantData<T>(url: string | null) {
   const reads = useContext(ConsultantReads);

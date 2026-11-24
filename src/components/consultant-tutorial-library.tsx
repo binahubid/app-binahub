@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import { useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   isTutorialVersion,
   tutorialDriveUrl,
@@ -30,10 +31,10 @@ function videosForVersion(episodes: ConsultantTutorial[], version: TutorialVersi
   });
 }
 
-function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
+function TutorialPlaylist({ episodes, first }: { episodes: ConsultantTutorial[]; first: ConsultantTutorial }) {
   const { t } = useConsultantLocale();
-  const [episode, setEpisode] = useState(episodes[0]);
-  const [series, setSeries] = useState(episodes[0].series);
+  const [episode, setEpisode] = useState(first);
+  const [series, setSeries] = useState(first.series);
   const [version, setVersion] = useState<TutorialVersion>("id");
   const [query, setQuery] = useState("");
   const player = useRef<HTMLElement>(null);
@@ -60,13 +61,16 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
   function selectEpisode(item: ConsultantTutorial) {
     setEpisode(item);
     if (window.matchMedia("(max-width: 1100px)").matches) {
-      player.current?.scrollIntoView({ block: "start" });
+      window.requestAnimationFrame(() => {
+        player.current?.focus({ preventScroll: true });
+        player.current?.scrollIntoView({ block: "start" });
+      });
     }
   }
 
   return (
     <div className={s.library}>
-      <section ref={player} className={s.player} aria-labelledby="tutorial-now-playing">
+      <section ref={player} className={s.player} aria-labelledby="tutorial-now-playing" tabIndex={-1}>
         <ConsultantVideoPlayer key={episode.drive.fileId} episode={episode} version={version} />
         <div className={s.details}>
           <div aria-live="polite">
@@ -158,6 +162,7 @@ function TutorialPlaylist({ episodes }: { episodes: ConsultantTutorial[] }) {
 
 export function ConsultantTutorialLibrary() {
   const { t } = useConsultantLocale();
+  const episodeId = useSearchParams().get("episode");
   const { data, error, reload } = useConsultantData<ConsultantTutorial[]>(
     consultantTutorialUrl,
   );
@@ -170,5 +175,7 @@ export function ConsultantTutorialLibrary() {
     );
   }
   if (!data) return <ConsultantPending message="Memuat daftar video…" />;
-  return <TutorialPlaylist episodes={data} />;
+  const first = data.find((episode) => episode.id === episodeId) ?? data[0];
+  if (!first) return <p className={portal.empty}>{t("Belum ada video panduan.")}</p>;
+  return <TutorialPlaylist key={first.id} episodes={data} first={first} />;
 }

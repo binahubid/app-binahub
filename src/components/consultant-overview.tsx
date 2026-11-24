@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   BookOpen,
   CalendarDays,
+  ChevronRight,
   Download,
   FileText,
+  ListTodo,
   Play,
   RefreshCw,
 } from "lucide-react";
@@ -21,12 +24,13 @@ import {
   type Task,
 } from "@/lib/consultant-client";
 import { consultantMaterials, type ConsultantMaterial } from "@/lib/consultant-materials";
-import { ConsultantPending, consultantDirectoryUrl, useConsultantData } from "./consultant-data";
+import { ConsultantDirectorySearch, ConsultantPending, agendaUrl, consultantDirectoryUrl, consultantMyDirectoryUrl, useConsultantClock, useConsultantData } from "./consultant-data";
+import { agendaPath, appointmentEnded, appointmentTime, bookingLabel, clientListPath, isOpenOpportunity, meetingHref, readDirectoryView, readOwner, readPage, safeWorkReturn, workUrl } from "@/lib/consultant-workflow";
 import { consultantTranslator } from "@/lib/consultant-locale";
+import { useConsultantLocale } from "@/components/consultant-language";
 import s from "./consultant.module.css";
 import tutorial from "./consultant-tutorials.module.css";
 const translateIndonesian = consultantTranslator("id");
-import { useConsultantLocale } from "@/components/consultant-language";
 
 export function ConsultantHeading({
   title,
@@ -111,36 +115,46 @@ export function Pager({
   );
 }
 
-export function AgendaRows({ records }: { records: (Task | Booking)[] }) {
-  const { t } = useConsultantLocale();
-  if (!records.length)
-    return <p className={s.empty}>{t("Belum ada agenda pada pilihan ini.")}</p>;
+export function AgendaRows({ records, returnTo, now, details = false }: {
+  records: (Task | Booking)[];
+  now: number;
+  returnTo?: string;
+  details?: boolean;
+}) {
+  const { t, locale } = useConsultantLocale();
+  if (!records.length) return <p className={s.empty}>{t("Belum ada agenda pada pilihan ini.")}</p>;
   return (
-    <ul>
-      {records.map((r) => {
-        const lead = "due_at" in r ? r.lead_id : r.lead_id || r.leadId;
-        const date = "due_at" in r ? r.due_at : r.start_time || r.startTime;
+    <ul className={s.agendaRows}>
+      {records.map((record) => {
+        const task = "due_at" in record;
+        const lead = task ? record.lead_id : record.lead_id || record.leadId;
+        const date = task ? record.due_at : appointmentTime(record);
+        const label = task ? record.due_at && Date.parse(record.due_at) <= now
+          ? "Lewat tenggat" : "Tugas terbuka" : bookingLabel(record.status);
+        const title = record.title || t("Konsultasi klien");
+        const href = lead && workUrl(lead, task ? { section: "followup", target: "tasks" }
+          : { section: "summary", target: "schedule" }, returnTo);
+        const ended = !task && appointmentEnded(record, now);
+        const meeting = !task && !ended && details && meetingHref(record);
         return (
-          <li key={r.id} className={s.row}>
+          <li key={record.id} className={s.row}>
             <div>
-              <h3>
-                {lead ? (
-                  <Link href={`/konsultan/clients/${lead}`}>
-                    {r.title || t("Konsultasi klien")}
-                  </Link>
-                ) : (
-                  r.title
-                )}
-              </h3>
-              <p className={s.muted}>
-                {[r.company, r.assigneeName || "Belum ditugaskan"]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
+              <span className={label === "Lewat tenggat" || label === "Menunggu konfirmasi" ? s.attentionBadge : s.badge}>
+                {t(label)}
+              </span>
+              <h3>{href && !details ? <Link href={href}>{title}</Link> : title}</h3>
+              {(!details || record.company) && (
+                <p className={s.muted}>{[record.company, !details && (record.assigneeName || t("Belum ditugaskan"))].filter(Boolean).join(" · ")}</p>
+              )}
             </div>
-            <time className={s.muted} dateTime={date}>
-              {consultantDate(date)}
-            </time>
+            <div className={s.agendaDate}>
+              <time dateTime={date}>{t(consultantDate(date, locale))}</time>
+              {meeting && <a className={s.button} href={meeting} target="_blank" rel="noreferrer">{t("Buka meeting")}</a>}
+              {details && ended && !["cancelled", "completed", "no_show"].includes(record.status) && <p>{t("Waktu pertemuan sudah lewat.")}</p>}
+              {details && !task && !ended && record.status === "requested" && <p>{t("Tunggu konfirmasi jadwal sebelum membuka meeting.")}</p>}
+              {details && !task && !ended && ["confirmed", "rescheduled"].includes(record.status) && !meeting &&
+                <p>{t("Tautan meeting belum tersedia. Periksa undangan kalender.")}</p>}
+            </div>
           </li>
         );
       })}
@@ -148,256 +162,251 @@ export function AgendaRows({ records }: { records: (Task | Booking)[] }) {
   );
 }
 
-export function ConsultantOverview({ clients = false }: { clients?: boolean }) {
-  const { t } = useConsultantLocale();
-  const [owner, setOwner] = useState("all"),
-    [search, setSearch] = useState(""),
-    [query, setQuery] = useState(""),
-    [page, setPage] = useState(0),
-    [view, setView] = useState("all");
-  const directoryUrl = owner === "all" && !query && page === 0 && view === "all"
-    ? consultantDirectoryUrl
-    : consultantDirectoryUrl + "?" + new URLSearchParams({ owner, search: query, page: String(page), view });
-  const { data, error, reload } = useConsultantData<ConsultantList>(directoryUrl);
+export function ConsultantOverview() {
+  const { t, locale } = useConsultantLocale();
+  const personal = useConsultantData<ConsultantList>(consultantMyDirectoryUrl);
+  const team = useConsultantData<ConsultantList>(consultantDirectoryUrl);
+  const now = useConsultantClock();
+  const own = personal.data;
+  const task = own?.tasks.find((item) => item.status === "open");
+  const upcoming = own?.bookings.find((item) => (item.leadId || item.lead_id) && ["confirmed", "rescheduled"].includes(item.status) &&
+    Date.parse(item.endTime || item.end_time || "") >= now && Date.parse(appointmentTime(item) ?? "") <= now + 24 * 60 * 60 * 1000);
+  const active = own?.records.find((record) => isOpenOpportunity(record));
+  const urgentTask = task?.due_at && Date.parse(task.due_at) <= now ? task : undefined;
+  const priorityTask = urgentTask || (!upcoming ? task : undefined);
+  const title = priorityTask?.title || upcoming?.title || active?.company || active?.name || t("Belum ada peluang aktif yang ditugaskan");
+  const context = priorityTask ? priorityTask.company : upcoming ? t("Jadwal konsultasi") : active ? t(stageLabels[active.stage] || active.stage) : "";
+  const date = priorityTask ? priorityTask.due_at : upcoming && appointmentTime(upcoming);
+  const meetingLead = upcoming?.leadId || upcoming?.lead_id;
+  const meetingSoon = upcoming && Date.parse(appointmentTime(upcoming) ?? "") <= now + 15 * 60 * 1000;
+  const next = priorityTask ? { href: workUrl(priorityTask.lead_id, { section: "followup", target: "tasks" }, agendaPath), label: "Buka tugas" }
+    : meetingLead ? { href: workUrl(meetingLead, meetingSoon ? { section: "summary", target: "schedule" } : { section: "meeting", target: "checklist" }, agendaPath + "?kind=bookings"), label: meetingSoon ? "Lihat jadwal meeting" : "Siapkan meeting" }
+    : active ? { href: workUrl(active.id, undefined, clientListPath), label: "Lanjutkan peluang" }
+    : { href: clientListPath + "?owner=all", label: "Lihat peluang tim" };
+
   return (
     <>
-      <ConsultantHeading
-        title={clients ? t("Klien & peluang") : t("Beranda konsultan")}
-        description={
-          clients
-            ? t("Lihat tahap, jadwal, dan penanggung jawab setiap peluang konsultasi.")
-            : t("Pantau pekerjaan dan agenda konsultasi seluruh tim.")
-        }
-      >
-        <button type="button" className={s.button} onClick={reload}>
-          <RefreshCw size={16} aria-hidden="true" />{t("Perbarui")}</button>
+      <ConsultantHeading title={t("Beranda konsultan")} description={t("Mulai dari pekerjaan Anda dan pantau perkembangan tim.")}>
+        <button type="button" className={s.button} onClick={() => { personal.reload(); team.reload(); }}>
+          <RefreshCw size={16} aria-hidden="true" />{t("Perbarui")}
+        </button>
       </ConsultantHeading>
-      <form
-        className={s.filters}
-        onSubmit={(e) => {
-          e.preventDefault();
-          setPage(0);
-          setQuery(search);
-        }}
-      >
-        {clients && (
-          <label className={`${s.field} ${s.search}`}>{t("Cari klien")}<input
-              type="search"
-              maxLength={150}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("Nama, perusahaan, atau email")}
-            />
-          </label>
-        )}
-        <OwnerFilter
-          value={owner}
-          members={data?.members || []}
-          onChange={(v) => {
-            setOwner(v);
-            setPage(0);
-          }}
-        />
-        {clients && (
-          <>
-            <label className={s.field}>{t("Tahap")}<select
-                value={view}
-                onChange={(e) => {
-                  setView(e.target.value);
-                  setPage(0);
-                }}
-              >
-                <option value="all">{t("Semua tahap")}</option>
-                <option value="active">{t("Peluang terbuka")}</option>
-                <option value="won">{t("Disepakati")}</option>
-                <option value="lost">{t("Tidak dilanjutkan")}</option>
-                <option value="handoff">{t("Serah terima")}</option>
-              </select>
-            </label>
-            <button className={s.primary}>{t("Cari")}</button>
-          </>
-        )}
-      </form>
-      {error && (
-        <p role="alert" className={s.error}>
-          {t(error)}
-        </p>
-      )}
-      {!error && !data && <ConsultantPending message="Memuat pekerjaan tim…" />}
-      {data && (
-        <>
-          {!clients && (
+      <div className={s.homeLead}>
+        <section className={s.priorityPanel} aria-labelledby="consultant-priority-title">
+          <p className={s.priorityLabel} id="consultant-priority-title"><ListTodo size={18} aria-hidden="true" />{t("Prioritas saya")}</p>
+          {personal.error ? (
+            <div role="alert"><p>{t(personal.error)}</p><button type="button" className={s.button} onClick={personal.reload}>{t("Coba lagi")}</button></div>
+          ) : !own ? <ConsultantPending message="Memuat tugas dan jadwal Anda…" /> : (
+            <>
+              {urgentTask && <span className={s.attentionBadge}>{t("Lewat tenggat")}</span>}
+              <h2>{title}</h2>
+              <p>{[context, date && consultantDate(date, locale)].filter(Boolean).join(" · ")
+                || t("Peluang yang sudah ditugaskan akan muncul di sini.")}</p>
+              <Link className={s.priorityAction} href={next.href}>{t(next.label)}<ArrowRight size={18} aria-hidden="true" /></Link>
+            </>
+          )}
+        </section>
+        <section className={s.panel} aria-labelledby="home-appointments-title">
+          <div className={s.panelTitle}>
+            <h2 id="home-appointments-title"><CalendarDays size={19} aria-hidden="true" />{t("Jadwal saya")}</h2>
+            <Link className={s.textlink} href={agendaPath + "?kind=bookings"}>{t("Lihat jadwal")}</Link>
+          </div>
+          {personal.error ? <p className={s.muted}>{t("Jadwal belum dapat dimuat.")}</p>
+            : !own ? <ConsultantPending message="Memuat agenda…" />
+            : own.bookings.length ? <AgendaRows records={own.bookings.slice(0, 2)} now={now} returnTo={agendaPath + "?kind=bookings"} />
+            : <p className={s.compactEmpty}>{t("Belum ada jadwal konsultasi untuk Anda.")}</p>}
+        </section>
+      </div>
+      <section className={s.teamOverview} aria-labelledby="team-overview-title">
+        <div className={s.panelTitle}>
+          <h2 id="team-overview-title">{t("Ringkasan tim")}</h2>
+          <Link className={s.textlink} href={clientListPath + "?owner=all"}>{t("Lihat semua peluang")}</Link>
+        </div>
+        {team.error ? <p role="alert" className={s.error}>{t(team.error)} <button className={s.button} onClick={team.reload}>{t("Coba lagi")}</button></p>
+          : !team.data ? <ConsultantPending message="Memuat pekerjaan tim…" /> : (
             <div className={s.stats}>
-              {(
-                [
-                  ["Peluang terbuka", data.summary.active],
-                  ["Tugas lewat tenggat", data.summary.overdue],
-                  ["Draf proposal", data.summary.proposals],
-                  ["Serah terima", data.summary.handoffs],
-                ] as const
-              ).map(([label, count]) => (
-                <div className={s.stat} key={label}>
-                  <strong>{count}</strong>
-                  <span>{t(label)}</span>
-                </div>
-              ))}
+              <Link className={s.stat} href={clientListPath + "?owner=all&view=active"}><strong>{team.data.summary.active}</strong><span>{t("Peluang terbuka")}</span></Link>
+              <Link className={s.stat} href={agendaPath + "?owner=all#overdue"}><strong>{team.data.summary.overdue}</strong><span>{t("Tugas lewat tenggat")}</span></Link>
+              <div className={s.stat}><strong>{team.data.summary.proposals}</strong><span>{t("Draf proposal")}</span></div>
+              <Link className={s.stat} href={clientListPath + "?owner=all&view=handoff"}><strong>{team.data.summary.handoffs}</strong><span>{t("Serah terima")}</span></Link>
             </div>
           )}
-          <div className={clients ? undefined : s.grid}>
-            <section className={s.panel}>
-              <h2>{clients ? t("Daftar peluang") : t("Peluang tim")}</h2>
-              {data.records.length ? (
-                <table className={s.table}>
-                  <thead>
-                    <tr>
-                      <th>{t("Klien")}</th>
-                      <th>{t("Tahap")}</th>
-                      <th>{t("Penanggung jawab")}</th>
-                      <th>{t("Akses")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(clients ? data.records : data.records.slice(0, 6)).map(
-                      (r) => (
-                        <tr key={r.id}>
-                          <td>
-                            <Link
-                              className={s.textlink}
-                              href={`/konsultan/clients/${r.id}`}
-                            >
-                              <strong>{r.company || r.name}</strong>
-                            </Link>
-                            <small>
-                              {r.name}
-                              {r.nextAction ? ` · ${r.nextAction}` : ""}
-                            </small>
-                          </td>
-                          <td>
-                            <span className={s.mobileLabel}>{t("Tahap")}</span>
-                            {t(stageLabels[r.stage] || r.stage)}
-                          </td>
-                          <td>
-                            <span className={s.mobileLabel}>{t("Penanggung jawab")}</span>
-                            {r.assigneeName}
-                          </td>
-                          <td>
-                            <span
-                              className={`${s.badge} ${r.canEdit ? "" : s.readonly}`}
-                            >
-                              {r.canEdit ? t("Dapat dikelola") : t("Hanya baca")}
-                            </span>
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                  </tbody>
-                </table>
-              ) : (
-                <p className={s.empty}>{t("Belum ada peluang yang cocok.")}</p>
-              )}
-              {clients ? (
-                <Pager
-                  translate={t}
-                  page={page}
-                  pageSize={data.pageSize}
-                  total={data.total}
-                  onChange={setPage}
-                />
-              ) : (
-                <Link className={s.textlink} href="/konsultan/clients">{t("Lihat semua peluang")}{" "}
-                  <ArrowRight size={14} className="inline" />
-                </Link>
-              )}
-            </section>
-            {!clients && (
-              <div>
-                <section className={s.panel}>
-                  <h2>{t("Tugas terdekat")}</h2>
-                  <AgendaRows records={data.tasks.slice(0, 4)} />
-                  <Link className={s.textlink} href="/konsultan/tasks">{t("Buka tugas & jadwal")}</Link>
-                </section>
-                <section className={s.panel}>
-                  <h2>{t("Jadwal konsultasi")}</h2>
-                  <AgendaRows records={data.bookings.slice(0, 4)} />
-                </section>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+      </section>
+    </>
+  );
+}
+
+export function ConsultantClients() {
+  const { t } = useConsultantLocale();
+  const params = useSearchParams();
+  const owner = readOwner(params, "mine");
+  const view = readDirectoryView(params);
+  const page = readPage(params);
+  const [query, setQuery] = useContext(ConsultantDirectorySearch);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const filters = new URLSearchParams({ owner });
+  if (query) filters.set("search", query);
+  if (view !== "all") filters.set("view", view);
+  if (page) filters.set("page", String(page));
+  const url = owner === "all" && filters.size === 1 ? consultantDirectoryUrl : consultantDirectoryUrl + "?" + filters;
+  const { data, error, reload } = useConsultantData<ConsultantList>(url);
+  const membership = useConsultantData<ConsultantList>(consultantMyDirectoryUrl);
+  const returnTo = safeWorkReturn(clientListPath + "?" + params.toString());
+
+  function update(values: Record<string, string | null>) {
+    const next = new URLSearchParams(params);
+    for (const [key, value] of Object.entries(values)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
+    window.history.replaceState(null, "", next.size ? clientListPath + "?" + next : clientListPath);
+  }
+
+  function clearSearch() {
+    setQuery("");
+    if (searchInput.current) searchInput.current.value = "";
+    update({ page: null });
+  }
+
+  return (
+    <>
+      <ConsultantHeading title={t("Klien & peluang")} description={t("Pilih klien untuk melihat tahap, penanggung jawab, dan langkah berikutnya.")}>
+        <button type="button" className={s.button} onClick={reload}><RefreshCw size={16} aria-hidden="true" />{t("Perbarui")}</button>
+      </ConsultantHeading>
+      <div role="group" aria-label={t("Cakupan peluang")} className={s.switcher}>
+        <button type="button" aria-pressed={owner === "mine"} onClick={() => update({ owner: null, page: null })}>{t("Tanggung jawab saya")}</button>
+        <button type="button" aria-pressed={owner !== "mine"} onClick={() => update({ owner: "all", page: null })}>{t("Semua tim")}</button>
+      </div>
+      <form className={s.filters} onSubmit={(event) => {
+        event.preventDefault();
+        setQuery(searchInput.current?.value.trim() ?? "");
+        update({ page: null });
+      }}>
+        <label className={s.field + " " + s.search}>{t("Cari klien")}
+          <input ref={searchInput} type="search" maxLength={150} defaultValue={query} placeholder={t("Nama, perusahaan, atau email")} />
+        </label>
+        {owner !== "mine" && <OwnerFilter value={owner} members={data?.members || membership.data?.members || []} onChange={(value) => update({ owner: value === "mine" ? null : value, page: null })} />}
+        <label className={s.field}>{t("Tahap")}
+          <select value={view} onChange={(event) => update({ view: event.target.value === "all" ? null : event.target.value, page: null })}>
+            <option value="all">{t("Semua tahap")}</option>
+            <option value="active">{t("Peluang terbuka")}</option>
+            <option value="won">{t("Disepakati")}</option>
+            <option value="lost">{t("Tidak dilanjutkan")}</option>
+            <option value="handoff">{t("Serah terima")}</option>
+          </select>
+        </label>
+        <div className={s.actions}>
+          <button className={s.button}>{t("Cari")}</button>
+          {query && <button type="button" className={s.button} onClick={clearSearch}>{t("Hapus pencarian")}</button>}
+        </div>
+      </form>
+      <section className={s.panel} aria-labelledby="client-directory-title">
+        <h2 id="client-directory-title">{t("Daftar peluang")}</h2>
+        {error ? <div className={s.error} role="alert"><p>{t(error)}</p><button className={s.button} onClick={reload}>{t("Coba lagi")}</button></div>
+          : !data ? <ConsultantPending message="Memuat peluang…" />
+          : !data.records.length ? (
+            <div className={s.empty}>
+              <p>{t(owner === "mine" && !query && view === "all" ? "Belum ada peluang yang ditugaskan kepada Anda." : "Belum ada peluang yang cocok.")}</p>
+              {query ? <button type="button" className={s.button} onClick={clearSearch}>{t("Hapus pencarian")}</button>
+                : owner === "mine" ? <button type="button" className={s.button} onClick={() => update({ owner: "all", view: null, page: null })}>{t("Lihat peluang tim")}</button>
+                : view !== "all" ? <button type="button" className={s.button} onClick={() => update({ view: null, page: null })}>{t("Lihat semua tahap")}</button>
+                : owner !== "all" ? <button type="button" className={s.button} onClick={() => update({ owner: "all", page: null })}>{t("Lihat peluang tim")}</button>
+                : null}
+            </div>
+          ) : (
+            <table className={s.table + " " + s.clientTable} role="table" aria-labelledby="client-directory-title">
+              <thead role="rowgroup"><tr role="row">
+                <th scope="col" role="columnheader">{t("Klien")}</th>
+                <th scope="col" role="columnheader">{t("Tahap")}</th>
+                <th scope="col" role="columnheader">{t("Penanggung jawab")}</th>
+                <th scope="col" role="columnheader">{t("Langkah berikutnya")}</th>
+              </tr></thead>
+              <tbody role="rowgroup">
+                {data.records.map((record) => (
+                  <tr key={record.id} role="row">
+                    <td role="cell">
+                      <Link className={s.clientName} href={workUrl(record.id, undefined, returnTo)}>
+                        <strong>{record.company || record.name}</strong><ChevronRight size={15} aria-hidden="true" />
+                      </Link>
+                      <small>{record.company ? record.name : null}{record.company && record.origin ? " · " : null}{t(record.origin?.label || "")}</small>
+                    </td>
+                    <td role="cell"><span className={s.badge}>{t(stageLabels[record.stage] || record.stage)}</span></td>
+                    <td role="cell"><span className={s.mobileLabel}>{t("Penanggung jawab")}</span>{t(record.assigneeName)}{!record.canEdit && record.assigneeId && <small>{t("Hanya baca")}</small>}</td>
+                    <td role="cell"><span className={s.mobileLabel}>{t("Langkah berikutnya")}</span>{record.nextAction || <span className={s.muted}>{t("Belum dicatat")}</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        {data && <Pager translate={t} page={page} pageSize={data.pageSize} total={data.total} onChange={(next) => update({ page: next ? String(next) : null })} />}
+      </section>
     </>
   );
 }
 
 export function ConsultantAgenda() {
   const { t } = useConsultantLocale();
-  const [owner, setOwner] = useState("all"),
-    [kind, setKind] = useState("tasks"),
-    [page, setPage] = useState(0);
-  const directory = useConsultantData<ConsultantList>(consultantDirectoryUrl);
-  const { data, error, reload } = useConsultantData<{
-    records: (Task | Booking)[];
-    total: number;
-    pageSize: number;
-  }>(
-    "/api/konsultan/agenda?" +
-      new URLSearchParams({ owner, kind, page: String(page) }),
+  const params = useSearchParams();
+  const owner = readOwner(params, "mine");
+  const kind = params.get("kind") === "bookings" ? "bookings" : "tasks";
+  const page = readPage(params);
+  const directory = useConsultantData<ConsultantList>(consultantMyDirectoryUrl);
+  const { data, error, reload } = useConsultantData<{ records: (Task | Booking)[]; total: number; pageSize: number }>(
+    agendaUrl(owner, kind, page),
   );
+  const now = useConsultantClock();
+  const rows = data?.records ?? [];
+  const overdue = rows.filter((row) => "due_at" in row && Date.parse(row.due_at) <= now);
+  const remaining = rows.filter((row) => !("due_at" in row) || Date.parse(row.due_at) > now);
+  const returnTo = safeWorkReturn(agendaPath + "?" + params.toString());
+
+  useEffect(() => {
+    if (data && window.location.hash === "#overdue") {
+      document.getElementById("overdue")?.scrollIntoView({ block: "start" });
+    }
+  }, [data]);
+
+  function update(nextOwner = owner, nextKind = kind, nextPage = 0) {
+    const next = new URLSearchParams();
+    if (nextOwner !== "mine") next.set("owner", nextOwner);
+    if (nextKind !== "tasks") next.set("kind", nextKind);
+    if (nextPage) next.set("page", String(nextPage));
+    window.history.replaceState(null, "", next.size ? agendaPath + "?" + next : agendaPath);
+  }
+
   return (
     <>
-      <ConsultantHeading
-        title={t("Tugas & jadwal")}
-        description={t("Lihat agenda seluruh tim. Buka peluang untuk mengelola tugas yang menjadi tanggung jawab Anda.")}
-      >
-        <button className={s.button} onClick={reload}>
-          <RefreshCw size={16} aria-hidden="true" />{t("Perbarui")}</button>
+      <ConsultantHeading title={t("Tugas & jadwal")} description={t("Periksa tenggat dan status pertemuan. Buka item untuk melanjutkan pekerjaan terkait.")}>
+        <button type="button" className={s.button} onClick={reload}><RefreshCw size={16} aria-hidden="true" />{t("Perbarui")}</button>
       </ConsultantHeading>
-      <div className={s.filters}>
-        <OwnerFilter
-          value={owner}
-          members={directory.data?.members || []}
-          onChange={(v) => {
-            setOwner(v);
-            setPage(0);
-          }}
-        />
-        <label className={s.field}>
-          {t("Tampilkan")}
-          <select
-            value={kind}
-            onChange={(e) => {
-              setKind(e.target.value);
-              setPage(0);
-            }}
-          >
-            <option value="tasks">{t("Tugas terbuka")}</option>
-            <option value="bookings">{t("Jadwal konsultasi")}</option>
-          </select>
-        </label>
+      <div className={s.switcher} role="group" aria-label={t("Jenis agenda")}>
+        <button type="button" aria-pressed={kind === "tasks"} onClick={() => update(owner, "tasks")}><ListTodo size={17} aria-hidden="true" />{t("Tugas")}</button>
+        <button type="button" aria-pressed={kind === "bookings"} onClick={() => update(owner, "bookings")}><CalendarDays size={17} aria-hidden="true" />{t("Jadwal")}</button>
       </div>
-      <section className={s.panel}>
-        <h2>
-          <CalendarDays size={18} className="mr-2 inline" aria-hidden="true" />
-          {kind === "tasks" ? t("Tugas terbuka") : t("Jadwal konsultasi")}
-        </h2>
-        {error ? (
-          <p role="alert" className={s.error}>
-            {t(error)}
-          </p>
-        ) : data ? (
-          <>
-            <AgendaRows records={data.records} />
-            <Pager
-              translate={t}
-              page={page}
-              total={data.total}
-              pageSize={data.pageSize}
-              onChange={setPage}
-            />
-          </>
-        ) : (
-          <ConsultantPending message="Memuat agenda…" />
-        )}
+      <div className={s.filters}>
+        <OwnerFilter value={owner} members={directory.data?.members || []} onChange={(value) => update(value)} />
+      </div>
+      <section className={s.panel} id={kind === "tasks" ? "overdue" : undefined} aria-labelledby="agenda-list-title">
+        <h2 id="agenda-list-title">{t(kind === "tasks" ? "Tugas terbuka" : "Jadwal konsultasi")}</h2>
+        {error ? <div className={s.error} role="alert"><p>{t(error)}</p><button className={s.button} onClick={reload}>{t("Coba lagi")}</button></div>
+          : !data ? <ConsultantPending message="Memuat agenda…" />
+          : !rows.length ? (
+            <div className={s.empty}><p>{t(kind === "tasks" ? "Belum ada tugas terbuka pada pilihan ini." : "Belum ada jadwal konsultasi pada pilihan ini.")}</p>
+              {owner !== "all" && <button className={s.button} onClick={() => update("all")}>{t("Lihat agenda tim")}</button>}
+            </div>
+          ) : (
+            <>
+              {kind === "tasks" && overdue.length > 0 && <>
+                <h3 className={s.agendaGroupTitle}>{t("Lewat tenggat")}</h3>
+                <AgendaRows records={overdue} now={now} returnTo={returnTo} />
+              </>}
+              {remaining.length > 0 && <>
+                {kind === "tasks" && <h3 className={s.agendaGroupTitle}>{t("Tugas mendatang")}</h3>}
+                <AgendaRows records={remaining} now={now} returnTo={returnTo} />
+              </>}
+            </>
+          )}
+        {data && <Pager translate={t} page={page} total={data.total} pageSize={data.pageSize} onChange={(next) => update(owner, kind, next)} />}
       </section>
     </>
   );
@@ -434,6 +443,21 @@ export function ConsultantMaterials() {
         </div>
         <Link className={s.primary} href="/konsultan/materials/tutorial">
           <Play size={16} aria-hidden="true" /> {t("Lihat video")}</Link>
+      </section>
+      <section className={s.guidePanel} aria-labelledby="materials-guide-title">
+        <h2 id="materials-guide-title">{t("Panduan sesuai pekerjaan")}</h2>
+        <div className={s.guideLinks}>
+          {([
+            ["S01", "Mulai menggunakan portal", "Buka akses dari AMS dan cek penugasan."],
+            ["S03", "Persiapan meeting", "Pilih materi dan siapkan pembahasan dengan klien."],
+            ["S05", "Menyusun proposal", "Buat draf dan periksa isi usulan sebelum dikirim."],
+          ] as const).map(([episode, title, description]) => (
+            <Link key={episode} href={"/konsultan/materials/tutorial?episode=" + episode}>
+              <div><strong>{t(title)}</strong><span>{t(description)}</span></div>
+              <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+          ))}
+        </div>
       </section>
       {error && (
         <p role="alert" className={s.error}>

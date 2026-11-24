@@ -5,7 +5,7 @@ import { Check, CheckCircle2, LoaderCircle, RotateCcw, Save } from 'lucide-react
 import { apiFetch } from '@/lib/api-fetch';
 import { formatSpinCopy, SpinFieldControl, type SpinCopy } from '@/components/spin-discovery';
 import { spinErrors, spinLabel, type SpinAnswers, type SpinOption } from '@/lib/spin-form';
-import { hasMeetingAnswer, meetingEffective, meetingFields, meetingProgress, type MeetingContext, type MeetingChecklist } from '../_lib/spin-meeting';
+import { hasMeetingAnswer, meetingEffective, meetingFields, meetingGroup, meetingProgress, type MeetingContext, type MeetingChecklist } from '../_lib/spin-meeting';
 
 type Props = { id: string; onSaved: (checklist: MeetingChecklist) => void; onDirty: (dirty: boolean) => void; endpoint?: string; readOnly?: boolean; translate?: SpinCopy; locale?: 'id' | 'en' };
 const button = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B2C6B] disabled:opacity-50';
@@ -66,6 +66,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
   const [editing, setEditing] = useState<string[]>([]);
   const [error, setError] = useState(''), [conflict, setConflict] = useState(false), [saving, setSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [validationTarget, setValidationTarget] = useState<{ key: string }>();
   const revision = useRef(checklist.revision), lock = useRef(false), alive = useRef(true), edits = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const effective = meetingEffective(context, additions), progress = meetingProgress(definition, effective);
@@ -74,6 +75,13 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
   const fields = meetingFields(definition, effective, group).filter(field => !missingOnly || missingKeys.includes(field.key) || !hasMeetingAnswer(effective[field.key]) || !!errors[field.key]);
 
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  useEffect(() => {
+    if (!validationTarget) return;
+    const field = document.getElementById('meeting-field-' + id + '-' + validationTarget.key);
+    const focus = field?.querySelector<HTMLElement>('[aria-invalid="true"]') || heading.current;
+    focus?.focus({ preventScroll: true });
+    focus?.scrollIntoView?.({ block: 'center' });
+  }, [id, validationTarget]);
   useEffect(() => { onDirty(dirty || saving); return () => onDirty(false); }, [dirty, saving, onDirty]);
   useEffect(() => {
     if (!dirty && !saving) return;
@@ -85,10 +93,22 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
     if (lock.current || conflict) return;
     const targetStatus = finish ? 'completed' : status;
     if (finish) {
-      const issues = spinErrors(definition, meetingEffective(context, additions), true);
-      if (Object.keys(issues).length) { setShowErrors(true); setMissingOnly(true); setError('Lengkapi jawaban yang wajib sebelum menandai sesi selesai.'); return; }
+      const effectiveAnswers = meetingEffective(context, additions);
+      const issues = spinErrors(definition, effectiveAnswers, true);
+      if (Object.keys(issues).length) {
+        const first = meetingFields(definition, effectiveAnswers).find(field => issues[field.key]);
+        setShowErrors(true);
+        setMissingOnly(true);
+        setMissingKeys(Object.keys(issues));
+        setError('Lengkapi jawaban yang wajib sebelum menandai sesi selesai.');
+        if (first) {
+          setGroup(meetingGroup(definition, first));
+          setValidationTarget({ key: first.key });
+        }
+        return;
+      }
     } else if (Object.keys(spinErrors(definition, meetingEffective(context, additions), false)).length) return;
-    lock.current = true; setSaving(true); setError('');
+    lock.current = true; setSaving(true); setError(''); setValidationTarget(undefined);
     const editAtStart = edits.current;
     const payload = { revision: revision.current, answers: additions, notes, status: targetStatus };
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
@@ -118,6 +138,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
     if (missingOnly) setMissingKeys(current => current.includes(key) ? current : [...current, key]);
     setAdditions(current => ({ ...current, [key]: value })); setStatus('in_progress');
     setError(current => conflict ? current : '');
+    setValidationTarget(undefined);
   }
   function move(next: number) { setGroup(next); heading.current?.focus(); }
   const controls = <div className="flex flex-wrap items-center gap-2">
@@ -134,7 +155,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
       <label className="flex min-h-11 cursor-pointer items-center gap-2 text-slate-700"><input type="checkbox" checked={missingOnly} onChange={event => { setMissingKeys(meetingFields(definition, effective).filter(field => !hasMeetingAnswer(effective[field.key]) || errors[field.key]).map(field => field.key)); setMissingOnly(event.target.checked); }} className="size-4 accent-[#0B2C6B]" />{t('Hanya yang belum diisi')}</label>
     </div>
     <p role="status" aria-live="polite" className="min-h-6 text-xs leading-6 text-slate-600">{saving ? t('Menyimpan perubahan… Anda tetap dapat melanjutkan pengisian.') : dirty ? t('Ada perubahan yang belum tersimpan.') : updatedAt ? t('Tersimpan · {0}', [new Date(updatedAt).toLocaleString(locale === 'en' ? 'en-GB' : 'id-ID')]) : t('Jawaban tambahan akan tersimpan otomatis saat Anda mengisi.')}</p>
-    {error && <div role="alert" className="my-3 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800">{t(error)}{conflict ? <button type="button" onClick={() => { if (window.confirm(t('Muat versi terbaru? Perubahan lokal yang belum tersimpan akan diganti.'))) onReload(); }} className={button + ' underline'}>{t('Muat versi terbaru')}</button> : <button type="button" onClick={() => { setError(''); void save(); }} className={button + ' underline'}>{t('Coba simpan lagi')}</button>}</div>}
+    {error && <div role="alert" className="my-3 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800">{t(error)}{conflict ? <button type="button" onClick={() => { if (window.confirm(t('Muat versi terbaru? Perubahan lokal yang belum tersimpan akan diganti.'))) onReload(); }} className={button + ' underline'}>{t('Muat versi terbaru')}</button> : !validationTarget && <button type="button" onClick={() => { setError(''); void save(); }} className={button + ' underline'}>{t('Coba simpan lagi')}</button>}</div>}
     <div className="mt-4 grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)]">
       <nav aria-label={t('Bagian checklist meeting')} className="flex gap-1 overflow-x-auto lg:block lg:space-y-1">{definition.stages.map((label, index) => {
         const part = meetingProgress(definition, effective, index);
@@ -145,7 +166,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
         <div className="space-y-6">{fields.map(field => {
           const clientFilled = hasMeetingAnswer(original[field.key]), changed = additions[field.key] !== undefined && JSON.stringify(additions[field.key]) !== JSON.stringify(original[field.key]);
           const editable = !clientFilled || changed || editing.includes(field.key) || !!errors[field.key];
-          return <div key={field.key} className="border-b border-slate-100 pb-6">
+          return <div key={field.key} id={'meeting-field-' + id + '-' + field.key} className="border-b border-slate-100 pb-6">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><span className={'inline-flex items-center gap-1.5 text-xs font-semibold ' + (changed ? 'text-amber-800' : clientFilled ? 'text-emerald-800' : 'text-slate-600')}>{clientFilled && !changed && <Check size={13} aria-hidden="true" />}{t(changed ? 'Catatan saat meeting' : clientFilled ? 'Diisi klien' : 'Belum diisi')}</span>
               {clientFilled && !editable && <button type="button" aria-label={t('Klarifikasi jawaban: {0}', [field.label])} onClick={() => setEditing(current => [...current, field.key])} className="min-h-9 px-2 text-xs font-semibold text-[#0B2C6B] underline underline-offset-4">{t('Klarifikasi jawaban')}</button>}
               {changed && <button type="button" onClick={() => { edits.current += 1; setAdditions(current => { const next = { ...current }; delete next[field.key]; return next; }); setEditing(current => current.filter(key => key !== field.key)); setStatus('in_progress'); }} className="inline-flex min-h-9 items-center gap-1 px-2 text-xs font-semibold text-[#0B2C6B]"><RotateCcw size={12} aria-hidden="true" />{t(clientFilled ? 'Gunakan jawaban klien' : 'Kosongkan')}</button>}

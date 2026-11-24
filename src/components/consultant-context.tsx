@@ -24,7 +24,7 @@ const stageAdvice: Record<string, string> = {
 };
 
 export function ConsultantContext({ record }: { record: ConsultantLead }) {
-  const { t } = useConsultantLocale();
+  const { t, locale } = useConsultantLocale();
   const kind = record.origin?.kind || "unknown";
   const source = record.origin?.label || "Sumber belum tercatat";
   return (
@@ -32,15 +32,13 @@ export function ConsultantContext({ record }: { record: ConsultantLead }) {
       <dl>
         <div><dt>{t("Jalur masuk tercatat")}</dt><dd>{t(source)}</dd></div>
         <div><dt>{t("Tahap peluang")}</dt><dd>{t(stageLabels[record.stage] || "Tahap perlu dikonfirmasi")}</dd></div>
-        <div><dt>{t("Langkah berikutnya")}</dt><dd>{record.nextAction || t(stageAdvice[record.stage] || "Tinjau kebutuhan dan riwayat komunikasi klien.")}</dd>
-          {record.nextActionDueAt && <p className={s.muted}>{consultantDate(record.nextActionDueAt)}</p>}</div>
+        {record.nextAction && <div><dt>{t("Langkah yang dicatat")}</dt><dd>{record.nextAction}</dd>
+          {record.nextActionDueAt && <p className={s.muted}>{consultantDate(record.nextActionDueAt, locale)}</p>}</div>}
       </dl>
       <details>
         <summary>{t("Acuan penanganan klien")}</summary>
-        <p>{t(sourceAdvice[kind])}</p>
-        {record.origin?.status === "unavailable" && <p>{t("Gunakan Perbarui untuk mencoba memuat sumber kembali.")}</p>}
-        {record.nextAction && <p>{t(stageAdvice[record.stage])}</p>}
-        <p className={s.muted}>{t("Jalur masuk dan tahap peluang adalah dua informasi yang berbeda. Konfirmasikan hasil atau dokumen yang dirujuk bersama klien sebelum menyusun usulan.")}</p>
+        <p>{t(record.origin?.status === "unavailable" ? "Gunakan Perbarui untuk mencoba memuat sumber kembali." : sourceAdvice[kind])}</p>
+        <p>{t(stageAdvice[record.stage] || "Tinjau kebutuhan dan riwayat komunikasi klien.")}</p>
       </details>
     </section>
   );

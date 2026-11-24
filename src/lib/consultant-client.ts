@@ -85,6 +85,7 @@ export type Booking = {
   startTime?: string;
   start_time?: string;
   endTime?: string;
+  end_time?: string;
   status: string;
   meetingUrl?: string;
   meeting_url?: string;
@@ -210,9 +211,9 @@ export const messageLabels: Record<string, string> = {
   cancelled: "Dibatalkan",
   uncertain: "Pengiriman perlu diperiksa",
 };
-export const consultantDate = (v?: string | null) =>
+export const consultantDate = (v?: string | null, locale: "id" | "en" = "id") =>
   v
-    ? new Date(v).toLocaleString("id-ID", {
+    ? new Date(v).toLocaleString(locale === "en" ? "en-GB" : "id-ID", {
         dateStyle: "medium",
         timeStyle: "short",
       })

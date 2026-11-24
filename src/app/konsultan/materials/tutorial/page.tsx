@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { Suspense } from "react";
+import { ConsultantPending } from "@/components/consultant-data";
 import { ConsultantHeading } from "@/components/consultant-overview";
 import { ConsultantTutorialLibrary } from "@/components/consultant-tutorial-library";
 import { useConsultantLocale } from "@/components/consultant-language";
@@ -18,7 +20,7 @@ export default function ConsultantTutorialPage() {
         title={t("Video tutorial")}
         description={t("Pilih episode untuk mempelajari fitur portal atau mengikuti alur kerja konsultasi.")}
       />
-      <ConsultantTutorialLibrary />
+      <Suspense fallback={<ConsultantPending />}><ConsultantTutorialLibrary /></Suspense>
     </>
   );
 }

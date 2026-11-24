@@ -1,4 +1,6 @@
-import { ConsultantOverview } from "@/components/consultant-overview";
+import { Suspense } from "react";
+import { ConsultantPending } from "@/components/consultant-data";
+import { ConsultantClients } from "@/components/consultant-overview";
 export default function ConsultantClientsPage() {
-  return <ConsultantOverview clients />;
+  return <Suspense fallback={<ConsultantPending />}><ConsultantClients /></Suspense>;
 }

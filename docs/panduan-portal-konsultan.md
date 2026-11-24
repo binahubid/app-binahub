@@ -16,22 +16,23 @@ Panduan ini digunakan admin dan konsultan sejak jadwal masuk sampai serah terima
 
 ## 3. Siapkan materi dan pandu meeting
 
-1. Di portal, buka **Materi** dan pilih **Company Profile BinaHub** atau **Product Knowledge BinaHub**. Pilih **Baca di web** untuk membuka PDF, atau **Unduh PDF** untuk menyimpannya. Admin dapat memperbarui dokumen dari **Tim Konsultan → Materi** di App BinaHub dengan PDF berukuran maksimal 4 MB.
-2. Buka **Klien & peluang → Tanggung jawab saya**, lalu pilih peluang. Gunakan **Semua** untuk melihat pekerjaan tim. Buka **Kebutuhan & meeting** untuk meninjau checklist.
-3. Jika klien telah mengisi Rekomendasi Program, pilih pengisian yang sesuai dan tekan **Hubungkan jawaban**. Tinjau jawaban klien dan catat koreksi sebagai klarifikasi.
-4. Saat meeting, bahas kondisi tim, tantangan, dampak terhadap pekerjaan, dan hasil yang ingin dicapai. Tanyakan jumlah peserta, durasi, lokasi, dan pilihan indoor atau outdoor. Jika klien tertarik pada BinaPlay, gali perilaku atau dinamika tim yang ingin dilatih.
-5. Bacakan kembali kebutuhan dan sepakati langkah berikutnya. Pilih **Simpan sesi** jika masih ada informasi yang perlu diperoleh. Setelah isian wajib lengkap, pilih **Tandai selesai** agar checklist bisa digunakan untuk menyusun proposal.
+1. Di **Beranda**, mulai dari **Prioritas saya**. Panel ini mengarahkan Anda ke tugas, jadwal terdekat, atau peluang yang bisa dilanjutkan. Untuk melihat daftar jadwal, pilih **Tugas & jadwal → Jadwal**. Buka jadwal yang bersangkutan untuk melihat konfirmasi dan tautan meeting.
+2. Buka **Materi → Panduan sesuai pekerjaan → Persiapan meeting** untuk video terkait. Pada bagian **Dokumen**, pilih **Baca di web** atau **Unduh PDF** untuk Company Profile atau Product Knowledge. Admin dapat memperbarui dokumen dari **Tim Konsultan → Materi** di App BinaHub dengan PDF berukuran maksimal 4 MB.
+3. Buka **Klien & peluang → Tanggung jawab saya**, lalu pilih peluang. Gunakan **Semua tim** untuk membaca pekerjaan tim. Di detail, baca **Jalur masuk tercatat** dan **Tahap peluang** untuk memahami konteks klien. Jika sumber belum tercatat, konfirmasikan cara klien mengenal BinaHub saat komunikasi pertama. Pilih **Lengkapi checklist** pada **Langkah berikutnya**, atau buka **Kebutuhan & meeting**.
+4. Jika klien telah mengisi Rekomendasi Program, pilih pengisian yang sesuai dan tekan **Hubungkan jawaban**. Tinjau jawaban klien dan catat koreksi sebagai klarifikasi.
+5. Saat meeting, bahas kondisi tim, tantangan, dampak terhadap pekerjaan, dan hasil yang ingin dicapai. Tanyakan jumlah peserta, durasi, lokasi, dan pilihan indoor atau outdoor. Jika klien tertarik pada BinaPlay, gali perilaku atau dinamika tim yang ingin dilatih.
+6. Bacakan kembali kebutuhan dan sepakati langkah berikutnya. Pilih **Simpan sesi** jika masih ada informasi yang perlu diperoleh. Pilih **Tandai selesai** saat isian wajib lengkap. Jika masih ada yang kosong, portal membawa Anda ke pertanyaan pertama yang perlu dilengkapi.
 
 ## 4. Buat dan tinjau proposal
 
-1. Buka tab **Proposal**. Pada **Susun proposal**, pilih program yang relevan, durasi, jumlah peserta, format, dan lokasi. Pilih **Buat draf proposal**.
-2. Buka revisi yang baru dibuat dan pilih **Unduh PDF**. Periksa nama organisasi, kebutuhan, program, durasi, jumlah peserta, lokasi, ruang lingkup, dan biaya sebelum menyiapkan email.
+1. Pilih **Susun proposal** setelah checklist selesai. Pilih program yang relevan, durasi, jumlah peserta, format, dan lokasi. Pilih **Buat draf proposal**.
+2. Revisi baru dibuka otomatis pada **Riwayat proposal**. Pilih **Unduh PDF**. Periksa nama organisasi, kebutuhan, program, durasi, jumlah peserta, lokasi, ruang lingkup, dan biaya sebelum menyiapkan email.
 3. Untuk program dengan tarif harian, estimasi dasar adalah tarif satu hari dikali jumlah hari. Pilihan indoor dan outdoor memakai tarif dasar yang sama. Jika tarif masih perlu dibahas, angka yang belum tersedia tampil sebagai tanda pisah. Konfirmasikan rincian tersebut sebelum menyampaikan komitmen biaya.
-4. Jika kebutuhan berubah, perbarui checklist dan buat revisi proposal berdasarkan checklist yang terbaru. Gunakan revisi yang sudah ditinjau sebagai lampiran.
+4. Jika kebutuhan berubah, perbarui checklist dan tandai selesai kembali. Pilih **Buat revisi** saat portal menampilkan **Proposal perlu revisi**. Gunakan revisi yang sudah ditinjau sebagai lampiran.
 
 ## 5. Kirim dan tindak lanjuti
 
-1. Buka **Tindak lanjut → Siapkan email**. Pilih **Pengiriman proposal** pada **Jenis email**, pilih revisi di **Lampiran proposal**, lalu isi subjek dan pesan.
+1. Pada revisi yang sudah ditinjau, pilih **Siapkan pengiriman proposal**. Portal membuka **Tindak lanjut → Siapkan email** dengan jenis email dan revisinya sudah dipilih. Isi subjek dan pesan.
 2. Isi **Jadwal kirim** jika email perlu dikirim pada waktu tertentu. Kosongkan jika ingin diproses pada giliran berikutnya. Pilih **Tinjau pengiriman**, periksa tujuan, nama konsultan, jadwal, serta lampiran, lalu pilih **Antrekan email**. Nama pengirim mengikuti konsultan yang ditugaskan dan balasan diarahkan ke email kerjanya.
 3. Pantau **Riwayat pengiriman**. **Menunggu jadwal** berarti email masih dalam antrean. **Diterima penyedia email** berarti layanan email sudah menerima pengiriman. Untuk status **Pengiriman perlu diperiksa**, cocokkan dengan riwayat penyedia sebelum mengirim ulang.
 4. Untuk pengingat berikutnya, pilih jenis email **Tindak lanjut** dan atur waktunya. Catat balasan klien di **Riwayat aktivitas** agar tindak lanjut yang masih terjadwal dapat dibatalkan.
@@ -42,7 +43,7 @@ Contoh pesan setelah meeting
 
 ## 6. Serahkan program yang sudah disepakati
 
-1. Setelah proposal terkirim dan klien menyepakati program, buka **Ringkasan → Serah terima ke admin**. Catat program dan revisi yang disepakati, jumlah peserta, waktu, lokasi, dan hal yang masih perlu ditindaklanjuti. Pilih **Serahkan ke admin** dan konfirmasikan.
+1. Setelah proposal terkirim dan klien menyepakati program, pilih **Klien sudah setuju?** pada **Langkah berikutnya**. Catat program dan revisi yang disepakati, jumlah peserta, waktu, lokasi, dan hal yang masih perlu ditindaklanjuti. Pilih **Tinjau serah terima**, lalu **Serahkan ke admin**.
 2. Admin membuka **Tim Konsultan → Serah terima**, membaca kesepakatan, lalu melanjutkan pekerjaan dari **Klien & Pelaksanaan**. Status peluang menjadi **Disepakati** dan email yang masih terjadwal pada peluang tersebut dibatalkan.
 
 ## Rilis dan pengujian

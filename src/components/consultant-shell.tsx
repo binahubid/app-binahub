@@ -19,7 +19,8 @@ import { supabase } from "@/lib/supabase";
 import s from "./consultant.module.css";
 import { ConsultantLanguageSelect, useConsultantLocale } from "@/components/consultant-language";
 import {
-  ConsultantPending, ConsultantReads, consultantAgendaUrl, consultantDirectoryUrl,
+  ConsultantDirectorySearch, ConsultantPending, ConsultantReads, consultantAgendaUrl, consultantDirectoryUrl,
+  consultantMyDirectoryUrl,
   consultantTutorialUrl, createConsultantReads,
 } from "./consultant-data";
 const Session = createContext<ConsultantSession | null>(null);
@@ -36,9 +37,9 @@ const nav = [
 ];
 const amsOrigin = "https://ams.binahub.id";
 const pageReads: Record<string, readonly string[]> = {
-  "/konsultan": [consultantDirectoryUrl],
-  "/konsultan/clients": [consultantDirectoryUrl],
-  "/konsultan/tasks": [consultantDirectoryUrl, consultantAgendaUrl],
+  "/konsultan": [consultantMyDirectoryUrl, consultantDirectoryUrl],
+  "/konsultan/clients": [consultantMyDirectoryUrl],
+  "/konsultan/tasks": [consultantMyDirectoryUrl, consultantAgendaUrl],
   "/konsultan/materials/tutorial": [consultantTutorialUrl],
 };
 
@@ -48,6 +49,7 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
     [error, setError] = useState(""),
     [retry, setRetry] = useState(0);
   const [reads] = useState(createConsultantReads);
+  const [search, setSearch] = useState("");
   const [returning, setReturning] = useState(false);
   const pathname = usePathname(),
     router = useRouter();
@@ -114,6 +116,7 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
       if (event !== "SIGNED_OUT" && (!authUser || !next || next.user.id === authUser)) return;
       controller.abort();
       reads.clear();
+      setSearch("");
       setSession(null);
       if (event === "SIGNED_OUT") signIn();
       else setRetry((value) => value + 1);
@@ -164,6 +167,7 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
   return (
     <Session.Provider value={session}>
       <ConsultantReads.Provider value={reads}>
+      <ConsultantDirectorySearch.Provider value={[search, setSearch]}>
       <div className={s.shell} lang={locale}>
         <link rel="preconnect" href={amsOrigin} />
         <aside className={s.sidebar}>
@@ -241,6 +245,7 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
+      </ConsultantDirectorySearch.Provider>
       </ConsultantReads.Provider>
     </Session.Provider>
   );

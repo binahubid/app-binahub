@@ -49,8 +49,9 @@ const definition = {
       type: "text",
       required: false,
     },
+    { key: "challenge", questionId: "Q04", label: "Tantangan utama", type: "text", maxLength: 500, required: true },
   ],
-  screens: [["Q01"]],
+  screens: [["Q01"], [], [], ["Q04"]],
 };
 const members = [
   { id: alice, name: "Alicia Konsultan", active: true },
@@ -66,9 +67,10 @@ const record = {
   assigneeId: alice,
   assigneeName: members[0].name,
   version: 1,
-  checklistStatus: "completed",
+  checklistStatus: "in_progress",
   canEdit: true,
   handoff: null,
+  origin: { kind: "recommendation", label: "Rekomendasi Program", status: "recorded" },
 };
 const readOnly = {
   ...record,
@@ -76,6 +78,7 @@ const readOnly = {
   company: "PT Agenda Tim",
   assigneeId: bob,
   assigneeName: members[1].name,
+  origin: { kind: "assessment_team", label: "Diagnosis Tim / Organisasi", status: "recorded" },
   canEdit: false,
 };
 const catalog = [
@@ -123,6 +126,7 @@ try {
     const page = await context.newPage();
     let asAdmin = false, availabilityFailure = false;
     let sessionChecks = 0, defaultReads = 0, firstSessionReady = false, readStartedInParallel = false;
+    let personalReads = 0, checklistRevision = 1, answers = {};
     const requests = [];
     const pageErrors = [],
       writes = [];
@@ -130,6 +134,12 @@ try {
       proposals = [],
       messages = [],
       tasks = [];
+    const bookings = [
+      { id: "scheduled-1", leadId: lead, title: "Konfirmasi waktu konsultasi", company: record.company,
+        assigneeName: members[0].name, startTime: date, endTime: "2099-01-01T11:00:00.000Z", status: "requested", meetingUrl: "https://meeting.example.invalid/waiting" },
+      { id: "scheduled-2", leadId: lead, title: "Jadwal konsultasi sebelumnya", company: record.company,
+        startTime: "2020-11-16T03:00:00.000Z", endTime: "2020-11-16T04:00:00.000Z", status: "confirmed", meetingUrl: "https://meeting.example.invalid/past" },
+    ];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     page.on("request", (request) => {
       const url = new URL(request.url());
@@ -191,6 +201,7 @@ try {
           if (!firstSessionReady) readStartedInParallel = true;
         }
         const owner = url.searchParams.get("owner");
+        if (owner === "mine" && !url.searchParams.get("search")) personalReads++;
         const records =
           owner === "mine"
             ? [local]
@@ -211,11 +222,13 @@ try {
             handoffs: 0,
           },
           tasks,
-          bookings: [],
+          bookings: bookings.slice(0, 1),
         });
       }
-      if (path === "/api/konsultan/agenda")
-        return reply({ records: tasks, total: tasks.length, pageSize: 20 });
+      if (path === "/api/konsultan/agenda") {
+        const diary = url.searchParams.get("kind") === "bookings" ? bookings : tasks.filter(item => item.status === "open");
+        return reply({ records: diary, total: diary.length, pageSize: 20 });
+      }
       const read = path.includes(peerLead),
         current = read ? readOnly : local;
       if (method !== "GET") {
@@ -227,7 +240,7 @@ try {
             id: proposal,
             revision: 1,
             status: "draft",
-            checklist_revision: 1,
+            checklist_revision: checklistRevision,
             created_at: date,
             snapshot: {
               programs: [{ ...catalog[0], total: 50000000 }],
@@ -267,6 +280,15 @@ try {
           });
         if (body.action === "complete_task") tasks[0].status = "completed";
         if (body.action === "cancel_message") messages[0].status = "cancelled";
+        if (body.action === "handoff") {
+          local.stage = "won";
+          local.handoff = { note: body.note, requestedAt: date };
+        }
+        if (path.endsWith("/meeting")) {
+          current.checklistStatus = body.status;
+          answers = body.answers;
+          checklistRevision++;
+        }
         current.version++;
       }
       if (path.endsWith("/meeting"))
@@ -278,9 +300,9 @@ try {
               company: current.company,
               email: current.email,
             },
-            status: "completed",
+            status: current.checklistStatus,
             revision: current.version,
-            answers: {},
+            answers: read ? {} : answers,
             notes: "Catatan uji",
             updated_at: date,
           },
@@ -298,7 +320,7 @@ try {
         record: current,
         workspace: {
           version: current.version,
-          checklist_revision: 1,
+          checklist_revision: checklistRevision,
           source_id: null,
         },
         tasks: read ? [] : tasks,
@@ -307,7 +329,7 @@ try {
         sources: [],
         activities: [],
         activityTotal: 0,
-        bookings: [],
+        bookings: read ? [] : bookings,
       });
     });
 
@@ -320,18 +342,21 @@ try {
       console.error("Portal text", (await page.locator("body").innerText()).slice(0, 1500));
       throw error;
     }
-    await page
-      .getByRole("link", { name: "PT Uji Konsultasi", exact: true })
-      .waitFor();
+    const mine = page.getByRole("link", { name: "PT Uji Konsultasi", exact: true });
+    const peer = page.getByRole("link", { name: "PT Agenda Tim", exact: true });
+    await page.getByRole("region", { name: "Prioritas saya" }).getByRole("link", { name: "Lanjutkan peluang" }).waitFor();
+    await page.getByRole("region", { name: "Ringkasan tim" }).getByRole("link", { name: "Lihat semua peluang" }).waitFor();
     const portalNav = page.getByRole("navigation", { name: "Portal konsultan" });
     await portalNav.getByRole("link", { name: "Klien & peluang" }).click();
     await page.getByRole("heading", { name: "Klien & peluang" }).waitFor();
-    await page.getByRole("link", { name: "PT Uji Konsultasi", exact: true }).waitFor();
+    await mine.waitFor();
+    assert.equal(await peer.count(), 0);
     await portalNav.getByRole("link", { name: "Beranda", exact: true }).click();
     await page.getByRole("heading", { name: "Beranda konsultan" }).waitFor();
-    await page.getByRole("link", { name: "PT Uji Konsultasi", exact: true }).waitFor();
+    await page.getByRole("link", { name: "Lanjutkan peluang" }).waitFor();
     assert.equal(sessionChecks, 1, "Switching portal pages must reuse the verified shell session");
-    assert.equal(defaultReads, 1, "Home and Clients must share the default list within the session");
+    assert.equal(defaultReads, 1, "Do not reload the team summary during navigation");
+    assert.equal(personalReads, 1, "Home and Clients must share the personal list within the session");
     assert(readStartedInParallel, "The initial data request must not wait for the shell access check");
     assert(
       await page.evaluate(
@@ -340,10 +365,18 @@ try {
     );
     await page.screenshot({ path: `tmp/consultant-dashboard-${width}.png` });
     checks++;
-    await page
-      .getByRole("link", { name: "PT Agenda Tim", exact: true })
-      .click();
+    await page.getByRole("link", { name: "Lihat semua peluang" }).click();
+    await peer.waitFor();
+    await page.getByLabel("Penanggung jawab").selectOption(bob);
+    await page.getByRole("searchbox", { name: "Cari klien" }).fill("Agenda Tim");
+    await Promise.all([
+      page.waitForRequest(request => new URL(request.url()).searchParams.get("search") === "Agenda Tim"),
+      page.getByRole("button", { name: "Cari", exact: true }).click(),
+    ]);
+    await peer.click();
     await page.getByRole("heading", { name: "PT Agenda Tim" }).waitFor();
+    await page.getByText("Diagnosis Tim / Organisasi", { exact: true }).waitFor();
+    await page.getByRole("heading", { name: "Peluang tim · Hanya baca" }).waitFor();
     await page.getByRole("button", { name: "Kebutuhan & meeting" }).click();
     await page.getByText("Catatan uji", { exact: true }).waitFor();
     assert.equal(
@@ -365,25 +398,45 @@ try {
     assert.equal(writes.length, 0);
     checks++;
 
-    await page
-      .getByRole("navigation", { name: "Portal konsultan" })
-      .getByRole("link", { name: "Klien & peluang" })
-      .click();
-    await page.getByLabel("Penanggung jawab").selectOption("mine");
-    await page
-      .getByRole("link", { name: "PT Uji Konsultasi", exact: true })
-      .waitFor();
-    assert.equal(
-      await page
-        .getByRole("link", { name: "PT Agenda Tim", exact: true })
-        .count(),
-      0,
-    );
+    await page.locator(`a[href="/konsultan/clients?owner=${bob}"]`).click();
+    await peer.waitFor();
+    assert.equal(await page.getByLabel("Penanggung jawab").inputValue(), bob);
+    assert.equal(await page.getByRole("searchbox", { name: "Cari klien" }).inputValue(), "Agenda Tim");
+    assert(!page.url().includes("Agenda"), "Keep search text out of the browser URL");
+    await page.getByRole("button", { name: "Hapus pencarian" }).click();
+    await page.getByRole("button", { name: "Tanggung jawab saya" }).click();
+    await mine.waitFor();
+    assert.equal(await peer.count(), 0);
     checks++;
-    await page
-      .getByRole("link", { name: "PT Uji Konsultasi", exact: true })
-      .click();
+    if (width === 1440) local.stage = "identified";
+    await mine.click();
+    const detailNav = page.getByRole("navigation", { name: "Detail peluang" });
+    await detailNav.waitFor();
+    assert.equal(await detailNav.getByRole("button").count(), 4);
+    if (width === 1440) {
+      await page.getByRole("heading", { name: "Peluang baru" }).waitFor();
+      await page.getByRole("button", { name: "Tinjau kontak klien" }).click();
+      await page.locator("#work-contact").getByRole("button", { name: "Siapkan email" }).waitFor();
+      local.stage = "consultation";
+      await page.getByRole("button", { name: "Perbarui", exact: true }).click();
+      checks++;
+    }
+    await page.getByRole("heading", { name: "Checklist belum selesai" }).waitFor();
+    await page.screenshot({ path: `tmp/consultant-next-step-${width}.png` });
     await page.getByRole("button", { name: "Proposal", exact: true }).click();
+    await page.getByText("Selesaikan checklist kebutuhan terlebih dahulu.").waitFor();
+    assert.equal(await page.getByRole("button", { name: "Buat draf proposal" }).count(), 0);
+    await page.getByRole("button", { name: "Buka checklist kebutuhan" }).click();
+    await page.getByRole("button", { name: "Tandai selesai" }).first().click();
+    await page.getByRole("alert").getByText("Lengkapi jawaban yang wajib sebelum menandai sesi selesai.").waitFor();
+    const question = page.getByRole("textbox", { name: "Tantangan utama" });
+    await question.waitFor();
+    assert(await question.evaluate(element => element === document.activeElement));
+    assert.equal(writes.length, 0);
+    await question.fill("Koordinasi antartim perlu lebih konsisten.");
+    await page.getByRole("button", { name: "Tandai selesai" }).first().click();
+    await page.locator("#work-checklist").getByRole("button", { name: "Susun proposal" }).click();
+    checks++;
     await page.getByRole("checkbox", { name: /Program Kepemimpinan/ }).check();
     await page.getByLabel("Durasi (hari)").fill("2");
     await page.getByLabel("Jumlah peserta").fill("20");
@@ -393,7 +446,10 @@ try {
     await page
       .getByText("Draf proposal tersimpan. Tinjau PDF sebelum mengirim.")
       .waitFor();
-    await page.getByText(/Revisi 1 · Draf/).click();
+    const proposalReview = page.locator(`details#proposal-${proposal}`);
+    await proposalReview.getByText(/Revisi 1 · Draf siap ditinjau/).waitFor();
+    await proposalReview.getByRole("button", { name: "Siapkan pengiriman proposal" }).waitFor();
+    assert.equal(await proposalReview.evaluate(element => element.open), true);
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: "Unduh PDF" }).click();
     assert.equal(
@@ -401,9 +457,11 @@ try {
       "BinaHub-Proposal-r1.pdf",
     );
     checks++;
-    await page
-      .getByRole("button", { name: "Tindak lanjut", exact: true })
-      .click();
+    await proposalReview.getByRole("button", { name: "Siapkan pengiriman proposal" }).click();
+    const email = page.locator("#work-email");
+    await email.getByRole("heading", { name: "Siapkan email" }).waitFor();
+    assert.equal(await email.getByLabel("Jenis email").inputValue(), "proposal");
+    assert.equal(await email.getByLabel("Lampiran proposal").inputValue(), proposal);
     await page.getByLabel("Tugas baru").fill("Konfirmasi jadwal klien");
     await page.getByLabel("Tenggat").fill("2099-01-03T09:00");
     await page.getByRole("button", { name: "Tambah tugas" }).click();
@@ -413,8 +471,6 @@ try {
     await page.getByRole("button", { name: "Tandai selesai" }).click();
     await page.getByText("Tugas ditandai selesai.").waitFor();
     checks++;
-    await page.getByLabel("Jenis email").selectOption("proposal");
-    await page.getByLabel("Lampiran proposal").selectOption(proposal);
     await page.getByLabel("Subjek").fill("Proposal konsultasi");
     await page.getByLabel("Isi pesan").fill("Ini pesan pengujian browser.");
     await page.getByRole("button", { name: "Tinjau pengiriman" }).click();
@@ -423,6 +479,8 @@ try {
       .getByText(/client@example.invalid/)
       .waitFor();
     await page.getByRole("button", { name: "Antrekan email" }).click();
+    await page.locator("#work-delivery").getByText("Email masuk antrean. Pantau statusnya di riwayat pengiriman.").waitFor();
+    assert.equal(writes.find(write => write.kind === "proposal").proposalId, proposal);
     await page.getByText("Proposal konsultasi · Menunggu jadwal").click();
     await page.getByRole("button", { name: "Batalkan pengiriman" }).click();
     await page.getByText("Proposal konsultasi · Dibatalkan").waitFor();
@@ -431,6 +489,40 @@ try {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     );
+    checks++;
+
+    checklistRevision++;
+    local.version++;
+    await page.getByRole("button", { name: "Perbarui", exact: true }).click();
+    const nextStep = page.getByRole("region", { name: "Langkah berikutnya" });
+    await nextStep.getByRole("heading", { name: "Proposal perlu revisi" }).waitFor();
+    await page.getByRole("button", { name: "Siapkan email", exact: true }).click();
+    assert(await email.getByLabel("Lampiran proposal").isDisabled());
+    await nextStep.getByRole("button", { name: "Buat revisi" }).click();
+    await page.getByText(/Revisi 1 · Draf · Perlu revisi/).waitFor();
+    assert.equal(await proposalReview.getByRole("button", { name: "Siapkan pengiriman proposal" }).count(), 0);
+    checks++;
+
+    proposals[0].status = "sent";
+    proposals[0].checklist_revision = checklistRevision;
+    messages[0].status = "accepted";
+    await page.getByRole("button", { name: "Perbarui", exact: true }).click();
+    await nextStep.getByRole("heading", { name: "Proposal sudah dikirim" }).waitFor();
+    await nextStep.getByRole("button", { name: "Klien sudah setuju?" }).click();
+    await page.getByLabel("Kesepakatan klien dan arahan pelaksanaan").fill("Klien menyepakati pelaksanaan di Jakarta.");
+    await page.getByRole("button", { name: "Tinjau serah terima" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Serahkan ke admin" }).click();
+    await nextStep.getByRole("heading", { name: "Serah terima tercatat" }).waitFor();
+    checks++;
+
+    await portalNav.getByRole("link", { name: "Tugas & jadwal" }).click();
+    await page.getByRole("button", { name: "Jadwal", exact: true }).click();
+    await page.getByText("Menunggu konfirmasi", { exact: true }).waitFor();
+    await page.getByRole("link", { name: "Konfirmasi waktu konsultasi" }).click();
+    const schedule = page.locator("#work-schedule");
+    await schedule.getByText("Tunggu konfirmasi jadwal sebelum membuka meeting.").waitFor();
+    await schedule.getByText("Waktu pertemuan sudah lewat.").waitFor();
+    assert.equal(await schedule.getByRole("link", { name: "Buka meeting" }).count(), 0);
     checks++;
 
     await page.goto(`${origin}/konsultan/materials`);

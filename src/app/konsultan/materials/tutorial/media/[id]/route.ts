@@ -1,21 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { readTutorialCatalog, TutorialCatalogError, tutorialFailure, tutorialPrivateHeaders } from "@/lib/consultant-tutorial-catalog-server";
-import { isTutorialVersion, tutorialVideo } from "@/lib/consultant-tutorials";
-
-const chunkSize = 2 * 1024 * 1024;
-const maxFileSize = 50 * 1024 * 1024;
-
-function boundedRange(value: string) {
-  const match = /^bytes=(\d*)-(\d*)$/.exec(value);
-  if (!match || (!match[1] && !match[2])) return null;
-  if (!match[1]) {
-    const length = Number(match[2]);
-    return Number.isSafeInteger(length) && length > 0 ? `bytes=-${Math.min(length, chunkSize)}` : null;
-  }
-  const start = Number(match[1]), end = match[2] ? Number(match[2]) : start + chunkSize - 1;
-  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start >= maxFileSize || end < start) return null;
-  return `bytes=${start}-${Math.min(end, start + chunkSize - 1)}`;
-}
+import { TutorialCatalogError, tutorialFailure, tutorialPrivateHeaders } from "@/lib/consultant-tutorial-catalog-server";
+import { publicApiUrl } from "@/lib/public-api";
+import { isTutorialVersion } from "@/lib/consultant-tutorials";
 
 async function media(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -25,54 +11,33 @@ async function media(request: Request, context: { params: Promise<{ id: string }
       const { data } = await supabase.auth.getSession();
       if (data.session?.access_token) authorization = `Bearer ${data.session.access_token}`;
     }
-    const catalog = await readTutorialCatalog(authorization);
+    if (!authorization) throw new TutorialCatalogError(401);
     const { id } = await context.params;
-    const episode = catalog.find((row) => row.id === id);
     const version = new URL(request.url).searchParams.get("version") ?? "id";
-    if (!episode || !isTutorialVersion(version)) throw new TutorialCatalogError(404);
-    const video = tutorialVideo(episode, version);
-    if (!video) throw new TutorialCatalogError(404);
-    const requestedRange = request.headers.get("Range");
-    const range = request.method === "HEAD" ? "bytes=0-0" : requestedRange ? boundedRange(requestedRange) : undefined;
-    if (range === null) return new Response(null, { status: 416, headers: tutorialPrivateHeaders });
-    const url = new URL("https://drive.usercontent.google.com/download");
-    url.searchParams.set("id", video.drive.fileId);
-    url.searchParams.set("export", "download");
-    url.searchParams.set("confirm", "t");
-    if (video.drive.resourceKey) url.searchParams.set("resourcekey", video.drive.resourceKey);
-    const upstream = await fetch(url, {
-      headers: { Accept: "video/mp4", ...(range ? { Range: range } : {}) },
-      signal: AbortSignal.any([request.signal, AbortSignal.timeout(45_000)]),
+    if (!/^[FS]\d{2}$/.test(id) || !isTutorialVersion(version)) throw new TutorialCatalogError(404);
+
+    const range = request.headers.get("Range");
+    const response = await fetch(publicApiUrl(`/api/konsultan/materials/media/${id}?version=${version}`), {
+      method: request.method,
+      headers: { Authorization: authorization, ...(range ? { Range: range } : {}) },
+      signal: request.signal,
       cache: "no-store",
       redirect: "error",
     });
-    if (upstream.status === 416) {
-      await upstream.body?.cancel();
-      return new Response(null, { status: 416, headers: tutorialPrivateHeaders });
+    if (response.status === 416) return new Response(null, { status: 416, headers: tutorialPrivateHeaders });
+    if (![200, 206].includes(response.status) || !response.headers.get("Content-Type")?.startsWith("video/mp4")) {
+      await response.body?.cancel();
+      throw new TutorialCatalogError([401, 403, 404].includes(response.status) ? response.status : 503);
     }
-    const contentRange = upstream.headers.get("Content-Range");
-    const rangeMatch = contentRange && /^bytes (\d+)-(\d+)\/(\d+)$/.exec(contentRange);
-    const length = Number(upstream.headers.get("Content-Length"));
-    const total = rangeMatch ? Number(rangeMatch[3]) : length;
-    const validPartial = rangeMatch && Number(rangeMatch[2]) < total
-      && Number(rangeMatch[2]) - Number(rangeMatch[1]) + 1 === length
-      && length > 0 && length <= chunkSize;
-    if (![200, 206].includes(upstream.status) || !upstream.headers.get("Content-Type")?.startsWith("video/mp4")
-      || !Number.isSafeInteger(total) || total <= 0 || total > maxFileSize || !upstream.body
-      || (range && upstream.status !== 206) || (upstream.status === 206 && !validPartial)) {
-      await upstream.body?.cancel();
-      throw new TutorialCatalogError(503);
+
+    const headers = new Headers({ ...tutorialPrivateHeaders, "Content-Type": "video/mp4",
+      "Accept-Ranges": "bytes", "Content-Disposition": "inline", "X-Content-Type-Options": "nosniff",
+      "Cross-Origin-Resource-Policy": "same-origin", Vary: "Cookie, Authorization" });
+    for (const name of ["Content-Length", "Content-Range"]) {
+      const value = response.headers.get(name);
+      if (value) headers.set(name, value);
     }
-    const headers = new Headers({ ...tutorialPrivateHeaders, "Content-Type": "video/mp4", "Accept-Ranges": "bytes",
-      "Content-Disposition": "inline", "X-Content-Type-Options": "nosniff", "Cross-Origin-Resource-Policy": "same-origin", Vary: "Cookie, Authorization" });
-    if (request.method === "HEAD") {
-      headers.set("Content-Length", String(total));
-      await upstream.body.cancel();
-      return new Response(null, { headers });
-    }
-    if (contentRange && rangeMatch) headers.set("Content-Range", contentRange);
-    if (Number.isSafeInteger(length) && length > 0) headers.set("Content-Length", String(length));
-    return new Response(upstream.body, { status: upstream.status, headers });
+    return new Response(response.body, { status: response.status, headers });
   } catch (error) { return tutorialFailure(error); }
 }
 

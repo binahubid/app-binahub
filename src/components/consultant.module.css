@@ -226,6 +226,8 @@
 }
 .readerText :global(.markedContent) { display: contents; }
 .readerText ::selection { background: #5e94e961; }
+.readerLink { position: absolute; background: transparent; border: 0; padding: 0; cursor: pointer; }
+.readerLink:focus-visible { outline: 2px solid #225d8a; outline-offset: -2px; }
 .actions {
   display: flex;
   align-items: center;

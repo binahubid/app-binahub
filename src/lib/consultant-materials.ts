@@ -2,7 +2,7 @@ export const consultantMaterials = [
   {
     slug: "company-profile",
     title: "Company Profile BinaHub",
-    description: "Profil perusahaan, pendekatan 4A, tiga pilar, dan ekosistem BinaHub.",
+    description: "Profil perusahaan, pendekatan 4A, tiga pilar, dan delapan layanan utama BinaHub.",
     filename: "BinaHub-company-profile-v3.pdf",
   },
   {

@@ -73,11 +73,13 @@ try {
   const allowed = await fetch(endpoint, { headers: { Authorization: `Bearer ${accessToken}` } });
   assert.equal(allowed.status, 200);
   assert.match(allowed.headers.get("cache-control"), /private.*no-store/);
-  assert.deepEqual(await allowed.json(), catalog);
+  const sanitized = await allowed.json();
+  assert.deepEqual(sanitized.map(({ id }) => id), catalog.map(({ id }) => id));
+  assert.doesNotMatch(JSON.stringify(sanitized), /"(?:drive|fileId|resourceKey)":/);
   assert.equal(new Set(catalog.map((item) => item.drive.fileId)).size, 29);
 
   for (const width of [1440, 1024, 390, 320]) {
-    const context = await browser.newContext({ viewport: { width, height: 900 } });
+    const context = await browser.newContext({ bypassCSP: true, viewport: { width, height: 900 } });
     await context.addCookies([{ name: "sb-127-auth-token", value: "base64-" + Buffer.from(JSON.stringify(session)).toString("base64url"), url: origin }]);
     const page = await context.newPage();
     const errors = [];
@@ -122,9 +124,8 @@ try {
     assert.equal(await page.locator("section[aria-labelledby=tutorial-playlist] li").count(), 8);
     await page.getByRole("button", { name: /S06/ }).click();
     await page.getByRole("heading", { name: catalog.find((item) => item.id === "S06").title }).waitFor();
-    const selected = catalog.find((item) => item.id === "S06");
     assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/S06");
-    assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).getAttribute("href"), `https://drive.google.com/file/d/${selected.drive.fileId}/view`);
+    assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).count(), 0);
     assert.equal(await page.locator("video").count(), 1);
 
     const search = page.getByRole("searchbox", { name: "Cari episode" });
@@ -148,8 +149,7 @@ try {
     await version.selectOption("en");
     await page.getByRole("heading", { name: "English episode S01" }).waitFor();
     assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/S01?version=en");
-    assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).getAttribute("href"),
-      "https://drive.google.com/file/d/synthetic-english-000000000-S01/view");
+    assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).count(), 0);
     await page.getByRole("button", { name: "Fitur portal" }).click();
     assert.equal(await page.locator("section[aria-labelledby=tutorial-playlist] li").count(), 21);
     await page.getByRole("button", { name: /English episode F02/ }).click();
@@ -157,8 +157,7 @@ try {
     await version.selectOption("mobile");
     await page.getByRole("heading", { name: "Tutorial S01" }).waitFor();
     assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/S01?version=mobile");
-    assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).getAttribute("href"),
-      "https://drive.google.com/file/d/synthetic-mobile-000000000-S01/view");
+    assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).count(), 0);
     assert.equal(await page.getByRole("button", { name: "Fitur portal" }).count(), 0);
     assert.equal(await page.locator("section[aria-labelledby=tutorial-playlist] li").count(), 8);
     const portrait = await player.boundingBox();

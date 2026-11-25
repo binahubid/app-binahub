@@ -18,10 +18,10 @@ export function ConsultantVideoPlayer({ episode, version }: {
       controls playsInline preload="metadata" aria-label={`Video ${episode.id} · ${episode.title}`}
       poster={tutorialThumbnail(episode.id, version, true)} src={src}
       onError={() => setFailed(true)} onLoadedMetadata={() => setFailed(false)}>
-      {t("Browser Anda belum mendukung pemutar video ini. Gunakan tombol Buka di Drive.")}
+      {t("Browser Anda belum mendukung pemutar video ini.")}
     </video>
     {failed && <div className={s.playerError}>
-      <p role="alert">{t("Video belum dapat dimuat. Coba lagi atau gunakan tombol Buka di Drive.")}</p>
+      <p role="alert">{t("Video belum dapat dimuat. Coba lagi.")}</p>
       <button type="button" onClick={() => { setFailed(false); setAttempt((value) => value + 1); }}>{t("Coba lagi")}</button>
     </div>}
   </>;

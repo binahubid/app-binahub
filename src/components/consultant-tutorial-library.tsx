@@ -1,12 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { ExternalLink } from "lucide-react";
 import { useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   isTutorialVersion,
-  tutorialDriveUrl,
   tutorialThumbnail,
   tutorialVersions,
   tutorialVideo,
@@ -71,20 +69,13 @@ function TutorialPlaylist({ episodes, first }: { episodes: ConsultantTutorial[];
   return (
     <div className={s.library}>
       <section ref={player} className={s.player} aria-labelledby="tutorial-now-playing" tabIndex={-1}>
-        <ConsultantVideoPlayer key={episode.drive.fileId} episode={episode} version={version} />
+        <ConsultantVideoPlayer key={`${episode.id}/${version}`} episode={episode} version={version} />
         <div className={s.details}>
           <div aria-live="polite">
             <p className={s.episodeMeta}>{episode.id} · {episode.duration}</p>
             <h2 id="tutorial-now-playing">{episode.title}</h2>
             <p className={portal.muted}>{episode.description}</p>
           </div>
-          <a
-            href={tutorialDriveUrl(episode, "view")}
-            className={portal.button}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ExternalLink size={16} aria-hidden="true" /> {t("Buka di Drive")}</a>
         </div>
       </section>
       <section className={s.playlist} aria-labelledby="tutorial-playlist">

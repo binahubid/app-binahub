@@ -6,11 +6,6 @@ export class TutorialCatalogError extends Error {
 }
 export const tutorialPrivateHeaders = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer" };
 
-function hasDriveFile(value: Pick<ConsultantTutorial, "drive">) {
-  return typeof value.drive?.fileId === "string"
-    && /^[\w-]{20,100}$/.test(value.drive.fileId);
-}
-
 export async function readTutorialCatalog(authorization: string | null) {
   if (!authorization) throw new TutorialCatalogError(401);
   const response = await fetch(publicApiUrl("/api/konsultan/materials/catalog"), {
@@ -21,17 +16,24 @@ export async function readTutorialCatalog(authorization: string | null) {
   const rows: unknown = await response.json();
   if (!Array.isArray(rows) || !rows.length || !rows.every((row) =>
     row && typeof row.id === "string" && /^[FS]\d{2}$/.test(row.id)
-    && hasDriveFile(row)
-    && [row.versions?.en, row.versions?.mobile].every((variant) =>
-      variant === undefined || (variant && hasDriveFile(variant)),
-    ),
+    && typeof row.duration === "string" && typeof row.title === "string"
+    && typeof row.description === "string"
+    && (row.series === "fitur" || row.series === "sop"),
   )) throw new TutorialCatalogError(503);
-  return rows as ConsultantTutorial[];
+  return (rows as ConsultantTutorial[]).map(({ id, series, title, description, duration, versions }) => ({
+    id, series, title, description, duration,
+    versions: versions && Object.fromEntries(
+      (["en", "mobile"] as const).flatMap((key) => {
+        const value = versions[key];
+        return value ? [[key, { title: value.title, description: value.description, duration: value.duration }]] : [];
+      }),
+    ),
+  }));
 }
 
 export function tutorialFailure(error: unknown) {
   const status = error instanceof TutorialCatalogError ? error.status : 503;
   return Response.json({ error: status === 401 || status === 403
     ? "Masuk dengan akun konsultan yang aktif untuk membuka video."
-    : "Video belum dapat dimuat. Coba lagi atau buka di Drive." }, { status, headers: tutorialPrivateHeaders });
+    : "Video belum dapat dimuat. Coba lagi." }, { status, headers: tutorialPrivateHeaders });
 }

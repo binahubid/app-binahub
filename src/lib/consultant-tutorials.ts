@@ -8,10 +8,6 @@ export type TutorialVersion = (typeof tutorialVersions)[number]["id"];
 
 type TutorialFile = {
   duration: string;
-  drive: {
-    fileId: string;
-    resourceKey?: string;
-  };
 };
 
 type TutorialVariant = TutorialFile & { title?: string; description?: string };
@@ -38,10 +34,4 @@ export function tutorialThumbnail(id: string, version: TutorialVersion, poster =
   const suffix = version === "mobile" && poster ? "mobile-poster" : version;
   const filename = version === "id" ? id : `${id}-${suffix}`;
   return `/consultant/tutorials/${filename}.webp`;
-}
-
-export function tutorialDriveUrl(episode: ConsultantTutorial, view: "preview" | "view") {
-  const url = new URL(`https://drive.google.com/file/d/${encodeURIComponent(episode.drive.fileId)}/${view}`);
-  if (episode.drive.resourceKey) url.searchParams.set("resourcekey", episode.drive.resourceKey);
-  return url.href;
 }

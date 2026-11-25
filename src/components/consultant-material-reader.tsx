@@ -11,6 +11,8 @@ import { ConsultantPending } from "./consultant-data";
 import s from "./consultant.module.css";
 import { useConsultantLocale } from "@/components/consultant-language";
 
+type PdfLink = { index: number; label: string; rectangle: number[]; page?: number; url?: string };
+
 type LoadedPdf = { pdf: PDFDocumentProxy; lib: typeof import("pdfjs-dist") };
 
 export function ConsultantMaterialReader({ material }: { material: ConsultantMaterial }) {
@@ -85,6 +87,8 @@ function PdfPages({ document: { pdf, lib }, title }: { document: LoadedPdf; titl
   const [width, setWidth] = useState(0);
   const [rendered, setRendered] = useState<string>();
   const [failed, setFailed] = useState<string>();
+  const [links, setLinks] = useState<PdfLink[]>([]);
+  const [programIndex, setProgramIndex] = useState<number>();
   const scroll = useRef<HTMLDivElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -98,6 +102,20 @@ function PdfPages({ document: { pdf, lib }, title }: { document: LoadedPdf; titl
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const outline = await pdf.getOutline();
+      const index = outline?.find(({ title }) => title === "Indeks Program");
+      const destination = typeof index?.dest === "string" ? await pdf.getDestination(index.dest) : index?.dest;
+      if (!destination?.length || cancelled) return;
+      const ref = destination[0];
+      const target = typeof ref === "number" ? ref : await pdf.getPageIndex(ref);
+      if (!cancelled) setProgramIndex(target + 1);
+    })().catch(() => {});
+    return () => { cancelled = true; };
+  }, [pdf]);
 
   useEffect(() => {
     if (!width) return;
@@ -128,7 +146,32 @@ function PdfPages({ document: { pdf, lib }, title }: { document: LoadedPdf; titl
       textLayer = new lib.TextLayer({ textContentSource: pdfPage.streamTextContent(), container: layer, viewport });
       void textLayer.render().catch(() => {});
       await render.promise;
-      if (!cancelled) setRendered(renderKey);
+      if (cancelled) return;
+      const annotations = await pdfPage.getAnnotations({ intent: "display" }).catch(() => []);
+      const destinations = await Promise.all(annotations.map(async (annotation, index): Promise<PdfLink | null> => {
+        if (annotation.subtype !== "Link" || !Array.isArray(annotation.rect)) return null;
+        const [left, bottom, right, top] = annotation.rect as number[];
+        const [a, b, c, d, e, f] = viewport.transform;
+        const rectangle = [
+          a * left + c * bottom + e, b * left + d * bottom + f,
+          a * right + c * top + e, b * right + d * top + f,
+        ];
+        const dest = typeof annotation.dest === "string" ? await pdf.getDestination(annotation.dest) : annotation.dest;
+        if (Array.isArray(dest) && dest.length) {
+          const ref = dest[0];
+          const target = 1 + (typeof ref === "number" ? ref : await pdf.getPageIndex(ref));
+          if (target < 1 || target > pdf.numPages) return null;
+          return { index, rectangle, label: t("Halaman") + " " + target, page: target };
+        }
+        if (typeof annotation.url === "string" && /^(https:\/\/|mailto:|tel:)/i.test(annotation.url)) {
+          return { index, rectangle, label: annotation.url, url: annotation.url };
+        }
+        return null;
+      })).catch(() => []);
+      if (!cancelled) {
+        setLinks(destinations.flatMap((link) => link ? [link] : []));
+        setRendered(renderKey);
+      }
     })().catch(() => {
       if (!cancelled) setFailed(renderKey);
     });
@@ -137,7 +180,7 @@ function PdfPages({ document: { pdf, lib }, title }: { document: LoadedPdf; titl
       render?.cancel();
       textLayer?.cancel();
     };
-  }, [pdf, lib, number, zoom, width, renderKey]);
+  }, [pdf, lib, number, zoom, width, renderKey, t]);
 
   function goTo(page: number) {
     setNumber(page);
@@ -158,6 +201,11 @@ function PdfPages({ document: { pdf, lib }, title }: { document: LoadedPdf; titl
             <ChevronRight size={17} aria-hidden="true" />
           </button>
         </div>
+        {programIndex && number !== programIndex ? (
+          <button type="button" className={s.button} onClick={() => goTo(programIndex)}>
+            {t("Indeks program")}
+          </button>
+        ) : null}
         <button className={s.button} type="button" onClick={() => setZoom((value) => !value)}>
           {zoom ? <ZoomOut size={16} aria-hidden="true" /> : <ZoomIn size={16} aria-hidden="true" />}
           {t(zoom ? "Pas layar" : "Perbesar")}
@@ -170,6 +218,17 @@ function PdfPages({ document: { pdf, lib }, title }: { document: LoadedPdf; titl
         <div className={s.readerSheet} ref={sheet} style={{ visibility: ready ? "visible" : "hidden" }}>
           <canvas ref={canvas} aria-hidden="true" />
           <div ref={text} className={s.readerText} />
+          {ready && links.map(({ index, label, rectangle: [x1, y1, x2, y2], page, url }) => {
+            const style = { left: Math.min(x1, x2), top: Math.min(y1, y2),
+              width: Math.abs(x1 - x2), height: Math.abs(y1 - y2) };
+            return page ? (
+              <button type="button" key={index} className={s.readerLink} style={style}
+                aria-label={page === programIndex ? t("Kembali ke indeks program") : label} onClick={() => goTo(page)} />
+            ) : (
+              <a key={index} className={s.readerLink} style={style} aria-label={label}
+                href={url} target="_blank" rel="noopener noreferrer" />
+            );
+          })}
         </div>
       </div>
     </section>

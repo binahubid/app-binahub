@@ -13,13 +13,14 @@ import {
 } from "lucide-react";
 import {
   consultantRequest,
+  type ConsultantList,
   type ConsultantSession,
 } from "@/lib/consultant-client";
 import { supabase } from "@/lib/supabase";
 import s from "./consultant.module.css";
 import { ConsultantLanguageSelect, useConsultantLocale } from "@/components/consultant-language";
 import {
-  ConsultantDirectorySearch, ConsultantPending, ConsultantReads, consultantAgendaUrl, consultantDirectoryUrl,
+  ConsultantDirectorySearch, ConsultantPending, ConsultantReads, consultantAgendaUrl, consultantBookingUrl,
   consultantMyDirectoryUrl,
   consultantTutorialUrl, createConsultantReads,
 } from "./consultant-data";
@@ -37,9 +38,9 @@ const nav = [
 ];
 const amsOrigin = "https://ams.binahub.id";
 const pageReads: Record<string, readonly string[]> = {
-  "/konsultan": [consultantMyDirectoryUrl, consultantDirectoryUrl],
+  "/konsultan": [consultantMyDirectoryUrl],
   "/konsultan/clients": [consultantMyDirectoryUrl],
-  "/konsultan/tasks": [consultantMyDirectoryUrl, consultantAgendaUrl],
+  "/konsultan/tasks": [consultantMyDirectoryUrl, consultantAgendaUrl, consultantBookingUrl],
   "/konsultan/materials/tutorial": [consultantTutorialUrl],
 };
 
@@ -76,12 +77,19 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
           return;
         }
         authUser = data.session.user.id;
+        let verified: ConsultantSession | undefined;
         if (preload) {
-          for (const url of pageReads[window.location.pathname] ?? []) {
-            void reads.load(url).catch(() => {});
+          const path = window.location.pathname;
+          if (path === "/konsultan") {
+            const initial = await reads.load<ConsultantList>(consultantMyDirectoryUrl).catch(() => undefined);
+            if (initial?.session?.id === authUser) verified = initial.session;
+            else if (initial?.session) reads.clear();
+          } else {
+            for (const url of pageReads[path] ?? []) void reads.load(url).catch(() => {});
           }
         }
-        const verified = await consultantRequest<ConsultantSession>(
+        if (controller.signal.aborted) return;
+        verified ??= await consultantRequest<ConsultantSession>(
           "/api/konsultan/session", undefined, "GET",
           AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]),
         );
@@ -128,6 +136,20 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
       document.removeEventListener("visibilitychange", refreshOnReturn);
     };
   }, [reads, retry]);
+
+  const sessionId = session?.id;
+  useEffect(() => {
+    if (!sessionId || pathname !== "/konsultan") return;
+    const warmAgenda = () => {
+      void reads.load(consultantAgendaUrl).catch(() => {});
+    };
+    if (window.requestIdleCallback) {
+      const idle = window.requestIdleCallback(warmAgenda);
+      return () => window.cancelIdleCallback(idle);
+    }
+    const timer = window.setTimeout(warmAgenda, 200);
+    return () => window.clearTimeout(timer);
+  }, [pathname, reads, sessionId]);
 
   useEffect(() => {
     const restore = () => setReturning(false);

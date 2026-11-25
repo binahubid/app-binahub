@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState, type ComponentProps } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
@@ -24,13 +24,26 @@ import {
   type Task,
 } from "@/lib/consultant-client";
 import { consultantMaterials, type ConsultantMaterial } from "@/lib/consultant-materials";
-import { ConsultantDirectorySearch, ConsultantPending, agendaUrl, consultantDirectoryUrl, consultantMyDirectoryUrl, useConsultantClock, useConsultantData } from "./consultant-data";
+import { ConsultantDirectorySearch, ConsultantPending, ConsultantReads, agendaUrl, consultantDetailUrl, consultantDirectoryUrl, consultantMyDirectoryUrl, useConsultantClock, useConsultantData } from "./consultant-data";
 import { agendaPath, appointmentEnded, appointmentTime, bookingLabel, clientListPath, isOpenOpportunity, meetingHref, readDirectoryView, readOwner, readPage, safeWorkReturn, workUrl } from "@/lib/consultant-workflow";
 import { consultantTranslator } from "@/lib/consultant-locale";
 import { useConsultantLocale } from "@/components/consultant-language";
 import s from "./consultant.module.css";
 import tutorial from "./consultant-tutorials.module.css";
 const translateIndonesian = consultantTranslator("id");
+
+function WorkLink({ leadId, warmOnMount, ...props }: ComponentProps<typeof Link> & { leadId?: string; warmOnMount?: boolean }) {
+  const reads = useContext(ConsultantReads);
+  const warm = useCallback(() => {
+    if (leadId) void reads?.load(consultantDetailUrl(leadId)).catch(() => {});
+  }, [leadId, reads]);
+  useEffect(() => {
+    if (!warmOnMount || !leadId) return;
+    const timer = window.setTimeout(warm, 150);
+    return () => window.clearTimeout(timer);
+  }, [leadId, warm, warmOnMount]);
+  return <Link {...props} onPointerEnter={warm} onPointerDown={warm} onFocus={warm} />;
+}
 
 export function ConsultantHeading({
   title,
@@ -142,7 +155,7 @@ export function AgendaRows({ records, returnTo, now, details = false }: {
               <span className={label === "Lewat tenggat" || label === "Menunggu konfirmasi" ? s.attentionBadge : s.badge}>
                 {t(label)}
               </span>
-              <h3>{href && !details ? <Link href={href}>{title}</Link> : title}</h3>
+              <h3>{href && !details ? <WorkLink href={href} leadId={lead}>{title}</WorkLink> : title}</h3>
               {(!details || record.company) && (
                 <p className={s.muted}>{[record.company, !details && (record.assigneeName || t("Belum ditugaskan"))].filter(Boolean).join(" · ")}</p>
               )}
@@ -202,7 +215,9 @@ export function ConsultantOverview() {
               <h2>{title}</h2>
               <p>{[context, date && consultantDate(date, locale)].filter(Boolean).join(" · ")
                 || t("Peluang yang sudah ditugaskan akan muncul di sini.")}</p>
-              <Link className={s.priorityAction} href={next.href}>{t(next.label)}<ArrowRight size={18} aria-hidden="true" /></Link>
+              <WorkLink className={s.priorityAction} href={next.href} leadId={priorityTask?.lead_id || meetingLead || active?.id} warmOnMount>
+                {t(next.label)}<ArrowRight size={18} aria-hidden="true" />
+              </WorkLink>
             </>
           )}
         </section>
@@ -325,9 +340,9 @@ export function ConsultantClients() {
                 {data.records.map((record) => (
                   <tr key={record.id} role="row">
                     <td role="cell">
-                      <Link className={s.clientName} href={workUrl(record.id, undefined, returnTo)}>
+                      <WorkLink className={s.clientName} href={workUrl(record.id, undefined, returnTo)} leadId={record.id}>
                         <strong>{record.company || record.name}</strong><ChevronRight size={15} aria-hidden="true" />
-                      </Link>
+                      </WorkLink>
                       <small>{record.company ? record.name : null}{record.company && record.origin ? " · " : null}{t(record.origin?.label || "")}</small>
                     </td>
                     <td role="cell"><span className={s.badge}>{t(stageLabels[record.stage] || record.stage)}</span></td>

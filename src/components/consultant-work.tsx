@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Fragment, useCallback, useContext, useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, Download } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui";
-import { SpinMeetingChecklist } from "@/app/admin/_components/spin-meeting-checklist";
 import type { MeetingChecklist } from "@/app/admin/_lib/spin-meeting";
 import {
   consultantDate,
@@ -23,16 +23,20 @@ import {
   ConsultantHeading,
   Pager,
 } from "./consultant-overview";
-import { ConsultantPending, consultantDirectoryUrl, useConsultantClock, useConsultantData } from "./consultant-data";
+import { ConsultantPending, ConsultantReads, consultantAgendaPath, consultantDetailUrl, consultantDirectoryUrl, useConsultantClock, useConsultantData } from "./consultant-data";
 import { useConsultant } from "./consultant-shell";
 import { ConsultantContext } from "./consultant-context";
 import s from "./consultant.module.css";
 import { useConsultantLocale } from "@/components/consultant-language";
 import {
   agendaPath, canAttachProposal, readWorkDestination, safeWorkReturn,
-  workAction, workSections, workUrl, type WorkDestination, type WorkSection,
+  workAction, workSections, workTabAttention, workUrl, type WorkDestination, type WorkSection,
 } from "@/lib/consultant-workflow";
 
+const SpinMeetingChecklist = dynamic(
+  () => import("@/app/admin/_components/spin-meeting-checklist").then((component) => component.SpinMeetingChecklist),
+  { loading: () => <ConsultantPending message="Memuat checklist meeting…" /> },
+);
 const sections = Object.keys(workSections) as WorkSection[];
 const events: Record<string, string> = {
   owner_assigned: "Penugasan diperbarui",
@@ -79,10 +83,11 @@ export function ConsultantWork({ id }: { id: string }) {
       null,
     );
   const endpoint = `/api/konsultan/${id}`;
+  const reads = useContext(ConsultantReads);
   const work = useConsultantData<ConsultantDetail>(
-    `${endpoint}?page=${history}`,
+    consultantDetailUrl(id, history),
   );
-  const directory = useConsultantData<ConsultantList>(consultantDirectoryUrl);
+  const directory = useConsultantData<ConsultantList>(section === "proposal" ? consultantDirectoryUrl : null);
   const session = useConsultant();
   const assignees = useConsultantData<{ members: { id: string; name: string }[] }>(
     session.isAdmin ? "/api/admin/consultants?view=assignees" : null,
@@ -92,9 +97,15 @@ export function ConsultantWork({ id }: { id: string }) {
   const [savedChecklist, setSavedChecklist] = useState<MeetingChecklist | null>(
     null,
   );
+  const invalidateWork = useCallback(() => reads?.invalidate((url) => url.startsWith(endpoint + "?")
+    || url === consultantDirectoryUrl || url.startsWith(consultantDirectoryUrl + "?")
+    || url.startsWith(consultantAgendaPath + "?")), [reads, endpoint]);
   const onSaved = useCallback(
-    (result: MeetingChecklist) => setSavedChecklist(result),
-    [],
+    (result: MeetingChecklist) => {
+      setSavedChecklist(result);
+      invalidateWork();
+    },
+    [invalidateWork],
   );
   const data = work.data;
   const loaded = !!data;
@@ -130,7 +141,10 @@ export function ConsultantWork({ id }: { id: string }) {
     try {
       await action();
       setMessage(success);
-      if (refresh) work.reload();
+      if (refresh) {
+        invalidateWork();
+        work.reload();
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Perubahan belum tersimpan.");
     } finally {
@@ -155,7 +169,9 @@ export function ConsultantWork({ id }: { id: string }) {
   }
   function move(next: WorkDestination) {
     if (busy || dirty) return;
-    if (section === "meeting" && next.section !== section) work.reload();
+    if (section === "meeting" && next.section !== section && (savedChecklist?.revision ?? 0) > (data?.record.version ?? 0)) {
+      work.reload();
+    }
     const nextProposalId = next.proposalId ?? (section === "followup" && next.section === "followup" ? destination.proposalId : undefined);
     const sameSection = next.section === section && next.target === target && nextProposalId === destination.proposalId;
     if (sameSection && focusId) {
@@ -269,6 +285,7 @@ export function ConsultantWork({ id }: { id: string }) {
     : destination.proposalId ? "proposal" : "follow_up";
   const presetProposal = readyProposals.find((p) => p.id === destination.proposalId);
   const next = workAction(data, canOperate, session.isAdmin, checklistComplete, now, checklistRevision);
+  const attention = workTabAttention(data, next, canOperate, session.isAdmin, checklistComplete, now, checklistRevision);
   const eligibleHandoff = canOperate && r.stage !== "lost" && readyProposals.some((p) => p.status === "sent");
   const handoff = r.handoff;
 
@@ -314,17 +331,25 @@ export function ConsultantWork({ id }: { id: string }) {
         </p>
       )}
       <nav aria-label={t("Detail peluang")} className={s.workTabs}>
-        {sections.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            aria-current={section === tab ? "page" : undefined}
-            disabled={section !== tab && (dirty || busy)}
-            onClick={() => move({ section: tab })}
-          >
-            {t(workSections[tab])}
-          </button>
-        ))}
+        {sections.map((tab) => {
+          const badge = attention[tab];
+          const descriptionId = badge ? `work-tab-attention-${tab}` : undefined;
+          return (
+            <Fragment key={tab}>
+              <button
+                type="button"
+                aria-current={section === tab ? "page" : undefined}
+                aria-describedby={descriptionId}
+                disabled={section !== tab && (dirty || busy)}
+                onClick={() => move(badge?.destination ?? { section: tab })}
+              >
+                <span>{t(workSections[tab])}</span>
+                {badge && <span aria-hidden="true" className={s.tabAttention} data-urgent={badge.urgent || undefined} title={t(badge.reason)}>!</span>}
+              </button>
+              {badge && <span id={descriptionId} className="sr-only">{t(badge.reason)}</span>}
+            </Fragment>
+          );
+        })}
       </nav>
       {dirty && <p className={s.muted} role="status">{t("Simpan perubahan checklist untuk berpindah bagian.")}</p>}
       {error && (

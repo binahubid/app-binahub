@@ -94,6 +94,7 @@ export type Booking = {
 };
 export type Message = {
   id: string;
+  proposal_id?: string | null;
   kind: string;
   status: string;
   scheduled_at: string;
@@ -135,6 +136,7 @@ export type ConsultantDetail = {
   activityTotal: number;
 };
 export type ConsultantList = {
+  session?: ConsultantSession;
   records: ConsultantLead[];
   members: ConsultantMember[];
   actorId: string;

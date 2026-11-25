@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import { createElement } from "react";
 import { Document, Page, Text, renderToBuffer } from "@react-pdf/renderer";
 
@@ -125,15 +125,16 @@ try {
     ]);
     const page = await context.newPage();
     let asAdmin = false, availabilityFailure = false;
-    let sessionChecks = 0, defaultReads = 0, firstSessionReady = false, readStartedInParallel = false;
+    let sessionChecks = 0, defaultReads = 0;
     let personalReads = 0, checklistRevision = 1, answers = {};
     const requests = [];
     const pageErrors = [],
       writes = [];
-    const local = { ...record },
+    const local = { ...record, stage: width === 1440 ? "identified" : record.stage },
       proposals = [],
       messages = [],
       tasks = [];
+    const session = () => ({ id: alice, role: asAdmin ? "admin" : "consultant", name: members[0].name, isAdmin: asAdmin });
     const bookings = [
       { id: "scheduled-1", leadId: lead, title: "Konfirmasi waktu konsultasi", company: record.company,
         assigneeName: members[0].name, startTime: date, endTime: "2099-01-01T11:00:00.000Z", status: "requested", meetingUrl: "https://meeting.example.invalid/waiting" },
@@ -184,24 +185,15 @@ try {
         throw new Error("Consultant UI called an admin API");
       if (path === "/api/konsultan/session") {
         sessionChecks++;
-        if (sessionChecks === 1) {
-          await new Promise((resolve) => setTimeout(resolve, 750));
-          firstSessionReady = true;
-        }
-        return reply({
-          id: alice,
-          role: asAdmin ? "admin" : "consultant",
-          name: members[0].name,
-          isAdmin: asAdmin,
-        });
+        return reply(session());
       }
       if (path === "/api/konsultan") {
-        if (!url.search) {
-          defaultReads++;
-          if (!firstSessionReady) readStartedInParallel = true;
-        }
+        if (!url.search) defaultReads++;
         const owner = url.searchParams.get("owner");
-        if (owner === "mine" && !url.searchParams.get("search")) personalReads++;
+        if (owner === "mine" && !url.searchParams.get("search")) {
+          personalReads++;
+          if (personalReads === 1) await new Promise(resolve => setTimeout(resolve, 750));
+        }
         const records =
           owner === "mine"
             ? [local]
@@ -209,6 +201,7 @@ try {
               ? [readOnly]
               : [local, readOnly];
         return reply({
+          ...(owner === "mine" ? { session: session() } : {}),
           records,
           members,
           catalog,
@@ -257,6 +250,7 @@ try {
         if (path.endsWith("/messages")) {
           messages.push({
             id: body.id,
+            proposal_id: body.proposalId,
             kind: body.kind,
             status: "queued",
             scheduled_at: body.scheduledAt,
@@ -338,7 +332,7 @@ try {
       await page.getByText("Memverifikasi akses Anda…", { exact: true }).waitFor();
       await page.getByRole("heading", { name: "Beranda konsultan" }).waitFor({ timeout: 18_000 });
     } catch (error) {
-      console.error("Portal fixture", { sessionChecks, defaultReads, readStartedInParallel, pageErrors, requests });
+      console.error("Portal fixture", { sessionChecks, defaultReads, personalReads, pageErrors, requests });
       console.error("Portal text", (await page.locator("body").innerText()).slice(0, 1500));
       throw error;
     }
@@ -346,6 +340,7 @@ try {
     const peer = page.getByRole("link", { name: "PT Agenda Tim", exact: true });
     await page.getByRole("region", { name: "Prioritas saya" }).getByRole("link", { name: "Lanjutkan peluang" }).waitFor();
     await page.getByRole("region", { name: "Ringkasan tim" }).getByRole("link", { name: "Lihat semua peluang" }).waitFor();
+    await expect.poll(() => requests.some(([method, path]) => method === "GET" && path === `/api/konsultan/${lead}`)).toBe(true);
     const portalNav = page.getByRole("navigation", { name: "Portal konsultan" });
     await portalNav.getByRole("link", { name: "Klien & peluang" }).click();
     await page.getByRole("heading", { name: "Klien & peluang" }).waitFor();
@@ -354,10 +349,9 @@ try {
     await portalNav.getByRole("link", { name: "Beranda", exact: true }).click();
     await page.getByRole("heading", { name: "Beranda konsultan" }).waitFor();
     await page.getByRole("link", { name: "Lanjutkan peluang" }).waitFor();
-    assert.equal(sessionChecks, 1, "Switching portal pages must reuse the verified shell session");
+    assert.equal(sessionChecks, 0, "The initial authorized personal list verifies the shell without a second API call");
     assert.equal(defaultReads, 1, "Do not reload the team summary during navigation");
     assert.equal(personalReads, 1, "Home and Clients must share the personal list within the session");
-    assert(readStartedInParallel, "The initial data request must not wait for the shell access check");
     assert(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -377,6 +371,7 @@ try {
     await page.getByRole("heading", { name: "PT Agenda Tim" }).waitFor();
     await page.getByText("Diagnosis Tim / Organisasi", { exact: true }).waitFor();
     await page.getByRole("heading", { name: "Peluang tim · Hanya baca" }).waitFor();
+    assert.equal(await page.getByRole("navigation", { name: "Detail peluang" }).locator("button[aria-describedby]").count(), 0);
     await page.getByRole("button", { name: "Kebutuhan & meeting" }).click();
     await page.getByText("Catatan uji", { exact: true }).waitFor();
     assert.equal(
@@ -408,11 +403,12 @@ try {
     await mine.waitFor();
     assert.equal(await peer.count(), 0);
     checks++;
-    if (width === 1440) local.stage = "identified";
     await mine.click();
     const detailNav = page.getByRole("navigation", { name: "Detail peluang" });
     await detailNav.waitFor();
     assert.equal(await detailNav.getByRole("button").count(), 4);
+    const initialDetailReads = requests.filter(([method, path]) => method === "GET" && path === `/api/konsultan/${lead}`).length;
+    assert.equal(initialDetailReads, 1, "The warmed priority detail must serve the first visit with one API read");
     if (width === 1440) {
       await page.getByRole("heading", { name: "Peluang baru" }).waitFor();
       await page.getByRole("button", { name: "Tinjau kontak klien" }).click();
@@ -422,6 +418,16 @@ try {
       checks++;
     }
     await page.getByRole("heading", { name: "Checklist belum selesai" }).waitFor();
+    const proposalTab = detailNav.getByRole("button", { name: "Proposal", exact: true });
+    await expect(detailNav.getByRole("button", { name: "Kebutuhan & meeting" })).toHaveAccessibleDescription("Checklist belum selesai");
+    await expect(detailNav.getByRole("button", { name: "Ringkasan" })).toHaveAccessibleDescription("Jadwal menunggu konfirmasi");
+    if (width === 320) {
+      await page.getByRole("combobox", { name: "Bahasa tampilan" }).selectOption("en");
+      await expect(page.getByRole("button", { name: "Needs and meeting" })).toHaveAccessibleDescription("Checklist incomplete");
+      assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await page.screenshot({ path: "tmp/consultant-tab-attention-en-320.png" });
+      await page.getByRole("combobox", { name: "Display language" }).selectOption("id");
+    }
     await page.screenshot({ path: `tmp/consultant-next-step-${width}.png` });
     await page.getByRole("button", { name: "Proposal", exact: true }).click();
     await page.getByText("Selesaikan checklist kebutuhan terlebih dahulu.").waitFor();
@@ -449,6 +455,7 @@ try {
     const proposalReview = page.locator(`details#proposal-${proposal}`);
     await proposalReview.getByText(/Revisi 1 · Draf siap ditinjau/).waitFor();
     await proposalReview.getByRole("button", { name: "Siapkan pengiriman proposal" }).waitFor();
+    await expect(proposalTab).toHaveAccessibleDescription("Draf siap ditinjau");
     assert.equal(await proposalReview.evaluate(element => element.open), true);
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: "Unduh PDF" }).click();
@@ -482,6 +489,7 @@ try {
     await page.locator("#work-delivery").getByText("Email masuk antrean. Pantau statusnya di riwayat pengiriman.").waitFor();
     assert.equal(writes.find(write => write.kind === "proposal").proposalId, proposal);
     await page.getByText("Proposal konsultasi · Menunggu jadwal").click();
+    assert.equal(await proposalTab.getAttribute("aria-describedby"), null);
     await page.getByRole("button", { name: "Batalkan pengiriman" }).click();
     await page.getByText("Proposal konsultasi · Dibatalkan").waitFor();
     assert(
@@ -496,11 +504,22 @@ try {
     await page.getByRole("button", { name: "Perbarui", exact: true }).click();
     const nextStep = page.getByRole("region", { name: "Langkah berikutnya" });
     await nextStep.getByRole("heading", { name: "Proposal perlu revisi" }).waitFor();
+    await expect(proposalTab).toHaveAccessibleDescription("Proposal perlu revisi");
     await page.getByRole("button", { name: "Siapkan email", exact: true }).click();
     assert(await email.getByLabel("Lampiran proposal").isDisabled());
     await nextStep.getByRole("button", { name: "Buat revisi" }).click();
     await page.getByText(/Revisi 1 · Draf · Perlu revisi/).waitFor();
     assert.equal(await proposalReview.getByRole("button", { name: "Siapkan pengiriman proposal" }).count(), 0);
+    checks++;
+
+    messages[0].status = "failed";
+    await page.getByRole("button", { name: "Perbarui", exact: true }).click();
+    const failedBadge = detailNav.getByRole("button", { name: "Tindak lanjut" });
+    await expect(failedBadge).toHaveAccessibleDescription("Gagal diproses");
+    await failedBadge.locator('[data-urgent="true"]').waitFor();
+    if (width === 390) await page.screenshot({ path: "tmp/consultant-tab-attention-id-390.png" });
+    await failedBadge.click();
+    await page.waitForURL(/focus=delivery/);
     checks++;
 
     proposals[0].status = "sent";
@@ -513,6 +532,7 @@ try {
     await page.getByRole("button", { name: "Tinjau serah terima" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Serahkan ke admin" }).click();
     await nextStep.getByRole("heading", { name: "Serah terima tercatat" }).waitFor();
+    assert.equal(await detailNav.locator("button[aria-describedby]").count(), 0);
     checks++;
 
     await portalNav.getByRole("link", { name: "Tugas & jadwal" }).click();

@@ -124,6 +124,68 @@ type WorkAction = {
   destination: WorkDestination;
 };
 
+type TabAttention = { reason: string; destination: WorkDestination; urgent?: boolean };
+
+export function workTabAttention(
+  data: ConsultantDetail,
+  next: WorkAction,
+  canOperate: boolean,
+  isAdmin: boolean,
+  checklistComplete: boolean,
+  now: number,
+  checklistRevision: number | undefined,
+): Partial<Record<WorkSection, TabAttention>> {
+  const { record } = data;
+  if (record.handoff || record.stage === "lost") return {};
+  if (isAdmin && !record.assigneeId) return { summary: { reason: next.status, destination: next.destination } };
+  if (!canOperate) return {};
+  if (record.stage === "won") return {
+    [next.destination.section]: { reason: next.label, destination: next.destination },
+  };
+
+  const attention: Partial<Record<WorkSection, TabAttention>> = {};
+  const scheduledSoon = data.bookings.find((booking) => ["confirmed", "rescheduled"].includes(booking.status)
+    && Date.parse(appointmentTime(booking) ?? "") <= now + 15 * 60 * 1000
+    && Date.parse(booking.endTime || booking.end_time || "") >= now);
+  if (scheduledSoon) {
+    attention.summary = { reason: meetingHref(scheduledSoon) ? "Meeting segera dimulai" : "Periksa tautan meeting",
+      destination: { section: "summary", target: "schedule" }, urgent: true };
+  } else if (data.bookings.some((booking) => booking.status === "requested" && !appointmentEnded(booking, now))) {
+    attention.summary = { reason: "Jadwal menunggu konfirmasi", destination: { section: "summary", target: "schedule" } };
+  } else if (next.destination.target === "contact") {
+    attention.summary = { reason: next.status, destination: next.destination };
+  }
+
+  if (!checklistComplete && (next.destination.target !== "contact" || scheduledSoon)) {
+    attention.meeting = { reason: "Checklist belum selesai", destination: { section: "meeting", target: "checklist" } };
+  }
+
+  const latest = data.proposals[0];
+  if (checklistRevision !== undefined) {
+    if (latest && !canAttachProposal(latest, checklistRevision)) {
+      attention.proposal = { reason: "Proposal perlu revisi", destination: { section: "proposal", target: "draft" } };
+    } else if (latest?.status === "draft" && !data.messages.some((message) => message.proposal_id === latest.id
+      && ["queued", "processing", "failed", "uncertain"].includes(message.status))) {
+      attention.proposal = { reason: "Draf siap ditinjau", destination: { section: "proposal", target: "review", proposalId: latest.id } };
+    } else if (!latest && checklistComplete) {
+      attention.proposal = { reason: "Susun proposal", destination: { section: "proposal", target: "draft" } };
+    }
+  }
+
+  const email = data.messages[0];
+  if (email && ["failed", "uncertain"].includes(email.status)) {
+    attention.followup = { reason: messageLabels[email.status], destination: { section: "followup", target: "delivery" }, urgent: true };
+  } else {
+    const due = data.tasks.find((task) => task.status === "open" && Date.parse(task.due_at) <= now + 24 * 60 * 60 * 1000);
+    if (due) {
+      const overdue = Date.parse(due.due_at) <= now;
+      attention.followup = { reason: overdue ? "Tugas lewat tenggat" : "Tenggat tugas dalam 24 jam",
+        destination: { section: "followup", target: "tasks" }, urgent: overdue };
+    }
+  }
+  return attention;
+}
+
 export function workAction(
   data: ConsultantDetail,
   canOperate: boolean,

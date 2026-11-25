@@ -1,18 +1,27 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { consultantRequest } from "@/lib/consultant-client";
 import { useConsultantLocale } from "./consultant-language";
 import s from "./consultant.module.css";
 
 export const consultantDirectoryUrl = "/api/konsultan";
 export const consultantMyDirectoryUrl = consultantDirectoryUrl + "?owner=mine";
+export const consultantAgendaPath = "/api/konsultan/agenda";
 export const agendaUrl = (owner: string, kind: string, page: number) =>
-  "/api/konsultan/agenda?" + new URLSearchParams({ owner, kind, page: String(page) });
+  consultantAgendaPath + "?" + new URLSearchParams({ owner, kind, page: String(page) });
 export const consultantAgendaUrl = agendaUrl("mine", "tasks", 0);
+export const consultantBookingUrl = agendaUrl("mine", "bookings", 0);
 export const consultantTutorialUrl = "/konsultan/materials/tutorial/catalog";
-const warmUrls = [consultantDirectoryUrl, consultantMyDirectoryUrl, consultantAgendaUrl, consultantTutorialUrl];
-const freshForMs = 20_000;
+export const consultantDetailUrl = (id: string, page = 0) => `${consultantDirectoryUrl}/${encodeURIComponent(id)}?page=${page}`;
+const freshForMs = 30_000;
+const maxReads = 32;
+
+function canReuseRead(url: string) {
+  return url === consultantDirectoryUrl || url.startsWith(consultantDirectoryUrl + "?")
+    || url.startsWith(consultantAgendaPath + "?") || url === consultantTutorialUrl
+    || /^\/api\/konsultan\/[a-f0-9-]{36}\?page=\d+$/i.test(url);
+}
 
 type Entry = { promise: Promise<unknown>; value?: unknown; expiresAt: number };
 
@@ -20,12 +29,17 @@ export function createConsultantReads() {
   const entries = new Map<string, Entry>();
   return {
     load<T>(url: string, signal?: AbortSignal): Promise<T> {
-      if (!warmUrls.includes(url)) return consultantRequest<T>(url, undefined, "GET", signal);
+      if (!canReuseRead(url)) return consultantRequest<T>(url, undefined, "GET", signal);
       const previous = entries.get(url);
       if (previous && previous.expiresAt > Date.now()) return previous.promise as Promise<T>;
 
       const request = consultantRequest<T>(url, undefined, "GET", AbortSignal.timeout(12_000));
       const entry: Entry = { promise: request, expiresAt: Infinity };
+      entries.delete(url);
+      if (entries.size >= maxReads) {
+        const oldest = entries.keys().next().value;
+        if (oldest) entries.delete(oldest);
+      }
       entries.set(url, entry);
       void request.then(
         (data) => {
@@ -39,6 +53,9 @@ export function createConsultantReads() {
     peek<T>(url: string): T | undefined {
       const entry = entries.get(url);
       return entry && entry.expiresAt > Date.now() ? entry.value as T | undefined : undefined;
+    },
+    invalidate(matches: (url: string) => boolean) {
+      for (const url of entries.keys()) if (matches(url)) entries.delete(url);
     },
     clear() {
       entries.clear();
@@ -87,14 +104,15 @@ export function useConsultantData<T>(url: string | null) {
     );
     return () => controller.abort();
   }, [reads, url, revision]);
+  const reload = useCallback(() => {
+    reads?.invalidate((cached) => cached === url);
+    setRevision((value) => value + 1);
+  }, [reads, url]);
   const current = state?.url === url ? state : undefined;
   return {
-    data: current?.data ?? (url ? reads?.peek<T>(url) : undefined),
+    data: current?.error ? undefined : current?.data ?? (url ? reads?.peek<T>(url) : undefined),
     error: current?.error,
-    reload: () => {
-      reads?.clear();
-      setRevision((value) => value + 1);
-    },
+    reload,
   };
 }
 

@@ -947,6 +947,23 @@
   border-color: var(--navy);
   color: #fff;
 }
+.tabAttention {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #73400a;
+  background: #ffedc0;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+}
+.tabAttention[data-urgent="true"] {
+  color: #9a2025;
+  background: #ffe3e2;
+}
 .clientName {
   display: inline-flex;
   align-items: center;

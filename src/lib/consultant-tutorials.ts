@@ -14,11 +14,15 @@ type TutorialVariant = TutorialFile & { title?: string; description?: string };
 
 export type ConsultantTutorial = TutorialFile & {
   id: string;
-  series: "fitur" | "sop";
+  series: "fitur" | "sop" | "studi-kasus";
   title: string;
   description: string;
   versions?: Partial<Record<Exclude<TutorialVersion, "id">, TutorialVariant>>;
 };
+
+export function isTutorialId(value: string) {
+  return /^[FS]\d{2}$/.test(value) || value === "KASUS";
+}
 
 export function isTutorialVersion(value: string): value is TutorialVersion {
   return tutorialVersions.some(({ id }) => id === value);

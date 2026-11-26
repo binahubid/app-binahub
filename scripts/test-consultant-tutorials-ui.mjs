@@ -22,6 +22,11 @@ const catalog = [["F", "fitur", 21], ["S", "sop", 8]].flatMap(([prefix, series, 
     duration: "0:04", drive: { fileId: `synthetic-file-0000000000-${prefix}${index + 1}` },
   })),
 );
+catalog.push({
+  id: "KASUS", series: "studi-kasus", title: "Studi kasus Portal Konsultan",
+  description: "Episode studi kasus untuk pengujian navigasi.", duration: "11:11",
+  drive: { fileId: "synthetic-case-study-0000000" },
+});
 const videoBytes = await readFile("tools/fixtures/tutorial-test.mp4");
 for (const episode of catalog) {
   episode.versions = {
@@ -76,7 +81,7 @@ try {
   const sanitized = await allowed.json();
   assert.deepEqual(sanitized.map(({ id }) => id), catalog.map(({ id }) => id));
   assert.doesNotMatch(JSON.stringify(sanitized), /"(?:drive|fileId|resourceKey)":/);
-  assert.equal(new Set(catalog.map((item) => item.drive.fileId)).size, 29);
+  assert.equal(new Set(catalog.map((item) => item.drive.fileId)).size, catalog.length);
 
   for (const width of [1440, 1024, 390, 320]) {
     const context = await browser.newContext({ bypassCSP: true, viewport: { width, height: 900 } });
@@ -154,7 +159,14 @@ try {
     assert.equal(await page.locator("section[aria-labelledby=tutorial-playlist] li").count(), 21);
     await page.getByRole("button", { name: /English episode F02/ }).click();
     assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/F02?version=en");
+    await page.getByRole("button", { name: "Studi kasus", exact: true }).click();
+    await page.getByRole("button", { name: /English episode KASUS/ }).click();
+    assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/KASUS?version=en");
+    await version.selectOption("id");
+    await page.getByRole("heading", { name: "Studi kasus Portal Konsultan" }).waitFor();
+    assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/KASUS");
     await version.selectOption("mobile");
+    assert.equal(await page.getByRole("button", { name: "Studi kasus", exact: true }).count(), 0);
     await page.getByRole("heading", { name: "Tutorial S01" }).waitFor();
     assert.equal(await player.getAttribute("src"), "/konsultan/materials/tutorial/media/S01?version=mobile");
     assert.equal(await page.getByRole("link", { name: "Buka di Drive" }).count(), 0);

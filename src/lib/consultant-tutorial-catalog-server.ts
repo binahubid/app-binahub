@@ -1,5 +1,5 @@
 import { publicApiUrl } from "./public-api";
-import type { ConsultantTutorial } from "./consultant-tutorials";
+import { isTutorialId, type ConsultantTutorial } from "./consultant-tutorials";
 
 export class TutorialCatalogError extends Error {
   constructor(public status: number) { super("Tutorial catalog unavailable"); }
@@ -15,10 +15,10 @@ export async function readTutorialCatalog(authorization: string | null) {
   if (!response.ok) throw new TutorialCatalogError(503);
   const rows: unknown = await response.json();
   if (!Array.isArray(rows) || !rows.length || !rows.every((row) =>
-    row && typeof row.id === "string" && /^[FS]\d{2}$/.test(row.id)
+    row && typeof row.id === "string" && isTutorialId(row.id)
     && typeof row.duration === "string" && typeof row.title === "string"
     && typeof row.description === "string"
-    && (row.series === "fitur" || row.series === "sop"),
+    && (row.series === "fitur" || row.series === "sop" || row.series === "studi-kasus"),
   )) throw new TutorialCatalogError(503);
   return (rows as ConsultantTutorial[]).map(({ id, series, title, description, duration, versions }) => ({
     id, series, title, description, duration,

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { TutorialCatalogError, tutorialFailure, tutorialPrivateHeaders } from "@/lib/consultant-tutorial-catalog-server";
 import { publicApiUrl } from "@/lib/public-api";
-import { isTutorialVersion } from "@/lib/consultant-tutorials";
+import { isTutorialId, isTutorialVersion } from "@/lib/consultant-tutorials";
 
 async function media(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -14,7 +14,7 @@ async function media(request: Request, context: { params: Promise<{ id: string }
     if (!authorization) throw new TutorialCatalogError(401);
     const { id } = await context.params;
     const version = new URL(request.url).searchParams.get("version") ?? "id";
-    if (!/^[FS]\d{2}$/.test(id) || !isTutorialVersion(version)) throw new TutorialCatalogError(404);
+    if (!isTutorialId(id) || !isTutorialVersion(version)) throw new TutorialCatalogError(404);
 
     const range = request.headers.get("Range");
     const response = await fetch(publicApiUrl(`/api/konsultan/materials/media/${id}?version=${version}`), {

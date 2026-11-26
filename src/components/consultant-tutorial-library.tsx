@@ -20,6 +20,7 @@ import { useConsultantLocale } from "@/components/consultant-language";
 const seriesOptions = [
   { id: "fitur", title: "Fitur portal" },
   { id: "sop", title: "Alur kerja" },
+  { id: "studi-kasus", title: "Studi kasus" },
 ] as const;
 
 function videosForVersion(episodes: ConsultantTutorial[], version: TutorialVersion) {

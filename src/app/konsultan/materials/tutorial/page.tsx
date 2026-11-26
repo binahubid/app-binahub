@@ -18,7 +18,7 @@ export default function ConsultantTutorialPage() {
       </Link>
       <ConsultantHeading
         title={t("Video tutorial")}
-        description={t("Pilih episode untuk mempelajari fitur portal atau mengikuti alur kerja konsultasi.")}
+        description={t("Pelajari fitur portal, ikuti alur kerja, atau lihat contoh penanganan klien.")}
       />
       <Suspense fallback={<ConsultantPending />}><ConsultantTutorialLibrary /></Suspense>
     </>

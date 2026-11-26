@@ -109,6 +109,7 @@ export type Message = {
 };
 export type ConsultantDetail = {
   record: ConsultantLead;
+  bookingUrl?: string;
   proposalDefaults?: {
     participants?: number;
     days?: number;

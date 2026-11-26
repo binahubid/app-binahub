@@ -142,6 +142,7 @@ export function ConsultantShell({ children }: { children: React.ReactNode }) {
     if (!sessionId || pathname !== "/konsultan") return;
     const warmAgenda = () => {
       void reads.load(consultantAgendaUrl).catch(() => {});
+      void reads.load(consultantBookingUrl).catch(() => {});
     };
     if (window.requestIdleCallback) {
       const idle = window.requestIdleCallback(warmAgenda);

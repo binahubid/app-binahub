@@ -122,6 +122,7 @@ type WorkAction = {
   description: string;
   label: string;
   destination: WorkDestination;
+  priority?: "urgent" | "soon";
 };
 
 type TabAttention = { reason: string; destination: WorkDestination; urgent?: boolean };
@@ -235,26 +236,33 @@ export function workAction(
   const nextMeeting = data.bookings.find((booking) => {
     const start = Date.parse(appointmentTime(booking) ?? "");
     const end = Date.parse(booking.endTime || booking.end_time || "");
-    return meetingHref(booking) && start <= now + 15 * 60 * 1000 && end >= now;
+    return ["confirmed", "rescheduled"].includes(booking.status)
+      && start <= now + 15 * 60 * 1000 && end >= now;
   });
   if (nextMeeting) return {
-    status: "Meeting segera dimulai",
-    description: "Jadwal sudah terkonfirmasi. Buka tautan pada bagian jadwal konsultasi.",
+    priority: "urgent",
+    status: meetingHref(nextMeeting) ? "Meeting segera dimulai" : "Periksa tautan meeting",
+    description: meetingHref(nextMeeting) ? "Jadwal sudah terkonfirmasi. Buka tautan pada bagian jadwal konsultasi."
+      : "Meeting segera dimulai. Periksa tautan di undangan kalender.",
     label: "Lihat jadwal meeting",
     destination: { section: "summary", target: "schedule" },
   };
-  if (email && ["queued", "processing", "uncertain", "failed"].includes(email.status)) return {
+  const overdue = data.tasks.find((task) => task.status === "open" && Date.parse(task.due_at) <= now);
+  const deliveryIssue = email?.status === "uncertain" || email?.status === "failed";
+  if (email && (deliveryIssue || (!overdue && ["queued", "processing"].includes(email.status)))) return {
+    priority: deliveryIssue ? "urgent" : undefined,
     status: messageLabels[email.status],
-    description: email.status === "uncertain" || email.status === "failed" ?
-      "Periksa status dan penerima di riwayat sebelum menyiapkan pengiriman baru." :
-      "Pantau status dan waktu kirim di riwayat pengiriman.",
+    description: deliveryIssue ? "Periksa status dan penerima di riwayat sebelum menyiapkan pengiriman baru."
+      : "Pantau status dan waktu kirim di riwayat pengiriman.",
     label: "Lihat status email",
     destination: { section: "followup", target: "delivery" },
   };
-  const task = data.tasks.find((item) => item.status === "open" && Date.parse(item.due_at) <= now);
-  if (task) return {
-    status: "Tugas lewat tenggat",
-    description: task.title,
+  const due = overdue ?? data.tasks.find((task) =>
+    task.status === "open" && Date.parse(task.due_at) <= now + 24 * 60 * 60 * 1000);
+  if (due) return {
+    priority: overdue ? "urgent" : "soon",
+    status: overdue ? "Tugas lewat tenggat" : "Tenggat tugas dalam 24 jam",
+    description: due.title,
     label: "Buka tugas",
     destination: { section: "followup", target: "tasks" },
   };

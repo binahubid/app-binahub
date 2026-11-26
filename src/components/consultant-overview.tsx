@@ -8,6 +8,7 @@ import {
   BookOpen,
   CalendarDays,
   ChevronRight,
+  CircleAlert,
   Download,
   FileText,
   ListTodo,
@@ -185,13 +186,20 @@ export function ConsultantOverview() {
   const upcoming = own?.bookings.find((item) => (item.leadId || item.lead_id) && ["confirmed", "rescheduled"].includes(item.status) &&
     Date.parse(item.endTime || item.end_time || "") >= now && Date.parse(appointmentTime(item) ?? "") <= now + 24 * 60 * 60 * 1000);
   const active = own?.records.find((record) => isOpenOpportunity(record));
-  const urgentTask = task?.due_at && Date.parse(task.due_at) <= now ? task : undefined;
-  const priorityTask = urgentTask || (!upcoming ? task : undefined);
+  const meetingSoon = !!upcoming && Date.parse(appointmentTime(upcoming) ?? "") <= now + 15 * 60 * 1000;
+  const urgentTask = own?.tasks.find((item) => item.status === "open" && Date.parse(item.due_at) <= now);
+  const taskBeforeMeeting = task && (!upcoming || Date.parse(task.due_at) <= Date.parse(appointmentTime(upcoming) ?? ""));
+  const priorityTask = meetingSoon ? undefined : urgentTask ?? (taskBeforeMeeting ? task : undefined);
+  const dueSoon = !!priorityTask && Date.parse(priorityTask.due_at) <= now + 24 * 60 * 60 * 1000;
+  const upcomingPriority = !!upcoming && !priorityTask;
+  const priority = meetingSoon || !!(priorityTask && urgentTask) ? "urgent"
+    : upcomingPriority || dueSoon ? "soon" : own && !priorityTask && !active ? "neutral" : "default";
+  const reason = meetingSoon ? "Meeting segera dimulai" : priorityTask && urgentTask ? "Lewat tenggat"
+    : dueSoon ? "Tenggat tugas dalam 24 jam" : upcomingPriority ? "Konsultasi dalam 24 jam" : "";
   const title = priorityTask?.title || upcoming?.title || active?.company || active?.name || t("Belum ada peluang aktif yang ditugaskan");
   const context = priorityTask ? priorityTask.company : upcoming ? t("Jadwal konsultasi") : active ? t(stageLabels[active.stage] || active.stage) : "";
   const date = priorityTask ? priorityTask.due_at : upcoming && appointmentTime(upcoming);
   const meetingLead = upcoming?.leadId || upcoming?.lead_id;
-  const meetingSoon = upcoming && Date.parse(appointmentTime(upcoming) ?? "") <= now + 15 * 60 * 1000;
   const next = priorityTask ? { href: workUrl(priorityTask.lead_id, { section: "followup", target: "tasks" }, agendaPath), label: "Buka tugas" }
     : meetingLead ? { href: workUrl(meetingLead, meetingSoon ? { section: "summary", target: "schedule" } : { section: "meeting", target: "checklist" }, agendaPath + "?kind=bookings"), label: meetingSoon ? "Lihat jadwal meeting" : "Siapkan meeting" }
     : active ? { href: workUrl(active.id, undefined, clientListPath), label: "Lanjutkan peluang" }
@@ -205,13 +213,13 @@ export function ConsultantOverview() {
         </button>
       </ConsultantHeading>
       <div className={s.homeLead}>
-        <section className={s.priorityPanel} aria-labelledby="consultant-priority-title">
+        <section className={s.priorityPanel} data-priority={priority} aria-labelledby="consultant-priority-title">
           <p className={s.priorityLabel} id="consultant-priority-title"><ListTodo size={18} aria-hidden="true" />{t("Prioritas saya")}</p>
           {personal.error ? (
             <div role="alert"><p>{t(personal.error)}</p><button type="button" className={s.button} onClick={personal.reload}>{t("Coba lagi")}</button></div>
           ) : !own ? <ConsultantPending message="Memuat tugas dan jadwal Anda…" /> : (
             <>
-              {urgentTask && <span className={s.attentionBadge}>{t("Lewat tenggat")}</span>}
+              {reason && <span className={s.attentionBadge}><CircleAlert size={14} aria-hidden="true" />{t(reason)}</span>}
               <h2>{title}</h2>
               <p>{[context, date && consultantDate(date, locale)].filter(Boolean).join(" · ")
                 || t("Peluang yang sudah ditugaskan akan muncul di sini.")}</p>
@@ -221,10 +229,12 @@ export function ConsultantOverview() {
             </>
           )}
         </section>
-        <section className={s.panel} aria-labelledby="home-appointments-title">
+        <section className={s.panel} data-home-agenda aria-labelledby="home-appointments-title">
           <div className={s.panelTitle}>
             <h2 id="home-appointments-title"><CalendarDays size={19} aria-hidden="true" />{t("Jadwal saya")}</h2>
-            <Link className={s.textlink} href={agendaPath + "?kind=bookings"}>{t("Lihat jadwal")}</Link>
+            <Link className={s.sectionShortcut} href={agendaPath + "?kind=bookings"} aria-label={t("Lihat jadwal")} title={t("Lihat jadwal")}>
+              <ChevronRight size={20} aria-hidden="true" />
+            </Link>
           </div>
           {personal.error ? <p className={s.muted}>{t("Jadwal belum dapat dimuat.")}</p>
             : !own ? <ConsultantPending message="Memuat agenda…" />
@@ -235,15 +245,17 @@ export function ConsultantOverview() {
       <section className={s.teamOverview} aria-labelledby="team-overview-title">
         <div className={s.panelTitle}>
           <h2 id="team-overview-title">{t("Ringkasan tim")}</h2>
-          <Link className={s.textlink} href={clientListPath + "?owner=all"}>{t("Lihat semua peluang")}</Link>
+          <Link className={s.sectionShortcut} href={clientListPath + "?owner=all"} aria-label={t("Lihat semua peluang")} title={t("Lihat semua peluang")}>
+            <ChevronRight size={20} aria-hidden="true" />
+          </Link>
         </div>
         {team.error ? <p role="alert" className={s.error}>{t(team.error)} <button className={s.button} onClick={team.reload}>{t("Coba lagi")}</button></p>
           : !team.data ? <ConsultantPending message="Memuat pekerjaan tim…" /> : (
             <div className={s.stats}>
-              <Link className={s.stat} href={clientListPath + "?owner=all&view=active"}><strong>{team.data.summary.active}</strong><span>{t("Peluang terbuka")}</span></Link>
-              <Link className={s.stat} href={agendaPath + "?owner=all#overdue"}><strong>{team.data.summary.overdue}</strong><span>{t("Tugas lewat tenggat")}</span></Link>
+              <Link className={s.stat} href={clientListPath + "?owner=all&view=active"}><ChevronRight size={16} aria-hidden="true" /><strong>{team.data.summary.active}</strong><span>{t("Peluang terbuka")}</span></Link>
+              <Link className={s.stat} href={agendaPath + "?owner=all#overdue"}><ChevronRight size={16} aria-hidden="true" /><strong>{team.data.summary.overdue}</strong><span>{t("Tugas lewat tenggat")}</span></Link>
               <div className={s.stat}><strong>{team.data.summary.proposals}</strong><span>{t("Draf proposal")}</span></div>
-              <Link className={s.stat} href={clientListPath + "?owner=all&view=handoff"}><strong>{team.data.summary.handoffs}</strong><span>{t("Serah terima")}</span></Link>
+              <Link className={s.stat} href={clientListPath + "?owner=all&view=handoff"}><ChevronRight size={16} aria-hidden="true" /><strong>{team.data.summary.handoffs}</strong><span>{t("Serah terima")}</span></Link>
             </div>
           )}
       </section>
@@ -318,7 +330,7 @@ export function ConsultantClients() {
       <section className={s.panel} aria-labelledby="client-directory-title">
         <h2 id="client-directory-title">{t("Daftar peluang")}</h2>
         {error ? <div className={s.error} role="alert"><p>{t(error)}</p><button className={s.button} onClick={reload}>{t("Coba lagi")}</button></div>
-          : !data ? <ConsultantPending message="Memuat peluang…" />
+          : !data ? <ConsultantPending message="Memuat peluang…" layout="list" />
           : !data.records.length ? (
             <div className={s.empty}>
               <p>{t(owner === "mine" && !query && view === "all" ? "Belum ada peluang yang ditugaskan kepada Anda." : "Belum ada peluang yang cocok.")}</p>
@@ -404,7 +416,7 @@ export function ConsultantAgenda() {
       <section className={s.panel} id={kind === "tasks" ? "overdue" : undefined} aria-labelledby="agenda-list-title">
         <h2 id="agenda-list-title">{t(kind === "tasks" ? "Tugas terbuka" : "Jadwal konsultasi")}</h2>
         {error ? <div className={s.error} role="alert"><p>{t(error)}</p><button className={s.button} onClick={reload}>{t("Coba lagi")}</button></div>
-          : !data ? <ConsultantPending message="Memuat agenda…" />
+          : !data ? <ConsultantPending message="Memuat agenda…" layout="list" />
           : !rows.length ? (
             <div className={s.empty}><p>{t(kind === "tasks" ? "Belum ada tugas terbuka pada pilihan ini." : "Belum ada jadwal konsultasi pada pilihan ini.")}</p>
               {owner !== "all" && <button className={s.button} onClick={() => update("all")}>{t("Lihat agenda tim")}</button>}

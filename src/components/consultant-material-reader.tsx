@@ -73,7 +73,7 @@ export function ConsultantMaterialReader({ material }: { material: ConsultantMat
           {state?.error ? <>
             <p role="alert" className={s.error}>{t(state.error)}</p>
             <button className={s.button} type="button" onClick={() => { setSource(undefined); setRetry((n) => n + 1); }}>{t("Coba lagi")}</button>
-          </> : <ConsultantPending message="Memuat dokumen…" />}
+          </> : <ConsultantPending message="Memuat dokumen…" layout="reader" />}
         </section>
       )}
     </>

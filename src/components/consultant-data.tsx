@@ -116,12 +116,33 @@ export function useConsultantData<T>(url: string | null) {
   };
 }
 
-export function ConsultantPending({ message = "Memuat halaman…" }: { message?: string }) {
+export function ConsultantPending({
+  message = "Memuat halaman…",
+  layout = "compact",
+}: {
+  message?: string;
+  layout?: "compact" | "page" | "list" | "reader";
+}) {
   const { t } = useConsultantLocale();
   return (
-    <div className={s.pending} role="status">
-      <span className={s.pendingTrack} aria-hidden="true" />
-      <span>{t(message)}</span>
+    <div className={s.pending} data-layout={layout} role="status">
+      <span className={s.pendingLabel}>{t(message)}</span>
+      <div className={s.skeleton} aria-hidden="true">
+        {layout === "page" && (
+          <div className={s.skeletonHeading}><span /><span /></div>
+        )}
+        {layout === "reader" ? <div className={s.skeletonReader} /> : (
+          <div className={s.skeletonRows}>
+            {(layout === "compact" ? [0] : [0, 1, 2]).map((row) => (
+              <div className={s.skeletonRow} key={row}>
+                <span className={s.skeletonIcon} />
+                <div><span /><span /></div>
+                <span className={s.skeletonTrailing} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

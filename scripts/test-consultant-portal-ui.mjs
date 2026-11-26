@@ -123,6 +123,13 @@ try {
         url: origin,
       },
     ]);
+    await context.addInitScript(() => {
+      document.addEventListener("DOMContentLoaded", () => {
+        const style = document.createElement("style");
+        style.textContent = "nextjs-portal { display: none !important }";
+        document.head.append(style);
+      });
+    });
     const page = await context.newPage();
     let asAdmin = false, availabilityFailure = false;
     let sessionChecks = 0, defaultReads = 0;
@@ -312,6 +319,7 @@ try {
         });
       return reply({
         record: current,
+        bookingUrl: read ? undefined : "https://cal.com/binahub/konsultasi",
         workspace: {
           version: current.version,
           checklist_revision: checklistRevision,
@@ -329,7 +337,8 @@ try {
 
     await page.goto(`${origin}/konsultan`, { waitUntil: "domcontentloaded" });
     try {
-      await page.getByText("Memverifikasi akses Anda…", { exact: true }).waitFor();
+      await expect(page.getByRole("status").filter({ hasText: "Memverifikasi akses Anda…" }))
+        .toHaveAttribute("data-layout", "compact");
       await page.getByRole("heading", { name: "Beranda konsultan" }).waitFor({ timeout: 18_000 });
     } catch (error) {
       console.error("Portal fixture", { sessionChecks, defaultReads, personalReads, pageErrors, requests });
@@ -339,7 +348,13 @@ try {
     const mine = page.getByRole("link", { name: "PT Uji Konsultasi", exact: true });
     const peer = page.getByRole("link", { name: "PT Agenda Tim", exact: true });
     await page.getByRole("region", { name: "Prioritas saya" }).getByRole("link", { name: "Lanjutkan peluang" }).waitFor();
-    await page.getByRole("region", { name: "Ringkasan tim" }).getByRole("link", { name: "Lihat semua peluang" }).waitFor();
+    for (const label of ["Lihat jadwal", "Lihat semua peluang"]) {
+      const link = page.getByRole("link", { name: label, exact: true });
+      await expect(link).toBeVisible();
+      assert.equal(await link.innerText(), "");
+      const box = await link.boundingBox();
+      assert(box && box.width >= 44 && box.height >= 44);
+    }
     await expect.poll(() => requests.some(([method, path]) => method === "GET" && path === `/api/konsultan/${lead}`)).toBe(true);
     const portalNav = page.getByRole("navigation", { name: "Portal konsultan" });
     await portalNav.getByRole("link", { name: "Klien & peluang" }).click();
@@ -516,6 +531,7 @@ try {
     await page.getByRole("button", { name: "Perbarui", exact: true }).click();
     const failedBadge = detailNav.getByRole("button", { name: "Tindak lanjut" });
     await expect(failedBadge).toHaveAccessibleDescription("Gagal diproses");
+    await expect(nextStep).toHaveAttribute("data-priority", "urgent");
     await failedBadge.locator('[data-urgent="true"]').waitFor();
     if (width === 390) await page.screenshot({ path: "tmp/consultant-tab-attention-id-390.png" });
     await failedBadge.click();
@@ -532,6 +548,7 @@ try {
     await page.getByRole("button", { name: "Tinjau serah terima" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Serahkan ke admin" }).click();
     await nextStep.getByRole("heading", { name: "Serah terima tercatat" }).waitFor();
+    await expect(nextStep).toHaveAttribute("data-priority", "neutral");
     assert.equal(await detailNav.locator("button[aria-describedby]").count(), 0);
     checks++;
 
@@ -540,6 +557,15 @@ try {
     await page.getByText("Menunggu konfirmasi", { exact: true }).waitFor();
     await page.getByRole("link", { name: "Konfirmasi waktu konsultasi" }).click();
     const schedule = page.locator("#work-schedule");
+    assert.equal(await schedule.getByRole("link", { name: "Jadwalkan di Cal.com" }).count(), 0,
+      "Closed opportunities must not offer a new booking");
+    local.handoff = null;
+    local.stage = "consultation";
+    await page.getByRole("button", { name: "Perbarui", exact: true }).click();
+    const bookingLink = schedule.getByRole("link", { name: "Jadwalkan di Cal.com" });
+    await expect(bookingLink).toHaveAttribute("href", "https://cal.com/binahub/konsultasi");
+    await expect(bookingLink).toHaveAttribute("target", "_blank");
+
     await schedule.getByText("Tunggu konfirmasi jadwal sebelum membuka meeting.").waitFor();
     await schedule.getByText("Waktu pertemuan sudah lewat.").waitFor();
     assert.equal(await schedule.getByRole("link", { name: "Buka meeting" }).count(), 0);

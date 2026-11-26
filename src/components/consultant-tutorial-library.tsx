@@ -166,7 +166,7 @@ export function ConsultantTutorialLibrary() {
       </section>
     );
   }
-  if (!data) return <ConsultantPending message="Memuat daftar video…" />;
+  if (!data) return <ConsultantPending message="Memuat daftar video…" layout="list" />;
   const first = data.find((episode) => episode.id === episodeId) ?? data[0];
   if (!first) return <p className={portal.empty}>{t("Belum ada video panduan.")}</p>;
   return <TutorialPlaylist key={first.id} episodes={data} first={first} />;

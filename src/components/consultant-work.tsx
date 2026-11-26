@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Fragment, useCallback, useContext, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight, Download } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarPlus, CircleAlert, Download } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui";
 import type { MeetingChecklist } from "@/app/admin/_lib/spin-meeting";
 import {
@@ -264,7 +264,7 @@ export function ConsultantWork({ id }: { id: string }) {
             <button className={s.button} onClick={work.reload}>{t("Coba lagi")}</button>
           </div>
         ) : (
-          <ConsultantPending message="Memuat peluang…" />
+          <ConsultantPending message="Memuat peluang…" layout="page" />
         )}
       </>
     );
@@ -286,6 +286,9 @@ export function ConsultantWork({ id }: { id: string }) {
   const presetProposal = readyProposals.find((p) => p.id === destination.proposalId);
   const next = workAction(data, canOperate, session.isAdmin, checklistComplete, now, checklistRevision);
   const attention = workTabAttention(data, next, canOperate, session.isAdmin, checklistComplete, now, checklistRevision);
+  const informational = (!canOperate && next.destination.target !== "assignment")
+    || !!r.handoff || r.stage === "lost";
+  const nextPriority = next.priority ?? (informational ? "neutral" : "default");
   const eligibleHandoff = canOperate && r.stage !== "lost" && readyProposals.some((p) => p.status === "sent");
   const handoff = r.handoff;
 
@@ -308,9 +311,12 @@ export function ConsultantWork({ id }: { id: string }) {
           onClick={work.reload}
         >{t("Perbarui")}</button>
       </ConsultantHeading>
-      <section className={s.nextStep} aria-labelledby="work-next-title">
+      <section className={s.nextStep} data-priority={nextPriority} aria-labelledby="work-next-title">
         <div>
-          <p className={s.priorityLabel} id="work-next-title">{t("Langkah berikutnya")}</p>
+          <p className={s.priorityLabel} id="work-next-title">
+            {next.priority && <CircleAlert size={16} aria-hidden="true" />}
+            {t("Langkah berikutnya")}
+          </p>
           <h2>{t(next.status)}</h2>
           <p className={s.muted}>{t(next.description)}</p>
         </div>
@@ -318,7 +324,7 @@ export function ConsultantWork({ id }: { id: string }) {
           <button type="button" className={s.primary} disabled={dirty || busy} onClick={() => move(next.destination)}>
             {t(next.label)} <ArrowRight size={16} aria-hidden="true" />
           </button>
-          {canSend && eligibleHandoff && <button type="button" className={s.textlink} disabled={dirty || busy}
+          {canSend && eligibleHandoff && <button type="button" className={s.button} disabled={dirty || busy}
             onClick={() => move({ section: "summary", target: "handoff" })}>{t("Klien sudah setuju?")}</button>}
         </div>
       </section>
@@ -422,6 +428,16 @@ export function ConsultantWork({ id }: { id: string }) {
             <section className={s.panel} id="work-schedule" tabIndex={-1}>
               <h2>{t("Jadwal konsultasi")}</h2>
               <AgendaRows records={data.bookings} now={now} details />
+              {canSend && !handoff && data.bookingUrl && (
+                <div className={s.bookingAction}>
+                  <p>{t("Sepakati waktunya dengan klien. Pilih slot yang tersedia di Cal.com dan pakai email yang tercantum di Kontak dan status.")}</p>
+                  <a className={s.button} href={data.bookingUrl} target="_blank" rel="noopener noreferrer"
+                    aria-describedby="cal-booking-help">
+                    <CalendarPlus size={17} aria-hidden="true" />{t("Jadwalkan di Cal.com")}
+                  </a>
+                  <p className={s.muted} id="cal-booking-help">{t("Cal.com terbuka di tab baru. Setelah booking, kembali dan pilih Perbarui untuk melihat jadwal.")}</p>
+                </div>
+              )}
               {canOperate && (
                 <form
                   className={s.form}

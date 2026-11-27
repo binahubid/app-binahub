@@ -1,21 +1,36 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, List } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { consultantRequest } from "@/lib/consultant-client";
 import { useConsultantLocale } from "./consultant-language";
 import { ConsultantPending, useConsultantData } from "./consultant-data";
 import s from "./consultant.module.css";
 import styles from "./consultant-product-knowledge-reader.module.css";
 
-type ReadingPage = {
-  page: number;
-  title: string;
-  blocks: { kind: "heading" | "paragraph" | "bullet"; text: string }[];
+type PageLink = { left: number; top: number; width: number; height: number; page?: number; url?: string };
+type PageImage = {
+  number: number;
+  width: number;
+  height: number;
+  image: string;
+  links: PageLink[];
+  text: string;
 };
+type Preview = {
+  revision: string;
+  total: number;
+  chapters: { number: number; title: string }[];
+  page: PageImage;
+};
+
+const previewUrl = "/api/konsultan/materials/product-knowledge?view=preview";
 
 export function ConsultantProductKnowledgeReader() {
   const { t } = useConsultantLocale();
-  const source = useConsultantData<{ pages: ReadingPage[] }>("/api/konsultan/materials/product-knowledge?view=reader");
+  const source = useConsultantData<Preview>(previewUrl);
+
   if (source.error) return (
     <section className={s.panel}>
       <p role="alert" className={s.error}>{t("Pratinjau dokumen belum dapat dibuka.")}</p>
@@ -23,68 +38,137 @@ export function ConsultantProductKnowledgeReader() {
     </section>
   );
   if (!source.data) return <ConsultantPending message="Memuat dokumen…" layout="reader" />;
-  if (!source.data.pages.length) return <p role="status">{t("Pratinjau dokumen belum dapat dibuka.")}</p>;
-  return <ReadingPages pages={source.data.pages} />;
+
+  return <VisualPages key={source.data.revision} initial={source.data} reload={source.reload} />;
 }
 
-function ReadingPages({ pages }: { pages: ReadingPage[] }) {
+function VisualPages({ initial, reload }: { initial: Preview; reload: () => void }) {
   const { t } = useConsultantLocale();
-  const [pageIndex, setPageIndex] = useState(0);
-  const [showOutline, setShowOutline] = useState(false);
-  const viewport = useRef<HTMLElement>(null);
-  const page = pages[pageIndex];
-  const index = pages.findIndex(item => item.title.toLowerCase() === "indeks program");
-  const programPages = pages
-    .map((item, i) => [item.title.split(" / ").at(-1) ?? "", i] as const)
-    .filter(([name, i]) => !!name && index >= 0 && i > index && pages[i].title.includes(" / "));
+  const { chapters, total, revision } = initial;
+  const index = chapters.find(chapter => chapter.title.toLowerCase() === "indeks program")?.number;
+  const [shown, setShown] = useState(initial.page);
+  const [pending, setPending] = useState<number>();
+  const [error, setError] = useState<{ page: number; refresh: boolean }>();
+  const [zoom, setZoom] = useState(false);
+  const viewport = useRef<HTMLDivElement>(null);
+  const navigation = useRef(0);
+  const requests = useRef(new Map([[initial.page.number, Promise.resolve(initial)]]));
 
-  function goTo(next: number) {
-    setPageIndex(Math.max(0, Math.min(next, pages.length - 1)));
-    setShowOutline(false);
-    viewport.current?.scrollTo({ top: 0 });
+  const read = useCallback((page: number) => {
+    const cache = requests.current;
+    const previous = cache.get(page);
+    if (previous) return previous;
+    if (cache.size >= 6) {
+      const oldest = cache.keys().next().value;
+      if (oldest !== undefined) cache.delete(oldest);
+    }
+    const request = consultantRequest<Preview>(previewUrl + "&page=" + page, undefined, "GET", AbortSignal.timeout(12_000))
+      .then(async preview => {
+        if (preview.revision === revision) {
+          const image = new window.Image();
+          image.src = preview.page.image;
+          await image.decode();
+        }
+        return preview;
+      })
+      .catch(reason => {
+        if (cache.get(page) === request) cache.delete(page);
+        throw reason;
+      });
+    cache.set(page, request);
+    return request;
+  }, [revision]);
+
+  useEffect(() => {
+    for (const page of [shown.number - 1, shown.number + 1]) {
+      if (page >= 1 && page <= total) void read(page).catch(() => {});
+    }
+  }, [read, shown.number, total]);
+
+  async function goTo(number: number) {
+    if (number < 1 || number > total) return;
+    const ticket = ++navigation.current;
+    setError(undefined);
+    setPending(number === shown.number ? undefined : number);
+    if (number === shown.number) return;
+
+    try {
+      const result = await read(number);
+      if (ticket !== navigation.current || !viewport.current) return;
+      if (result.revision !== revision) {
+        setError({ page: number, refresh: true });
+        return;
+      }
+      setShown(result.page);
+      viewport.current.scrollTo({ top: 0, left: 0 });
+    } catch {
+      if (ticket === navigation.current && viewport.current) setError({ page: number, refresh: false });
+    } finally {
+      if (ticket === navigation.current && viewport.current) setPending(undefined);
+    }
   }
 
+  const destination = pending ?? shown.number;
   return (
-    <section className={styles.reader} aria-label={t("Pembaca {0}", ["Product Knowledge"])}>
-      <div className={styles.toolbar}>
+    <section className={s.reader} aria-label={t("Pembaca {0}", ["Product Knowledge"])}>
+      <div className={s.readerBar}>
         <div className={s.actions} role="group" aria-label={t("Navigasi halaman dokumen")}>
-          <button className={s.button} type="button" aria-label={t("Halaman sebelumnya")} disabled={pageIndex === 0}
-            onClick={() => goTo(pageIndex - 1)}><ChevronLeft size={18} aria-hidden="true" /></button>
-          <output className={s.readerPage}>{t("Halaman")} {page.page} {t("dari")} {pages.length}</output>
-          <button className={s.button} type="button" aria-label={t("Halaman berikutnya")} disabled={pageIndex === pages.length - 1}
-            onClick={() => goTo(pageIndex + 1)}><ChevronRight size={18} aria-hidden="true" /></button>
+          <button className={s.button} type="button" aria-label={t("Halaman sebelumnya")} disabled={destination <= 1}
+            onClick={() => void goTo(destination - 1)}><ChevronLeft size={17} aria-hidden="true" /></button>
+          <output className={s.readerPage}>{t("Halaman")} {shown.number} {t("dari")} {total}</output>
+          <button className={s.button} type="button" aria-label={t("Halaman berikutnya")} disabled={destination >= total}
+            onClick={() => void goTo(destination + 1)}><ChevronRight size={17} aria-hidden="true" /></button>
         </div>
-        <div className={s.actions}>
-          <button type="button" className={s.button} aria-expanded={showOutline} aria-controls="product-knowledge-outline"
-            onClick={() => setShowOutline(value => !value)}><List size={17} aria-hidden="true" />{t("Daftar isi")}</button>
-          {index >= 0 && index !== pageIndex && (
-            <button type="button" className={s.button} onClick={() => goTo(index)}>{t("Indeks program")}</button>
+        <div className={styles.controls}>
+          <select className={s.readerOutline} aria-label={t("Daftar isi")} value={destination}
+            onChange={event => void goTo(Number(event.target.value))}>
+            {Array.from({ length: total }, (_, i) => {
+              const page = i + 1;
+              return <option key={page} value={page}>{page}. {chapters.find(chapter => chapter.number === page)?.title ?? t("Halaman")}</option>;
+            })}
+          </select>
+          {index && (
+            <button className={s.button} type="button" disabled={destination === index} onClick={() => void goTo(index)}>
+              {t("Indeks program")}
+            </button>
           )}
+          <button className={s.button} type="button" onClick={() => {
+            setZoom(value => !value);
+            viewport.current?.scrollTo({ left: 0 });
+          }}>
+            {zoom ? <ZoomOut size={16} aria-hidden="true" /> : <ZoomIn size={16} aria-hidden="true" />}
+            {t(zoom ? "Pas layar" : "Perbesar")}
+          </button>
         </div>
       </div>
-      {showOutline && (
-        <nav className={styles.outline} id="product-knowledge-outline" aria-label={t("Daftar isi")}>
-          {pages.map((item, i) => (
-            <button key={item.page} type="button" onClick={() => goTo(i)} aria-current={i === pageIndex ? "page" : undefined}>
-              <span>{item.title || t("Halaman") + " " + item.page}</span><small>{item.page}</small>
-            </button>
-          ))}
-        </nav>
+      {pending && <p className="sr-only" role="status">{t("Menyiapkan halaman…")}</p>}
+      {error && (
+        <div className={styles.notice} role="alert">
+          <p>{t(error.refresh ? "Dokumen diperbarui. Muat ulang untuk membuka versi terbaru." : "Halaman ini belum dapat ditampilkan.")}</p>
+          <button type="button" className={s.button}
+            onClick={() => error.refresh ? reload() : void goTo(error.page)}>
+            {t(error.refresh ? "Muat ulang dokumen" : "Coba lagi")}
+          </button>
+        </div>
       )}
-      <article className={styles.sheet} ref={viewport} tabIndex={0} aria-labelledby="product-knowledge-title">
-        <h2 id="product-knowledge-title">{page.title.split(" / ").at(-1) || t("Halaman") + " " + page.page}</h2>
-        {page.blocks.map((block, i) => {
-          if (block.text === page.title || block.text === page.title.split(" / ").at(-1)) return null;
-          if (pageIndex === index) {
-            const match = programPages.find(([name]) => block.text === name || block.text.startsWith(name + " SS-"));
-            if (match) return <button type="button" key={i} className={styles.program} onClick={() => goTo(match[1])}>
-              {block.text}<ArrowRight size={15} aria-hidden="true" />
-            </button>;
-          }
-          if (block.kind === "heading") return <h3 key={i}>{block.text}</h3>;
-          return <p key={i} data-bullet={block.kind === "bullet"}>{block.text}</p>;
-        })}
-      </article>
+      <div className={s.readerViewport} ref={viewport} tabIndex={0} role="region"
+        aria-label={t("Isi halaman {0}", [shown.number])} aria-busy={!!pending}>
+        <div className={styles.sheet} data-zoom={zoom}>
+          <Image src={shown.image} width={shown.width} height={shown.height} unoptimized
+            className={styles.pageImage} draggable={false} alt="" />
+          <p className="sr-only">{shown.text}</p>
+          {shown.links.map(({ left, top, width, height, page, url }, i) => {
+            const style = { left: left * 100 + "%", top: top * 100 + "%", width: width * 100 + "%", height: height * 100 + "%" };
+            return page ? (
+              <button type="button" key={i} className={s.readerLink} style={style}
+                aria-label={chapters.find(chapter => chapter.number === page)?.title || t("Halaman") + " " + page}
+                onClick={() => void goTo(page)} />
+            ) : (
+              <a key={i} className={s.readerLink} style={style} aria-label={url} href={url} target="_blank" rel="noopener noreferrer" />
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }

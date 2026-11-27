@@ -9,6 +9,10 @@ const id='11111111-1111-4111-8111-111111111111';
 const context:MeetingContext={definition,original:{role:'R1'},checklist:{id,source_id:id,contact:{name:'Synthetic',company:'Synthetic',email:'synthetic@example.invalid'},answers:{},notes:'',status:'in_progress',revision:0,updated_at:null}};
 const response=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status});
 function mount(){return render(<SpinMeetingChecklist id={id} onDirty={vi.fn()} onSaved={vi.fn()}/>);}
+async function openNotes() {
+  fireEvent.click(await screen.findByRole('button', { name: 'Catatan konsultasi' }));
+  return screen.getByRole('textbox', { name: 'Catatan dan tindak lanjut konsultasi' });
+}
 beforeEach(()=>{vi.resetAllMocks();mocks.fetch.mockResolvedValue(response(context));});
 describe('meeting checklist work survives saves and failures',()=>{
  it('shows client evidence and missing-only controls without rewriting source',async()=>{
@@ -23,7 +27,7 @@ describe('meeting checklist work survives saves and failures',()=>{
  it('saves in the background, keeps controls editable, and queues newer notes',async()=>{
   let resolveSave:(value:Response)=>void=()=>{};
   mocks.fetch.mockImplementation((_path:string,init?:RequestInit)=>init?.method==='PATCH'?new Promise<Response>(resolve=>{resolveSave=resolve;}):Promise.resolve(response(context)));
-  mount();const notes=await screen.findByLabelText('Catatan dan tindak lanjut konsultasi');
+  mount();const notes=await openNotes();
   fireEvent.change(notes,{target:{value:'First note'}});
   await waitFor(()=>expect(mocks.fetch).toHaveBeenCalledTimes(2),{timeout:3000});
   expect(notes).not.toBeDisabled();fireEvent.change(notes,{target:{value:'Newer note'}});
@@ -34,14 +38,14 @@ describe('meeting checklist work survives saves and failures',()=>{
  });
  it('retains notes on server failure and offers retry instead of clearing the form',async()=>{
   mocks.fetch.mockImplementation((_path:string,init?:RequestInit)=>Promise.resolve(init?.method==='PATCH'?response({error:'Belum tersimpan'},503):response(context)));
-  mount();const notes=await screen.findByLabelText('Catatan dan tindak lanjut konsultasi');fireEvent.change(notes,{target:{value:'Do not lose this'}});
+  mount();const notes=await openNotes();fireEvent.change(notes,{target:{value:'Do not lose this'}});
   await screen.findByRole('alert',{}, {timeout:3000});expect(notes).toHaveValue('Do not lose this');expect(screen.getByRole('button',{name:'Coba simpan lagi'})).toBeVisible();
  });
  it('does not overwrite on a revision conflict and does not complete missing required answers',async()=>{
   mocks.fetch.mockImplementation((_path:string,init?:RequestInit)=>Promise.resolve(init?.method==='PATCH'?response({error:'Draft berubah'},409):response(context)));
   mount();await screen.findByRole('heading',{name:'Checklist meeting'});
   fireEvent.click(screen.getAllByRole('button',{name:'Tandai selesai'})[0]);expect(screen.getByRole('alert')).toHaveTextContent('Lengkapi jawaban');expect(mocks.fetch).toHaveBeenCalledTimes(1);
-  fireEvent.change(screen.getByLabelText('Catatan dan tindak lanjut konsultasi'),{target:{value:'Unmerged'}});
+  fireEvent.change(await openNotes(),{target:{value:'Unmerged'}});
   fireEvent.click(screen.getAllByRole('button',{name:'Simpan sesi'})[0]);await screen.findByRole('button',{name:'Muat versi terbaru'});
   expect(screen.getByLabelText('Catatan dan tindak lanjut konsultasi')).toHaveValue('Unmerged');
  });

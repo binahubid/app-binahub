@@ -344,13 +344,20 @@ try {
           definition,
         });
       if (path.endsWith("/materials/product-knowledge")) {
-        assert.equal(url.searchParams.get("view"), "reader", "The original Product Knowledge PDF must not reach this browser");
-        return reply({ pages: [
-          { page: 1, title: "Panduan Product Knowledge", blocks: [{ kind:"paragraph", text: "Contoh halaman pertama — Versi 3" }] },
-          { page: 2, title: "Indeks Program", blocks: [{ kind:"paragraph", text: "Contoh halaman kedua — Versi 3" },
-            { kind:"paragraph", text: "Trust & Psychological Safety" }] },
-          { page: 3, title: "BinaLab / Trust & Psychological Safety", blocks: [{ kind:"heading", text: "Sasaran pembelajaran" }] },
-        ] });
+        assert.equal(url.searchParams.get("view"), "preview", "The original Product Knowledge PDF must not reach this browser");
+        const number = Number(url.searchParams.get("page") || 1);
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="849"><rect width="600" height="849" fill="#fff"/><rect width="600" height="320" fill="#0b2c6b"/></svg>';
+        const chapterTitle = ["Panduan Product Knowledge", "Indeks Program", "Trust & Psychological Safety"];
+        return reply({
+          revision: "synthetic-edition", total: 3,
+          chapters: chapterTitle.map((title, index) => ({ number: index + 1, title })),
+          page: {
+            number, width: 600, height: 849,
+            image: "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64"),
+            text: ["Contoh halaman pertama — Versi 3", "Contoh halaman kedua — Versi 3", "Sasaran pembelajaran"][number - 1],
+            links: number === 2 ? [{ left: .1, top: .2, width: .7, height: .08, page: 3 }] : [],
+          },
+        });
       }
       if (path.endsWith("/pdf") || path.endsWith("/recommendation") || path.startsWith("/api/konsultan/materials/"))
         return route.fulfill({
@@ -492,6 +499,15 @@ try {
     await page.getByText("Selesaikan checklist kebutuhan terlebih dahulu.").waitFor();
     assert.equal(await page.getByRole("button", { name: "Buat draf proposal" }).count(), 0);
     await page.getByRole("button", { name: "Buka checklist kebutuhan" }).click();
+    const jumpMenu = page.getByRole("combobox", { name: "Lompat ke bagian" });
+    await jumpMenu.waitFor();
+    assert(await jumpMenu.evaluate(element => element.parentElement.scrollWidth <= element.parentElement.clientWidth));
+    const challengeSection = page.getByRole("button", { name: /^Tantangan / });
+    await expect(challengeSection).toHaveAttribute("aria-expanded", "false");
+    await jumpMenu.selectOption(await jumpMenu.getByRole("option", { name: /^Tantangan / }).getAttribute("value"));
+    await expect(challengeSection).toHaveAttribute("aria-expanded", "true");
+    await challengeSection.click();
+    await expect(challengeSection).toHaveAttribute("aria-expanded", "false");
     await page.getByRole("button", { name: "Tandai selesai" }).first().click();
     await page.getByRole("alert").getByText("Lengkapi jawaban yang wajib sebelum menandai sesi selesai.").waitFor();
     const question = page.getByRole("textbox", { name: "Tantangan utama" });
@@ -719,16 +735,22 @@ try {
     page.on("download", () => { readerDownloads++; });
     await page.getByRole("link", { name: "Baca Product Knowledge BinaHub di web" }).click();
     await page.getByText("Halaman 1 dari 3").waitFor();
-    await page.getByText("Contoh halaman pertama — Versi 3", { exact: true }).waitFor();
+    const firstPage = page.getByRole("region", { name: "Isi halaman 1", exact: true });
+    assert(await firstPage.locator("img").evaluate(async element => {
+      await element.decode();
+      return element.naturalWidth === 600;
+    }));
     await page.getByRole("button", { name: "Halaman berikutnya" }).click();
     await page.getByText("Halaman 2 dari 3").waitFor();
-    await page.getByText("Contoh halaman kedua — Versi 3", { exact: true }).waitFor();
     await page.getByRole("button", { name: "Trust & Psychological Safety", exact: true }).click();
-    await page.getByRole("heading", { name: "Sasaran pembelajaran" }).waitFor();
+    await page.getByText("Halaman 3 dari 3").waitFor();
+    await expect(page.getByRole("region", { name: "Isi halaman 3", exact: true }).locator("img")).toBeVisible();
     await page.getByRole("button", { name: "Indeks program" }).click();
     await page.getByText("Halaman 2 dari 3").waitFor();
     assert.equal(await page.getByRole("button", { name: "Unduh PDF", exact: true }).count(), 0);
     assert.equal(readerDownloads, 0);
+    await page.getByRole("button", { name: "Perbesar", exact: true }).click();
+    await page.getByRole("button", { name: "Pas layar", exact: true }).click();
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: `tmp/consultant-material-${width}.png` });
     await page.getByRole("link", { name: "Semua materi" }).click();

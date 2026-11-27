@@ -370,7 +370,7 @@ export function ConsultantWork({ id }: { id: string }) {
           }}>{t("Tindak lanjuti rekomendasi")}</button>}
         {canSend && initial.sentAt && !(section === "proposal" && target === "draft") && <button
           type="button" className={s.button} disabled={busy || dirty}
-          onClick={() => move({ section: "proposal", target: "draft" })}>{t("Siapkan proposal formal")}</button>}
+          onClick={() => move({ section: "proposal", target: "draft" })}>{t("Siapkan Proposal Pelaksanaan")}</button>}
       </div>
     </section>
   ) : data.recommendationUnavailable ? <p className={s.notice} role="status">{t("Rekomendasi awal belum dapat diperiksa. Coba lagi beberapa saat.")}</p> : null;
@@ -707,7 +707,7 @@ export function ConsultantWork({ id }: { id: string }) {
             <div className={s.flowNotice}>
               <p>{t("Checklist siap dipakai untuk memilih program dan menyusun draf.")}</p>
               <button type="button" className={s.primary} disabled={busy}
-                onClick={() => move({ section: "proposal", target: "draft" })}>{t("Susun proposal")}</button>
+                onClick={() => move({ section: "proposal", target: "draft" })}>{t("Susun Proposal Pelaksanaan")}</button>
             </div>
           )}
         </section>
@@ -718,7 +718,7 @@ export function ConsultantWork({ id }: { id: string }) {
           {recommendation}
           {canOperate && !checklistComplete && (
             <section className={s.panel} id="work-draft" tabIndex={-1}>
-              <h2>{t("Susun proposal")}</h2>
+              <h2>{t("Susun Proposal Pelaksanaan")}</h2>
               <div className={s.flowNotice}>
                 <p>{t(initial?.canUseAnswers
                   ? "Jawaban klien sudah lengkap. Gunakan jawaban ini jika kebutuhan masih sesuai."
@@ -731,7 +731,7 @@ export function ConsultantWork({ id }: { id: string }) {
             </section>
           )}
           <section className={s.panel} id="work-review" tabIndex={-1}>
-            <h2>{t("Riwayat proposal formal")}</h2>
+            <h2>{t("Riwayat Proposal Pelaksanaan")}</h2>
             {target === "review" && message && <p className={s.success} role="status">{t(message)}</p>}
             {data.proposals.length ? (
               data.proposals.map((p) => {
@@ -786,7 +786,7 @@ export function ConsultantWork({ id }: { id: string }) {
             <section className={s.panel} id="work-draft" tabIndex={-1}>
               <div className={proposalLayout.heading}>
                 <div>
-                  <h2>{t("Susun proposal formal")}</h2>
+                  <h2>{t("Susun Proposal Pelaksanaan")}</h2>
                   <p>{t("Tinjau program dan rincian pelaksanaan yang diambil dari checklist.")}</p>
                 </div>
                 <Link className={proposalLayout.guide} href="/konsultan/materials/tutorial?episode=S05">

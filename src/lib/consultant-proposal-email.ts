@@ -8,7 +8,7 @@ export function consultantEmailDraft(detail: ConsultantDetail, locale: "id" | "e
     const plan = programs.slice(0, 3).map(program => program.name).join(", ");
     const subject = (en ? `Program partnership proposal | ${company}` : `Usulan kerja sama program | ${company}`).slice(0, 180);
     const body = en
-      ? `Following our discussion about ${company}'s development needs, I am sharing BinaHub's formal proposal for ${plan}. The attachment outlines the delivery scope, expected outputs, and proposed investment.\n\nPlease let me know whether the proposed scope and timing suit your team. Once I receive your feedback, I can confirm the details for approval and prepare for delivery.`
+      ? `Following our discussion about ${company}'s development needs, I am sharing BinaHub's program partnership proposal for ${plan}. The attachment outlines the delivery scope, expected outputs, and proposed investment.\n\nPlease let me know whether the proposed scope and timing suit your team. Once I receive your feedback, I can confirm the details for approval and prepare for delivery.`
       : `Sebagai tindak lanjut pembahasan kebutuhan pengembangan ${company}, saya lampirkan usulan kerja sama BinaHub untuk ${plan}. Dokumen ini memuat ruang lingkup pelaksanaan, hasil yang dituju, dan estimasi investasi.\n\n${proposal.snapshot.nextStep || "Mohon konfirmasi kesesuaian ruang lingkup dan pilihan jadwal. Setelah menerima masukan Anda, saya akan menyiapkan rincian pelaksanaan untuk persetujuan."}`;
     return { subject, body };
   }

@@ -170,7 +170,7 @@ export function workTabAttention(
       && ["queued", "processing", "failed", "uncertain"].includes(message.status))) {
       attention.proposal = { reason: "Draf siap ditinjau", destination: { section: "proposal", target: "review", proposalId: latest.id } };
     } else if (!latest && checklistComplete && !data.initialRecommendation?.sentAt) {
-      attention.proposal = { reason: "Susun proposal", destination: { section: "proposal", target: "draft" } };
+      attention.proposal = { reason: "Susun Proposal Pelaksanaan", destination: { section: "proposal", target: "draft" } };
     }
   }
 
@@ -290,7 +290,7 @@ export function workAction(
   if (checklistRevision === undefined) return {
     status: "Checklist selesai",
     description: "Buka Proposal untuk memuat versi checklist terbaru.",
-    label: "Susun proposal",
+    label: "Susun Proposal Pelaksanaan",
     destination: { section: "proposal", target: "draft" },
   };
   if (latest && !ready) return {
@@ -314,14 +314,14 @@ export function workAction(
   };
   if (data.initialRecommendation?.sentAt) return {
     status: "Rekomendasi awal sudah dikirim",
-    description: "Tindak lanjuti rekomendasi. Siapkan proposal formal jika klien membutuhkan rincian pelaksanaan dan investasi.",
+    description: "Tindak lanjuti rekomendasi. Siapkan Proposal Pelaksanaan jika klien membutuhkan rincian pelaksanaan dan estimasi investasi.",
     label: "Tindak lanjuti rekomendasi",
     destination: { section: "followup", target: "email" },
   };
   return {
     status: "Checklist selesai",
     description: "Gunakan kebutuhan yang sudah ditinjau untuk membuat draf proposal.",
-    label: "Susun proposal",
+    label: "Susun Proposal Pelaksanaan",
     destination: { section: "proposal", target: "draft" },
   };
 }

@@ -491,7 +491,7 @@ try {
     assert.equal(writes.length, 0);
     await question.fill("Koordinasi antartim perlu lebih konsisten.");
     await page.getByRole("button", { name: "Tandai selesai" }).first().click();
-    await page.locator("#work-checklist").getByRole("button", { name: "Susun proposal" }).click();
+    await page.locator("#work-checklist").getByRole("button", { name: "Susun Proposal Pelaksanaan" }).click();
     checks++;
     await expect(page.getByRole("checkbox", { name: /Program Kepemimpinan/ })).toBeChecked();
     await expect(page.getByLabel("Hari per program")).toHaveValue("2");
@@ -504,7 +504,7 @@ try {
     if (width >= 1440) assert(programBounds.x + programBounds.width <= deliveryBounds.x);
     else assert(programBounds.y + programBounds.height <= deliveryBounds.y);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-    if (width === 1440) await draft.screenshot({ path: "tmp/consultant-proposal-formal-1440.png" });
+    if (width === 1440) await draft.screenshot({ path: "tmp/consultant-proposal-delivery-1440.png" });
     if (width === 390) {
       await programsPanel.locator("summary").click();
       const search = programsPanel.getByRole("searchbox", { name: "Cari program" });
@@ -662,14 +662,14 @@ try {
       await expect(email.getByLabel("Lampiran proposal")).toHaveValue("");
       await expect(email.getByLabel("Isi pesan")).toHaveValue(/rekomendasi program yang sudah BinaHub kirimkan/);
       await proposalTab.click();
-      await page.getByRole("region", { name: "Rekomendasi awal klien" }).getByRole("button", { name: "Siapkan proposal formal" }).click();
+      await page.getByRole("region", { name: "Rekomendasi awal klien" }).getByRole("button", { name: "Siapkan Proposal Pelaksanaan" }).click();
       const before = writes.length;
       await page.getByRole("button", { name: "Gunakan jawaban klien" }).click();
       await expect(page.getByRole("checkbox", { name: /Program Kepemimpinan/ })).toBeChecked();
       await expect(page.getByLabel("Jumlah peserta")).toHaveValue("50");
       assert.deepEqual(writes.slice(before).map(write => write.action), ["client_answers"]);
       await page.setViewportSize({ width, height: 1280 });
-      await draft.screenshot({ path: "tmp/consultant-proposal-formal-390.png" });
+      await draft.screenshot({ path: "tmp/consultant-proposal-delivery-390.png" });
       await page.setViewportSize({ width, height: 900 });
       checks++;
     }

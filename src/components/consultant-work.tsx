@@ -16,6 +16,7 @@ import {
   messageLabels,
   stageLabels,
   type ConsultantDetail,
+  type ConsultantEmailIdentity,
   type ConsultantList,
   type Proposal,
   type ProposalSuggestions,
@@ -113,6 +114,12 @@ export function ConsultantWork({ id }: { id: string }) {
     [invalidateWork],
   );
   const data = work.data;
+  const record = data?.record;
+  const canSend = Boolean(record?.canEdit && data?.workspace && record.assigneeId
+    && !record.handoff && !["won", "lost"].includes(record.stage));
+  const emailIdentity = useConsultantData<ConsultantEmailIdentity>(
+    canSend && section === "followup" ? `${endpoint}/messages?assignment=${record?.assignmentRevision ?? 0}` : null,
+  );
   const loaded = !!data;
   const focusId = target === "review" && destination.proposalId ? "proposal-" + destination.proposalId
     : target ? "work-" + target : "";
@@ -238,6 +245,8 @@ export function ConsultantWork({ id }: { id: string }) {
   }
   function reviewEmail(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const identity = emailIdentity.data;
+    if (!identity) return;
     const form = e.currentTarget,
       f = new FormData(form);
     const kind = value(f, "kind"),
@@ -269,9 +278,10 @@ export function ConsultantWork({ id }: { id: string }) {
     setConfirm({
       title: when ? "Jadwalkan email ini?" : "Masukkan email ke antrean?",
       label: when ? "Jadwalkan email" : "Antrekan email",
-      description: t("Tujuan {0}. Pengirim {1}. {2}{3}", [
-        data?.record.email,
-        data?.record.assigneeName,
+      description: t("Kepada {0}. Dari {1}. Balasan masuk ke {2}. {3}{4}", [
+        identity.to,
+        identity.from,
+        identity.replyTo,
         proposal ? t("Lampiran proposal revisi {0}.", [proposal.revision]) + " " : "",
         when ? t("Jadwal {0}.", [consultantDate(request.at, locale)]) : t("Email akan diproses pada antrean berikutnya."),
       ]),
@@ -314,8 +324,6 @@ export function ConsultantWork({ id }: { id: string }) {
   const r = data.record,
     canEdit = r.canEdit && (data.workspace !== null || session.isAdmin);
   const canOperate = canEdit && data.workspace !== null;
-  const canSend =
-    canOperate && !!r.assigneeId && !["won", "lost"].includes(r.stage);
   const checklistComplete = (savedChecklist && savedChecklist.revision >= r.version ? savedChecklist.status : r.checklistStatus) === "completed";
   const refreshingChecklist = (savedChecklist?.revision ?? 0) > r.version;
   const checklistRevision = refreshingChecklist ? undefined : data.workspace?.checklist_revision;
@@ -876,8 +884,18 @@ export function ConsultantWork({ id }: { id: string }) {
           {canSend && (
             <section className={s.panel} id="work-email" tabIndex={-1}>
               <h2>{t("Siapkan email")}</h2>
-              <p className={s.muted}>{t("Kepada")} {r.email} {t("· Atas nama")} {r.assigneeName}
-              </p>
+              {emailIdentity.data ? (
+                <dl className={s.emailAddresses}>
+                  <div><dt>{t("Kepada")}</dt><dd>{emailIdentity.data.to}</dd></div>
+                  <div><dt>{t("Dari")}</dt><dd>{emailIdentity.data.from}</dd></div>
+                  <div><dt>{t("Balasan masuk ke")}</dt><dd>{emailIdentity.data.replyTo}</dd></div>
+                </dl>
+              ) : emailIdentity.error ? (
+                <div className={s.error} role="alert">
+                  <p>{t(emailIdentity.error)}</p>
+                  <button type="button" className={s.button} onClick={emailIdentity.reload}>{t("Coba lagi")}</button>
+                </div>
+              ) : <ConsultantPending message="Memeriksa alamat pengiriman…" />}
               {!readyProposals.length && !initial?.sentAt && <div className={s.flowNotice}>
                 <p>{t("Pengiriman proposal memerlukan draf dari checklist terbaru.")}</p>
                 <button type="button" className={s.button} disabled={busy}
@@ -920,7 +938,7 @@ export function ConsultantWork({ id }: { id: string }) {
                 <label className={s.field}>{t("Jadwal kirim (waktu perangkat)")}<input name="when" type="datetime-local" />
                   <span className={s.muted}>{t("Kosongkan jika email boleh diproses pada antrean berikutnya.")}</span>
                 </label>
-                <button className={s.primary} disabled={busy || (emailKind === "proposal" && !readyProposals.length)}>{t("Tinjau pengiriman")}</button>
+                <button className={s.primary} disabled={busy || !emailIdentity.data || (emailKind === "proposal" && !readyProposals.length)}>{t("Tinjau pengiriman")}</button>
               </form>
             </section>
           )}
@@ -937,6 +955,7 @@ export function ConsultantWork({ id }: { id: string }) {
                     {consultantDate(m.scheduled_at)} · {m.envelope.senderName} →{" "}
                     {m.envelope.to}
                   </p>
+                  {m.envelope.replyTo && <p className={s.muted}>{t("Balasan masuk ke {0}", [m.envelope.replyTo])}</p>}
                   <p>{m.envelope.body}</p>
                   {m.status === "uncertain" && <p>{t("Minta admin memeriksa status pengiriman sebelum Anda mengirim ulang.")}</p>}
                   {m.status === "accepted" && <p>{t("Layanan email sudah menerima pesan. Status ini belum memastikan email masuk ke kotak masuk klien.")}</p>}

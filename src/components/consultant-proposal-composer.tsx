@@ -119,7 +119,9 @@ export function ConsultantProposalComposer({ programs, defaults, prior, autoStar
       </div>
       <label className={s.field}>{t("Ruang lingkup untuk klien")}
         <textarea name="scope" rows={3} maxLength={4000} defaultValue={prior?.scopeNote}
-          placeholder={t("Opsional. Catat penyesuaian yang disepakati bersama klien.")} />
+          aria-describedby="proposal-scope-hint"
+          placeholder={t("Contoh: Simulasi koordinasi lintas divisi dan refleksi terbimbing. Setiap tim menyusun satu rencana tindak lanjut.")} />
+        <span id="proposal-scope-hint" className={s.muted}>{t("Opsional. Tulis fokus kegiatan, penyesuaian yang disepakati, dan hasil yang akan dibawa peserta. Teks ini masuk ke PDF proposal.")}</span>
       </label>
       <label className={s.field}>{t("Langkah berikutnya untuk klien")}
         <textarea name="nextStep" rows={2} maxLength={500} defaultValue={prior?.nextStep}

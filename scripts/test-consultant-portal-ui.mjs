@@ -232,6 +232,14 @@ try {
       }
       const read = path.includes(peerLead),
         current = read ? readOnly : local;
+      if (method === "GET" && path.endsWith("/messages")) {
+        assert(!read, "Read-only work must not request the consultant's email identity");
+        return reply({
+          from: `${members[0].name} | BinaHub <assessment@example.invalid>`,
+          to: current.email,
+          replyTo: user.email,
+        });
+      }
       if (method !== "GET") {
         assert(!read, "Read-only detail must not mutate");
         const body = route.request().postDataJSON();
@@ -272,6 +280,7 @@ try {
               body: body.body,
               senderName: members[0].name,
               to: local.email,
+              replyTo: user.email,
             },
           });
           return reply({ message: messages[0] }, 202);
@@ -476,6 +485,7 @@ try {
     await expect(page.getByLabel("Durasi setiap program (hari)")).toHaveValue("2");
     await expect(page.getByLabel("Jumlah peserta")).toHaveValue("50");
     await page.getByText(/memakai 2 batch/).waitFor();
+    await expect(page.getByLabel("Ruang lingkup untuk klien")).toHaveAttribute("placeholder", /Simulasi koordinasi lintas divisi/);
     await page.getByLabel("Jumlah peserta").fill("20");
     await page.locator('select[name="venue"]').selectOption("indoor");
     await page.getByLabel("Lokasi").fill("Jakarta");
@@ -501,6 +511,8 @@ try {
     assert.equal(await email.getByLabel("Jenis email").inputValue(), "proposal");
     assert.equal(await email.getByLabel("Lampiran proposal").inputValue(), proposal);
     await expect(email.getByLabel("Isi pesan")).toHaveValue(/usulan kerja sama BinaHub/);
+    await expect(email).toContainText("Alicia Konsultan | BinaHub <assessment@example.invalid>");
+    await expect(email).toContainText("alice@example.invalid");
     await page.getByLabel("Tugas baru").fill("Konfirmasi jadwal klien");
     await page.getByLabel("Tenggat").fill("2099-01-03T09:00");
     await page.getByRole("button", { name: "Tambah tugas" }).click();
@@ -513,10 +525,10 @@ try {
     await page.getByLabel("Subjek").fill("Proposal konsultasi");
     await page.getByLabel("Isi pesan").fill("Ini pesan pengujian browser.");
     await page.getByRole("button", { name: "Tinjau pengiriman" }).click();
-    await page
-      .getByRole("dialog")
-      .getByText(/client@example.invalid/)
-      .waitFor();
+    const mailReview = page.getByRole("dialog");
+    await expect(mailReview).toContainText("Kepada client@example.invalid");
+    await expect(mailReview).toContainText("Dari Alicia Konsultan | BinaHub <assessment@example.invalid>");
+    await expect(mailReview).toContainText("Balasan masuk ke alice@example.invalid");
     await page.getByRole("button", { name: "Antrekan email" }).click();
     await page.locator("#work-delivery").getByText("Email masuk antrean. Pantau statusnya di riwayat pengiriman.").waitFor();
     assert.equal(writes.find(write => write.kind === "proposal").proposalId, proposal);

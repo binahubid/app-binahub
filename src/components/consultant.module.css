@@ -617,6 +617,18 @@
   margin-bottom: 16px;
   color: #53647c;
 }
+.emailAddresses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 12px 18px;
+  padding: 14px;
+  margin: 12px 0 16px;
+  border: 1px solid #dbe6f4;
+  border-radius: 12px;
+  background: #f4f7fc;
+}
+.emailAddresses dt { color: #53647c; font-size: 12px; }
+.emailAddresses dd { color: var(--navy); font-weight: 600; overflow-wrap: anywhere; }
 .clientContext {
   padding: 20px 24px;
   border: 1px solid #dbe3ed;

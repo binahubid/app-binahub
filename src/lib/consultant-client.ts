@@ -97,6 +97,12 @@ export type Booking = {
   assigneeName?: string;
   company?: string;
 };
+export type ConsultantEmailIdentity = {
+  from: string;
+  to: string;
+  replyTo: string;
+};
+
 export type Message = {
   id: string;
   proposal_id?: string | null;

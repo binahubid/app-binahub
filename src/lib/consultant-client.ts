@@ -128,7 +128,7 @@ export type InitialRecommendation = {
   programs: { code: string; name: string }[];
 };
 export type ProposalSuggestions = {
-  source: "initial" | "checklist";
+  source: "initial" | "checklist" | "catalog";
   status: "suggested" | "review" | "none" | "unavailable";
   programs: { code: string; reason: string }[];
 };
@@ -183,6 +183,12 @@ export type ConsultantList = {
   bookings: Booking[];
   catalog: Program[];
 };
+export class ConsultantRequestError extends Error {
+  constructor(message: string, readonly code?: string) {
+    super(message);
+  }
+}
+
 export async function consultantRequest<T>(
   path: string,
   body?: unknown,
@@ -202,8 +208,9 @@ export async function consultantRequest<T>(
   });
   const v = await r.json();
   if (!r.ok)
-    throw new Error(
+    throw new ConsultantRequestError(
       v.error || "Data belum dapat diproses. Coba perbarui halaman.",
+      v.code,
     );
   return v as T;
 }

@@ -4,11 +4,12 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Fragment, useCallback, useContext, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight, CalendarPlus, CircleAlert, Download } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarPlus, CircleAlert, CircleHelp, Download } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui";
 import type { MeetingChecklist } from "@/app/admin/_lib/spin-meeting";
 import {
   consultantDate,
+  ConsultantRequestError,
   consultantMoney,
   consultantRequest,
   downloadConsultantFile,
@@ -32,6 +33,7 @@ import { ConsultantPending, ConsultantReads, consultantAgendaPath, consultantDet
 import { useConsultant } from "./consultant-shell";
 import { ConsultantContext } from "./consultant-context";
 import s from "./consultant.module.css";
+import proposalLayout from "./consultant-proposal-composer.module.css";
 import { useConsultantLocale } from "@/components/consultant-language";
 import {
   agendaPath, canAttachProposal, readWorkDestination, safeWorkReturn,
@@ -114,6 +116,7 @@ export function ConsultantWork({ id }: { id: string }) {
     [invalidateWork],
   );
   const data = work.data;
+  const reloadWork = work.reload;
   const record = data?.record;
   const canSend = Boolean(record?.canEdit && data?.workspace && record.assigneeId
     && !record.handoff && !["won", "lost"].includes(record.stage));
@@ -143,11 +146,16 @@ export function ConsultantWork({ id }: { id: string }) {
   const suggest = useCallback((retry = false) => {
     const key = `${endpoint}:${data?.workspace?.checklist_revision}:${version}`;
     if (retry || suggestions.current?.key !== key) {
-      const promise = consultantRequest<ProposalSuggestions>(`${endpoint}/proposals/suggestions`, { version });
+      const promise = consultantRequest<ProposalSuggestions>(
+        `${endpoint}/proposals/suggestions`, { version }, "POST", AbortSignal.timeout(32_000),
+      ).catch(error => {
+        if (error instanceof ConsultantRequestError && error.code === "CONSULTANT_CONFLICT") reloadWork();
+        throw error;
+      });
       suggestions.current = { key, promise };
     }
     return suggestions.current!.promise;
-  }, [endpoint, data?.workspace?.checklist_revision, version]);
+  }, [endpoint, data?.workspace?.checklist_revision, version, reloadWork]);
 
   async function run(
     action: () => Promise<unknown>,
@@ -632,8 +640,12 @@ export function ConsultantWork({ id }: { id: string }) {
                     });
                   }}
                 >
-                  <label className={s.field}>{t("Kesepakatan klien dan arahan pelaksanaan")}<textarea name="note" required maxLength={4000} rows={3} />
-                  </label>
+                  <div className={s.field}>
+                    <label htmlFor="handoff-note">{t("Kesepakatan klien dan arahan pelaksanaan")}</label>
+                    <textarea id="handoff-note" name="note" required maxLength={4000} rows={4} aria-describedby="handoff-hint"
+                      placeholder={t("Contoh: Klien menyetujui proposal revisi 2 untuk 32 peserta. Jadwal dan lokasi disepakati. Ibu Rina menjadi PIC. Admin perlu mengonfirmasi dokumen pemesanan.")} />
+                    <span id="handoff-hint" className={s.muted}>{t("Catat revisi yang disetujui, ruang lingkup, jadwal, PIC klien, dan hal yang masih perlu dikonfirmasi admin.")}</span>
+                  </div>
                   <button className={s.primary} disabled={busy}>{t("Tinjau serah terima")}</button>
                 </form>
               )}
@@ -772,10 +784,15 @@ export function ConsultantWork({ id }: { id: string }) {
           </section>
           {canOperate && checklistComplete && (
             <section className={s.panel} id="work-draft" tabIndex={-1}>
-              <h2>{t("Susun proposal formal")}</h2>
-              <p className={s.muted}>{t("Sistem memakai checklist untuk mengisi draf. Tinjau program, rencana pelaksanaan, dan langkah untuk mencapai kesepakatan.")}</p>
-              {initial?.sentAt && <p className={s.notice}>{t("Gunakan proposal formal saat klien membutuhkan ruang lingkup dan estimasi untuk mengambil keputusan. Untuk membahas rekomendasi awal, siapkan email tindak lanjut.")}</p>}
-              <Link className={s.inlineHelp} href="/konsultan/materials/tutorial?episode=S05">{t("Lihat panduan menyusun proposal")}</Link>
+              <div className={proposalLayout.heading}>
+                <div>
+                  <h2>{t("Susun proposal formal")}</h2>
+                  <p>{t("Tinjau program dan rincian pelaksanaan yang diambil dari checklist.")}</p>
+                </div>
+                <Link className={proposalLayout.guide} href="/konsultan/materials/tutorial?episode=S05">
+                  <CircleHelp size={16} aria-hidden="true" />{t("Lihat panduan menyusun proposal")}
+                </Link>
+              </div>
               {refreshingChecklist ? <ConsultantPending message="Memuat versi checklist terbaru…" />
               : directory.error ? (
                 <div className={s.error} role="alert">
@@ -793,6 +810,7 @@ export function ConsultantWork({ id }: { id: string }) {
                   autoStart={target === "draft" || !initial?.sentAt}
                   suggest={suggest}
                   busy={busy}
+                  onOpenChecklist={() => move({ section: "meeting", target: "checklist" })}
                   onSubmit={(e) => submit(e, async (f) => {
                     const created = await consultantRequest<Proposal>(`${endpoint}/proposals`, {
                       version,
@@ -981,6 +999,9 @@ export function ConsultantWork({ id }: { id: string }) {
           </section>
           <section className={s.panel} id="work-activity" tabIndex={-1}>
             <h2>{t("Riwayat aktivitas")}</h2>
+            {canSend && readyProposals.some(proposal => proposal.status === "sent") && (
+              <p className={s.muted}>{t("Jika klien meminta perubahan, siapkan revisi proposal. Jika klien setuju, lanjutkan ke Serah terima. Jika masih menunggu kabar, jadwalkan tindak lanjut.")}</p>
+            )}
             {canOperate && (
               <form
                 className={s.form}
@@ -992,9 +1013,12 @@ export function ConsultantWork({ id }: { id: string }) {
                   )
                 }
               >
-                <label className={s.field}>{t("Catat balasan klien")}<textarea name="note" required maxLength={4000} rows={3} />
-                </label>
-                <p className={s.muted}>{t("Tindak lanjut terjadwal dibatalkan agar tim dapat meninjau balasan ini terlebih dahulu.")}</p>
+                <div className={s.field}>
+                  <label htmlFor="reply-note">{t("Catat balasan klien")}</label>
+                  <textarea id="reply-note" name="note" required maxLength={4000} rows={3} aria-describedby="reply-hint"
+                    placeholder={t("Contoh: Ibu Rina meminta revisi menjadi 32 peserta. Kirim revisi pada Selasa. Keputusan menunggu persetujuan HR.")} />
+                  <span id="reply-hint" className={s.muted}>{t("Ringkas keputusan, perubahan yang diminta, dan langkah berikutnya. Tindak lanjut email yang masih terjadwal akan dibatalkan.")}</span>
+                </div>
                 <button className={s.button} disabled={busy}>{t("Simpan balasan")}</button>
               </form>
             )}

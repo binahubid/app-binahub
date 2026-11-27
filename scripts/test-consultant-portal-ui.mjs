@@ -89,6 +89,13 @@ const catalog = [
     capacity: "Hingga 30 peserta",
     pricingModel: "Tarif Harian Standar",
   },
+  {
+    code: "SS-12",
+    name: "Trust & Psychological Safety",
+    dailyRateIdr: 25000000,
+    capacity: "Hingga 30 peserta",
+    pricingModel: "Tarif Harian Standar",
+  },
 ];
 const testServer = createServer((req, res) => {
   // These server requests come from the real Next.js middleware.
@@ -135,6 +142,7 @@ try {
     let sessionChecks = 0, defaultReads = 0;
     let personalReads = 0, checklistRevision = 1, answers = {};
     let recommendation;
+    let suggestionsFromCatalog = false;
     const requests = [];
     const pageErrors = [],
       writes = [];
@@ -243,11 +251,15 @@ try {
       if (method !== "GET") {
         assert(!read, "Read-only detail must not mutate");
         const body = route.request().postDataJSON();
-        if (path.endsWith("/proposals/suggestions")) return reply({
-          source: recommendation ? "initial" : "checklist",
-          status: "suggested",
-          programs: [{ code: catalog[0].code, reason: "Koordinasi tim yang lebih efektif." }],
-        });
+        if (path.endsWith("/proposals/suggestions")) {
+          return reply(suggestionsFromCatalog
+            ? { source: "catalog", status: "review", programs: [{ code: "SS-12", reason: "Membangun kepercayaan antaranggota tim." }] }
+            : {
+                source: recommendation ? "initial" : "checklist",
+                status: "suggested",
+                programs: [{ code: catalog[0].code, reason: "Koordinasi tim yang lebih efektif." }],
+              });
+        }
         writes.push(body);
         if (path.endsWith("/proposals")) {
           proposals.push({
@@ -482,9 +494,36 @@ try {
     await page.locator("#work-checklist").getByRole("button", { name: "Susun proposal" }).click();
     checks++;
     await expect(page.getByRole("checkbox", { name: /Program Kepemimpinan/ })).toBeChecked();
-    await expect(page.getByLabel("Durasi setiap program (hari)")).toHaveValue("2");
+    await expect(page.getByLabel("Hari per program")).toHaveValue("2");
     await expect(page.getByLabel("Jumlah peserta")).toHaveValue("50");
     await page.getByText(/memakai 2 batch/).waitFor();
+    const draft = page.locator("#work-draft");
+    const programsPanel = draft.getByRole("region", { name: "Program yang diusulkan" });
+    const deliveryPanel = draft.getByRole("region", { name: "Rencana pelaksanaan" });
+    const programBounds = await programsPanel.boundingBox(), deliveryBounds = await deliveryPanel.boundingBox();
+    if (width >= 1440) assert(programBounds.x + programBounds.width <= deliveryBounds.x);
+    else assert(programBounds.y + programBounds.height <= deliveryBounds.y);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    if (width === 1440) await draft.screenshot({ path: "tmp/consultant-proposal-formal-1440.png" });
+    if (width === 390) {
+      await programsPanel.locator("summary").click();
+      const search = programsPanel.getByRole("searchbox", { name: "Cari program" });
+      await search.fill("Psychological");
+      await expect(page.getByRole("checkbox", { name: /Trust & Psychological Safety/ })).toBeVisible();
+      await search.fill("tidak ditemukan");
+      await expect(programsPanel.getByText("Tidak ada program yang sesuai dengan pencarian.")).toBeVisible();
+      suggestionsFromCatalog = true;
+      await programsPanel.getByRole("button", { name: "Cocokkan program" }).click();
+      await expect(programsPanel.getByText(/Opsi dari katalog berdasarkan checklist/)).toBeVisible();
+      await expect(page.getByRole("checkbox", { name: /Trust & Psychological Safety/ })).not.toBeChecked();
+      if (!(await search.isVisible())) await programsPanel.locator("summary").click();
+      await search.fill("");
+      await expect(page.getByRole("checkbox", { name: /Program Kepemimpinan/ })).toBeChecked();
+      await programsPanel.locator("summary").click();
+      suggestionsFromCatalog = false;
+      checks++;
+    }
+    await draft.getByText("Catatan untuk proposal", { exact: false }).click();
     await expect(page.getByLabel("Ruang lingkup untuk klien")).toHaveAttribute("placeholder", /Simulasi koordinasi lintas divisi/);
     await page.getByLabel("Jumlah peserta").fill("20");
     await page.locator('select[name="venue"]').selectOption("indoor");
@@ -493,6 +532,7 @@ try {
     await page
       .getByText("Draf proposal tersimpan. Tinjau PDF sebelum mengirim.")
       .waitFor();
+    assert.deepEqual(writes.find(write => Array.isArray(write.programCodes))?.programCodes, [catalog[0].code]);
     const proposalReview = page.locator(`details#proposal-${proposal}`);
     await proposalReview.getByText(/Revisi 1 · Draf siap ditinjau/).waitFor();
     await proposalReview.getByRole("button", { name: "Siapkan pengiriman proposal" }).waitFor();
@@ -628,7 +668,9 @@ try {
       await expect(page.getByRole("checkbox", { name: /Program Kepemimpinan/ })).toBeChecked();
       await expect(page.getByLabel("Jumlah peserta")).toHaveValue("50");
       assert.deepEqual(writes.slice(before).map(write => write.action), ["client_answers"]);
-      await page.screenshot({ path: "tmp/consultant-proposal-formal-390.png" });
+      await page.setViewportSize({ width, height: 1280 });
+      await draft.screenshot({ path: "tmp/consultant-proposal-formal-390.png" });
+      await page.setViewportSize({ width, height: 900 });
       checks++;
     }
 

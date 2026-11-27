@@ -662,30 +662,8 @@
   font-size: 12px;
   color: #617087;
 }
-.catalog {
-  display: grid;
-  gap: 10px;
-  max-height: 280px;
-  overflow: auto;
-  padding: 12px;
-  border: 1px solid #cbd6e5;
-  border-radius: 10px;
-}
-.catalog label {
-  display: flex;
-  gap: 12px;
-  align-items: start;
-  padding: 8px;
-}
-.programChoice > span { min-width: 0; }
-.programChoice strong, .programChoice small { display: block; }
-.programChoice small { margin-top: 0.25rem; color: var(--muted, #465873); line-height: 1.4; }
 .recommendationCard { background: #f3f7fc; border-color: #dbe6f4; }
 .recommendationCard .actions { margin-top: 12px; }
-.catalog input {
-  margin-top: 5px;
-  flex-shrink: 0;
-}
 .mobileLabel {
   display: none;
 }

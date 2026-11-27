@@ -35,7 +35,8 @@ Panduan ini digunakan admin dan konsultan sejak jadwal masuk sampai serah terima
 1. Pada revisi yang sudah ditinjau, pilih **Siapkan pengiriman proposal**. Portal membuka **Tindak lanjut → Siapkan email** dengan revisi, subjek, dan draf pesan yang siap ditinjau. Sesuaikan pesan dengan keputusan atau langkah berikutnya yang dibahas dengan klien.
 2. Isi **Jadwal kirim** jika email perlu dikirim pada waktu tertentu. Kosongkan jika ingin diproses pada giliran berikutnya. Pilih **Tinjau pengiriman**, periksa tujuan, nama konsultan, jadwal, serta lampiran, lalu pilih **Antrekan email**. Periksa baris **Dari** dan **Balasan masuk ke**. Resend mengirim dari alamat resmi BinaHub dengan nama konsultan yang ditugaskan. Tombol **Balas** pada email klien mengarah ke email akun konsultan yang tercatat di AMS.
 3. Pantau **Riwayat pengiriman**. **Menunggu jadwal** berarti email masih dalam antrean. **Diterima penyedia email** berarti layanan email sudah menerima pengiriman. Untuk status **Pengiriman perlu diperiksa**, cocokkan dengan riwayat penyedia sebelum mengirim ulang.
-4. Untuk pengingat berikutnya, pilih jenis email **Tindak lanjut** dan atur waktunya. Catat balasan klien di **Riwayat aktivitas** agar tindak lanjut yang masih terjadwal dapat dibatalkan.
+4. Jika klien membalas, buka **Tindak lanjut → Catat balasan**. Ringkas keputusan klien, perubahan yang diminta, dan langkah berikutnya. Pencatatan ini membatalkan email tindak lanjut yang masih terjadwal. Jika klien meminta perubahan, perbarui checklist bila kebutuhannya berubah, buat revisi proposal, dan kirim revisi untuk ditinjau klien.
+5. Jika belum ada balasan, cek **Riwayat pengiriman**. Setelah penyedia menerima email, buat tugas untuk mengecek kembali dalam 2–3 hari kerja. Kirim atau jadwalkan satu pesan **Tindak lanjut** dari portal. Jika masih belum ada balasan, cek kembali 5–7 hari kerja setelah pengingat pertama dan catat hasilnya. Pertahankan status **Proposal** atau **Pembahasan** ketika keputusan masih terbuka. Gunakan **Tidak dilanjutkan** dengan alasan yang tercatat jika peluang memang ditutup.
 
 Contoh pesan setelah meeting
 
@@ -44,7 +45,7 @@ Contoh pesan setelah meeting
 ## 6. Serahkan program yang sudah disepakati
 
 1. Setelah proposal terkirim dan klien menyepakati program, pilih **Klien sudah setuju?** pada **Langkah berikutnya**. Catat program dan revisi yang disepakati, jumlah peserta, waktu, lokasi, dan hal yang masih perlu ditindaklanjuti. Pilih **Tinjau serah terima**, lalu **Serahkan ke admin**.
-2. Admin membuka **Tim Konsultan → Serah terima**, membaca kesepakatan, lalu melanjutkan pekerjaan dari **Klien & Pelaksanaan**. Status peluang menjadi **Disepakati** dan email yang masih terjadwal pada peluang tersebut dibatalkan.
+2. Admin membuka **Tim Konsultan → Serah terima**, membaca kesepakatan, lalu melanjutkan dari **Klien & Pelaksanaan**. Admin menghubungi PIC klien untuk konfirmasi jadwal, dokumen pemesanan/kontrak, pembayaran, dan persiapan program sesuai kesepakatan. Status peluang menjadi **Disepakati** dan email yang masih terjadwal dibatalkan.
 
 ## Rilis dan pengujian
 

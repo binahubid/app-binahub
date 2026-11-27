@@ -1,0 +1,174 @@
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 20px;
+}
+.heading h2 {
+  margin-bottom: 2px;
+  font-size: clamp(20px, 2.2vw, 27px);
+}
+.heading p {
+  max-width: 60ch;
+  color: var(--muted);
+}
+.heading .guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--navy);
+  font-weight: 600;
+}
+.form {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+.section {
+  min-width: 0;
+  border: 1px solid #dce4ef;
+  border-radius: 12px;
+  padding: clamp(12px, 2vw, 20px);
+}
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sectionHeader h3 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 16px;
+  font-weight: 650;
+}
+.sectionHeader button {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.matchStatus,
+.fieldIntro {
+  color: var(--muted);
+  font-size: 13px;
+}
+.matchStatus:not(:empty) { margin-bottom: 12px; }
+.matchStatus[data-state="attention"] { color: #794611; }
+.fieldIntro { margin-bottom: 12px; }
+.options {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+}
+.choice {
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+  min-height: 52px;
+  align-items: start;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.choice[data-selected="true"] {
+  background: #eff5fd;
+  border-color: #91afd7;
+}
+.choice:hover { border-color: #91afd7; }
+.choice input { margin-top: 4px; accent-color: var(--navy); }
+.choice strong { display: block; font-weight: 650; color: var(--navy); }
+.choice small { display: block; margin-top: 3px; color: var(--muted); }
+.choice .reason { color: #344c6e; }
+.catalog summary,
+.notes summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  color: var(--navy);
+  font-weight: 600;
+}
+.catalog summary::-webkit-details-marker,
+.notes summary::-webkit-details-marker { display: none; }
+.catalog summary svg, .notes summary svg:last-child { margin-left: auto; }
+.catalog[open] summary svg, .notes[open] summary svg:last-child { transform: rotate(180deg); }
+.search {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  gap: 8px;
+  border: 1px solid #cbd6e5;
+  padding: 0 10px;
+  border-radius: 8px;
+}
+.search input { min-width: 0; width: 100%; min-height: 44px; outline-offset: -2px; }
+.catalogResults {
+  display: grid;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+.fields, .noteFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+.fields { align-items: end; }
+.batchNote {
+  color: #344c6e;
+  background: #f4f7fc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-top: 12px;
+}
+.notes {
+  border: 1px solid #dce4ef;
+  border-radius: 12px;
+  padding: 3px 16px;
+}
+.notes summary small {
+  font-size: 12px;
+  margin-left: 4px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.noteFields { padding: 6px 0 14px; }
+.footer {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding-top: 14px;
+  border-top: 1px solid #dce4ef;
+}
+.footer .fieldIntro { margin: 1px 0 0; }
+.selection { color: var(--navy); font-weight: 650; overflow-wrap: anywhere; }
+.spin { animation: rotate 1.1s linear infinite; }
+@keyframes rotate { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+@media (max-width: 1050px) { .columns { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .heading { margin-bottom: 14px; gap: 4px; }
+  .noteFields { grid-template-columns: minmax(0, 1fr); }
+  .footer { flex-direction: column; align-items: stretch; }
+}
+@media (max-width: 380px) { .fields { grid-template-columns: minmax(0, 1fr); } }

@@ -42,6 +42,7 @@ export type Proposal = {
   revision: number;
   status: string;
   checklist_revision: number;
+  priceRefresh?: boolean;
   created_at: string;
   snapshot: {
     programs: {
@@ -50,12 +51,16 @@ export type Proposal = {
       objectives: string[];
       dailyRate: number | null;
       total: number | null;
+      priceBasis?: string;
     }[];
     days: number;
     participants: number;
     venue: string;
     location: string;
     scopeNote: string;
+    nextStep?: string;
+    pricedSubtotal?: number | null;
+    documentKind?: "formal";
     total: number | null;
     priceNote: string;
     summary: {
@@ -107,8 +112,24 @@ export type Message = {
   };
   error: string | null;
 };
+export type InitialRecommendation = {
+  id: string;
+  submittedAt: string;
+  sentAt: string | null;
+  delivery: string | null;
+  ready: boolean;
+  canUseAnswers: boolean;
+  programs: { code: string; name: string }[];
+};
+export type ProposalSuggestions = {
+  source: "initial" | "checklist";
+  status: "suggested" | "review" | "none" | "unavailable";
+  programs: { code: string; reason: string }[];
+};
 export type ConsultantDetail = {
   record: ConsultantLead;
+  initialRecommendation?: InitialRecommendation | null;
+  recommendationUnavailable?: boolean;
   bookingUrl?: string;
   proposalDefaults?: {
     participants?: number;

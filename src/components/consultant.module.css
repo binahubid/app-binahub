@@ -665,6 +665,11 @@
   align-items: start;
   padding: 8px;
 }
+.programChoice > span { min-width: 0; }
+.programChoice strong, .programChoice small { display: block; }
+.programChoice small { margin-top: 0.25rem; color: var(--muted, #465873); line-height: 1.4; }
+.recommendationCard { background: #f3f7fc; border-color: #dbe6f4; }
+.recommendationCard .actions { margin-top: 12px; }
 .catalog input {
   margin-top: 5px;
   flex-shrink: 0;

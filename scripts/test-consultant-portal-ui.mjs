@@ -134,6 +134,7 @@ try {
     let asAdmin = false, availabilityFailure = false;
     let sessionChecks = 0, defaultReads = 0;
     let personalReads = 0, checklistRevision = 1, answers = {};
+    let recommendation;
     const requests = [];
     const pageErrors = [],
       writes = [];
@@ -234,6 +235,11 @@ try {
       if (method !== "GET") {
         assert(!read, "Read-only detail must not mutate");
         const body = route.request().postDataJSON();
+        if (path.endsWith("/proposals/suggestions")) return reply({
+          source: recommendation ? "initial" : "checklist",
+          status: "suggested",
+          programs: [{ code: catalog[0].code, reason: "Koordinasi tim yang lebih efektif." }],
+        });
         writes.push(body);
         if (path.endsWith("/proposals")) {
           proposals.push({
@@ -269,6 +275,12 @@ try {
             },
           });
           return reply({ message: messages[0] }, 202);
+        }
+        if (body.action === "client_answers") {
+          assert.equal(body.sourceId, recommendation.id);
+          recommendation.canUseAnswers = false;
+          current.checklistStatus = "completed";
+          checklistRevision++;
         }
         if (body.action === "task")
           tasks.push({
@@ -310,7 +322,7 @@ try {
           original: {},
           definition,
         });
-      if (path.endsWith("/pdf") || path.startsWith("/api/konsultan/materials/"))
+      if (path.endsWith("/pdf") || path.endsWith("/recommendation") || path.startsWith("/api/konsultan/materials/"))
         return route.fulfill({
           headers: { ...headers, "Content-Type": "application/pdf" },
           body: path.startsWith("/api/konsultan/materials/")
@@ -319,6 +331,8 @@ try {
         });
       return reply({
         record: current,
+        initialRecommendation: read ? undefined : recommendation,
+        proposalDefaults: read ? undefined : { people: 50, participants: 50, days: 2, venue: "indoor", location: "Jakarta", spiritualOptIn: false },
         bookingUrl: read ? undefined : "https://cal.com/binahub/konsultasi",
         workspace: {
           version: current.version,
@@ -458,8 +472,10 @@ try {
     await page.getByRole("button", { name: "Tandai selesai" }).first().click();
     await page.locator("#work-checklist").getByRole("button", { name: "Susun proposal" }).click();
     checks++;
-    await page.getByRole("checkbox", { name: /Program Kepemimpinan/ }).check();
-    await page.getByLabel("Durasi (hari)").fill("2");
+    await expect(page.getByRole("checkbox", { name: /Program Kepemimpinan/ })).toBeChecked();
+    await expect(page.getByLabel("Durasi setiap program (hari)")).toHaveValue("2");
+    await expect(page.getByLabel("Jumlah peserta")).toHaveValue("50");
+    await page.getByText(/memakai 2 batch/).waitFor();
     await page.getByLabel("Jumlah peserta").fill("20");
     await page.locator('select[name="venue"]').selectOption("indoor");
     await page.getByLabel("Lokasi").fill("Jakarta");
@@ -484,6 +500,7 @@ try {
     await email.getByRole("heading", { name: "Siapkan email" }).waitFor();
     assert.equal(await email.getByLabel("Jenis email").inputValue(), "proposal");
     assert.equal(await email.getByLabel("Lampiran proposal").inputValue(), proposal);
+    await expect(email.getByLabel("Isi pesan")).toHaveValue(/usulan kerja sama BinaHub/);
     await page.getByLabel("Tugas baru").fill("Konfirmasi jadwal klien");
     await page.getByLabel("Tenggat").fill("2099-01-03T09:00");
     await page.getByRole("button", { name: "Tambah tugas" }).click();
@@ -570,6 +587,38 @@ try {
     await schedule.getByText("Waktu pertemuan sudah lewat.").waitFor();
     assert.equal(await schedule.getByRole("link", { name: "Buka meeting" }).count(), 0);
     checks++;
+
+    if (width === 390) {
+      recommendation = {
+        id: "00000000-0000-4000-8000-000000000008", submittedAt: date, sentAt: date,
+        delivery: "sent", ready: true, canUseAnswers: true,
+        programs: [{ code: catalog[0].code, name: catalog[0].name }],
+      };
+      local.checklistStatus = "in_progress";
+      proposals.length = 0;
+      messages.length = 0;
+      await page.getByRole("button", { name: "Perbarui", exact: true }).click();
+      const summaryRecommendation = page.getByRole("region", { name: "Rekomendasi awal klien" });
+      await summaryRecommendation.getByText(/Rekomendasi diterima penyedia email/).waitFor();
+      await expect(summaryRecommendation.getByRole("button", { name: "Buka PDF rekomendasi" })).toBeVisible();
+      const originalPdfRequest = page.waitForRequest(request => request.url().endsWith("/recommendation"));
+      const originalPdfTab = context.waitForEvent("page");
+      await summaryRecommendation.getByRole("button", { name: "Buka PDF rekomendasi" }).click();
+      await originalPdfRequest;
+      await (await originalPdfTab).close();
+      await summaryRecommendation.getByRole("button", { name: "Tindak lanjuti rekomendasi" }).click();
+      await expect(email.getByLabel("Lampiran proposal")).toHaveValue("");
+      await expect(email.getByLabel("Isi pesan")).toHaveValue(/rekomendasi program yang sudah BinaHub kirimkan/);
+      await proposalTab.click();
+      await page.getByRole("region", { name: "Rekomendasi awal klien" }).getByRole("button", { name: "Siapkan proposal formal" }).click();
+      const before = writes.length;
+      await page.getByRole("button", { name: "Gunakan jawaban klien" }).click();
+      await expect(page.getByRole("checkbox", { name: /Program Kepemimpinan/ })).toBeChecked();
+      await expect(page.getByLabel("Jumlah peserta")).toHaveValue("50");
+      assert.deepEqual(writes.slice(before).map(write => write.action), ["client_answers"]);
+      await page.screenshot({ path: "tmp/consultant-proposal-formal-390.png" });
+      checks++;
+    }
 
     await page.goto(`${origin}/konsultan/materials`);
     await page.getByRole("heading", { name: "Materi konsultan" }).waitFor();

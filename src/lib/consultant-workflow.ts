@@ -114,7 +114,7 @@ export function isOpenOpportunity(record: ConsultantLead) {
 }
 
 export function canAttachProposal(proposal: Proposal, revision: number | undefined) {
-  return revision !== undefined && proposal.checklist_revision === revision;
+  return !proposal.priceRefresh && revision !== undefined && proposal.checklist_revision === revision;
 }
 
 type WorkAction = {
@@ -158,7 +158,8 @@ export function workTabAttention(
   }
 
   if (!checklistComplete && (next.destination.target !== "contact" || scheduledSoon)) {
-    attention.meeting = { reason: "Checklist belum selesai", destination: { section: "meeting", target: "checklist" } };
+    attention.meeting = { reason: data.initialRecommendation?.canUseAnswers ? "Jawaban klien siap ditinjau" : "Checklist belum selesai",
+      destination: { section: "meeting", target: "checklist" } };
   }
 
   const latest = data.proposals[0];
@@ -168,7 +169,7 @@ export function workTabAttention(
     } else if (latest?.status === "draft" && !data.messages.some((message) => message.proposal_id === latest.id
       && ["queued", "processing", "failed", "uncertain"].includes(message.status))) {
       attention.proposal = { reason: "Draf siap ditinjau", destination: { section: "proposal", target: "review", proposalId: latest.id } };
-    } else if (!latest && checklistComplete) {
+    } else if (!latest && checklistComplete && !data.initialRecommendation?.sentAt) {
       attention.proposal = { reason: "Susun proposal", destination: { section: "proposal", target: "draft" } };
     }
   }
@@ -268,6 +269,12 @@ export function workAction(
   };
   const earlyStage = record.stage === "identified" || record.stage === "qualified";
   const scheduled = data.bookings.some((booking) => ["confirmed", "rescheduled"].includes(booking.status) && !appointmentEnded(booking, now));
+  if (!checklistComplete && data.initialRecommendation?.canUseAnswers) return {
+    status: "Jawaban klien siap ditinjau",
+    description: "Baca rekomendasi dan gunakan jawaban klien jika kebutuhannya masih sesuai.",
+    label: "Tinjau jawaban klien",
+    destination: { section: "meeting", target: "checklist" },
+  };
   if (!checklistComplete && earlyStage && !scheduled) return {
     status: record.stage === "identified" ? "Peluang baru" : "Kebutuhan awal perlu diklarifikasi",
     description: "Periksa kontak dan jalur masuk. Hubungi klien untuk mengonfirmasi tujuan atau menyiapkan konsultasi.",
@@ -276,7 +283,7 @@ export function workAction(
   };
   if (!checklistComplete) return {
     status: "Checklist belum selesai",
-    description: "Lengkapi pertanyaan wajib dan tandai sesi selesai untuk membuka penyusunan proposal.",
+    description: "Lengkapi jawaban yang masih diperlukan agar sistem dapat menyusun draf dari checklist.",
     label: "Lengkapi checklist",
     destination: { section: "meeting", target: "checklist" },
   };
@@ -288,7 +295,8 @@ export function workAction(
   };
   if (latest && !ready) return {
     status: "Proposal perlu revisi",
-    description: "Kebutuhan berubah setelah proposal ini dibuat. Buat revisi dari checklist terbaru sebelum mengirim.",
+    description: latest.priceRefresh ? "Tarif katalog untuk draf ini sudah bisa dihitung. Buat revisi untuk memperbarui estimasi."
+      : "Kebutuhan berubah setelah proposal ini dibuat. Buat revisi dari checklist terbaru sebelum mengirim.",
     label: "Buat revisi",
     destination: { section: "proposal", target: "draft" },
   };
@@ -302,6 +310,12 @@ export function workAction(
     status: "Proposal sudah dikirim",
     description: "Catat balasan klien atau jadwalkan tindak lanjut. Jika klien setuju, catat serah terima.",
     label: "Tindak lanjuti klien",
+    destination: { section: "followup", target: "email" },
+  };
+  if (data.initialRecommendation?.sentAt) return {
+    status: "Rekomendasi awal sudah dikirim",
+    description: "Tindak lanjuti rekomendasi. Siapkan proposal formal jika klien membutuhkan rincian pelaksanaan dan investasi.",
+    label: "Tindak lanjuti rekomendasi",
     destination: { section: "followup", target: "email" },
   };
   return {

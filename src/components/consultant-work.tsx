@@ -12,12 +12,16 @@ import {
   consultantMoney,
   consultantRequest,
   downloadConsultantFile,
+  fetchConsultantFile,
   messageLabels,
   stageLabels,
   type ConsultantDetail,
   type ConsultantList,
   type Proposal,
+  type ProposalSuggestions,
 } from "@/lib/consultant-client";
+import { consultantEmailDraft } from "@/lib/consultant-proposal-email";
+import { ConsultantProposalComposer } from "./consultant-proposal-composer";
 import {
   AgendaRows,
   ConsultantHeading,
@@ -65,13 +69,13 @@ export function ConsultantWork({ id }: { id: string }) {
   const returnTo = safeWorkReturn(params.get("from"));
   const backLabel = returnTo.startsWith(agendaPath) ? "Tugas & jadwal" : "Klien & peluang";
   const now = useConsultantClock();
-  const focusedDestination = useRef("");
+  const focusedDestination = useRef<HTMLElement | null>(null);
   const [history, setHistory] = useState(0),
     [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
     [error, setError] = useState("");
-  const [chosenEmail, setChosenEmail] = useState<{ proposalId?: string; kind: string }>();
+  const [chosenEmail, setChosenEmail] = useState<{ proposalId?: string; kind: string; attachmentId?: string }>();
   const [confirm, setConfirm] = useState<{
     title: string;
     description: string;
@@ -83,6 +87,7 @@ export function ConsultantWork({ id }: { id: string }) {
       null,
     );
   const endpoint = `/api/konsultan/${id}`;
+  const suggestions = useRef<{ key: string; promise: Promise<ProposalSuggestions> } | null>(null);
   const reads = useContext(ConsultantReads);
   const work = useConsultantData<ConsultantDetail>(
     consultantDetailUrl(id, history),
@@ -113,20 +118,29 @@ export function ConsultantWork({ id }: { id: string }) {
     : target ? "work-" + target : "";
   useEffect(() => {
     if (!loaded || !focusId) {
-      focusedDestination.current = "";
+      focusedDestination.current = null;
       return;
     }
     const element = document.getElementById(focusId) || document.getElementById("work-" + target);
-    if (!element || focusedDestination.current === element.id) return;
+    if (!element || focusedDestination.current === element) return;
     if (element instanceof HTMLDetailsElement) element.open = true;
     element.focus({ preventScroll: true });
     element.scrollIntoView({ block: "start" });
-    focusedDestination.current = element.id;
+    focusedDestination.current = element;
   }, [data, loaded, focusId, target]);
   const version = Math.max(
     data?.record.version ?? 0,
     savedChecklist?.revision ?? 0,
   );
+
+  const suggest = useCallback((retry = false) => {
+    const key = `${endpoint}:${data?.workspace?.checklist_revision}:${version}`;
+    if (retry || suggestions.current?.key !== key) {
+      const promise = consultantRequest<ProposalSuggestions>(`${endpoint}/proposals/suggestions`, { version });
+      suggestions.current = { key, promise };
+    }
+    return suggestions.current!.promise;
+  }, [endpoint, data?.workspace?.checklist_revision, version]);
 
   async function run(
     action: () => Promise<unknown>,
@@ -195,6 +209,33 @@ export function ConsultantWork({ id }: { id: string }) {
       false,
     );
   }
+  function viewRecommendation() {
+    const tab = window.open("about:blank", "_blank");
+    if (tab) tab.opener = null;
+    void run(async () => {
+      try {
+        const response = await fetchConsultantFile(`${endpoint}/recommendation`);
+        const url = URL.createObjectURL(await response.blob());
+        if (tab && !tab.closed) tab.location.href = url;
+        else {
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "BinaHub-Rekomendasi-Awal.pdf";
+          link.click();
+        }
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch (error) {
+        tab?.close();
+        throw error;
+      }
+    }, "PDF rekomendasi siap dibaca.", false);
+  }
+  function applyClientAnswers(sourceId: string) {
+    void run(async () => {
+      await save("client_answers", { sourceId });
+      setChecklistKey(key => key + 1);
+    }, "Jawaban klien sudah dipakai untuk checklist.");
+  }
   function reviewEmail(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget,
@@ -215,6 +256,7 @@ export function ConsultantWork({ id }: { id: string }) {
       body,
       when,
       version,
+      locale,
     ]);
     if (messageRequest.current?.key !== key)
       messageRequest.current = {
@@ -243,6 +285,7 @@ export function ConsultantWork({ id }: { id: string }) {
             proposalId,
             subject,
             body,
+            locale,
             scheduledAt: request.at,
           });
           form.reset();
@@ -281,9 +324,40 @@ export function ConsultantWork({ id }: { id: string }) {
       program.code !== "SS-27" || data.proposalDefaults?.spiritualOptIn,
   );
   const readyProposals = data.proposals.filter((p) => canAttachProposal(p, checklistRevision));
-  const emailKind = chosenEmail?.proposalId === destination.proposalId && chosenEmail ? chosenEmail.kind
-    : destination.proposalId ? "proposal" : "follow_up";
-  const presetProposal = readyProposals.find((p) => p.id === destination.proposalId);
+  const emailChoice = chosenEmail?.proposalId === destination.proposalId ? chosenEmail : undefined;
+  const emailKind = emailChoice?.kind ?? (destination.proposalId ? "proposal" : "follow_up");
+  const presetProposal = readyProposals.find((p) => p.id === (emailChoice?.attachmentId ?? destination.proposalId));
+  const emailDraft = consultantEmailDraft(data, locale, presetProposal);
+  const initial = data.initialRecommendation;
+  const prior = data.proposals.find(proposal => proposal.checklist_revision === checklistRevision);
+  const recommendation = initial ? (
+    <section className={`${s.panel} ${s.recommendationCard}`} aria-labelledby="work-initial-title">
+      <h2 id="work-initial-title">{t("Rekomendasi awal klien")}</h2>
+      <p className={s.muted}>{t("Form dikirim klien {0}.", [consultantDate(initial.submittedAt, locale)])}</p>
+      <p>{t(initial.sentAt ? "Rekomendasi diterima penyedia email {0}."
+        : initial.delivery === "uncertain" ? "Status pengiriman rekomendasi perlu diperiksa."
+        : initial.delivery === "failed" ? "Email rekomendasi gagal dikirim."
+        : initial.delivery === "pending" || initial.delivery === "sending" ? "Email rekomendasi dalam antrean."
+        : initial.ready ? "Laporan tersedia. Pengiriman belum tercatat."
+        : "Laporan sedang disiapkan.", [consultantDate(initial.sentAt, locale)])}</p>
+      {!!initial.programs.length && <ul className={s.list}>
+        {initial.programs.map(program => <li key={program.code}>{program.name}</li>)}
+      </ul>}
+      <div className={s.actions}>
+        {initial.ready && <button type="button" className={s.button} onClick={viewRecommendation} disabled={busy}>
+          <Download size={16} aria-hidden="true" />{t("Buka PDF rekomendasi")}
+        </button>}
+        {canSend && initial.sentAt && <button type="button" className={s.primary} disabled={busy || dirty}
+          onClick={() => {
+            setChosenEmail(undefined);
+            move({ section: "followup", target: "email" });
+          }}>{t("Tindak lanjuti rekomendasi")}</button>}
+        {canSend && initial.sentAt && !(section === "proposal" && target === "draft") && <button
+          type="button" className={s.button} disabled={busy || dirty}
+          onClick={() => move({ section: "proposal", target: "draft" })}>{t("Siapkan proposal formal")}</button>}
+      </div>
+    </section>
+  ) : data.recommendationUnavailable ? <p className={s.notice} role="status">{t("Rekomendasi awal belum dapat diperiksa. Coba lagi beberapa saat.")}</p> : null;
   const next = workAction(data, canOperate, session.isAdmin, checklistComplete, now, checklistRevision);
   const attention = workTabAttention(data, next, canOperate, session.isAdmin, checklistComplete, now, checklistRevision);
   const informational = (!canOperate && next.destination.target !== "assignment")
@@ -370,6 +444,7 @@ export function ConsultantWork({ id }: { id: string }) {
       )}
       {section === "summary" && (
         <>
+          {recommendation}
           <div className={s.grid}>
             <section className={s.panel} id="work-contact" tabIndex={-1}>
               <h2>{t("Kontak dan status")}</h2>
@@ -558,13 +633,21 @@ export function ConsultantWork({ id }: { id: string }) {
         </>
       )}
       {section === "meeting" && (
+        <>
+        {recommendation}
         <section className={s.panel} id="work-checklist" tabIndex={-1}>
           <h2>{t("Kebutuhan & meeting")}</h2>
-          <p className={s.muted}>{t("Tinjau kebutuhan klien sebelum pertemuan. Setelah semua bagian wajib lengkap, tandai sesi selesai.")}</p>
+          <p className={s.muted}>{t("Tinjau jawaban sebelum meeting. Klarifikasi hanya bagian yang berubah atau masih diperlukan.")}</p>
+          {canOperate && initial?.canUseAnswers && !checklistComplete && (
+            <div className={s.flowNotice}>
+              <p>{t("Jawaban klien sudah lengkap. Gunakan jawaban ini jika kebutuhan masih sesuai.")}</p>
+              <button type="button" className={s.primary} disabled={busy || dirty} onClick={() => applyClientAnswers(initial.id)}>{t("Gunakan jawaban klien")}</button>
+            </div>
+          )}
           {!dirty && <Link className={s.inlineHelp} href="/konsultan/materials/tutorial?episode=S03">{t("Lihat panduan persiapan konsultasi")}</Link>}
           {canOperate &&
             data.sources.length > 0 &&
-            !data.workspace?.source_id && !checklistComplete && (
+            !data.workspace?.source_id && !checklistComplete && !initial?.canUseAnswers && (
               <form
                 className={s.form}
                 onSubmit={(e) =>
@@ -600,37 +683,45 @@ export function ConsultantWork({ id }: { id: string }) {
             onSaved={onSaved}
             onDirty={setDirty}
           />
-          {canOperate && checklistComplete && !dirty && (
+          {canOperate && checklistComplete && !dirty && !initial?.sentAt && (
             <div className={s.flowNotice}>
-              <p>{t("Checklist sudah selesai. Anda bisa membuka penyusunan proposal.")}</p>
+              <p>{t("Checklist siap dipakai untuk memilih program dan menyusun draf.")}</p>
               <button type="button" className={s.primary} disabled={busy}
                 onClick={() => move({ section: "proposal", target: "draft" })}>{t("Susun proposal")}</button>
             </div>
           )}
         </section>
+        </>
       )}
       {section === "proposal" && (
         <>
+          {recommendation}
           {canOperate && !checklistComplete && (
             <section className={s.panel} id="work-draft" tabIndex={-1}>
               <h2>{t("Susun proposal")}</h2>
               <div className={s.flowNotice}>
-                <p>{t("Selesaikan checklist kebutuhan terlebih dahulu.")}</p>
-                <button type="button" className={s.primary} disabled={busy}
+                <p>{t(initial?.canUseAnswers
+                  ? "Jawaban klien sudah lengkap. Gunakan jawaban ini jika kebutuhan masih sesuai."
+                  : "Selesaikan checklist kebutuhan terlebih dahulu.")}</p>
+                {initial?.canUseAnswers && <button type="button" className={s.primary} disabled={busy}
+                  onClick={() => applyClientAnswers(initial.id)}>{t("Gunakan jawaban klien")}</button>}
+                <button type="button" className={initial?.canUseAnswers ? s.button : s.primary} disabled={busy}
                   onClick={() => move({ section: "meeting", target: "checklist" })}>{t("Buka checklist kebutuhan")}</button>
               </div>
             </section>
           )}
           <section className={s.panel} id="work-review" tabIndex={-1}>
-            <h2>{t("Riwayat proposal")}</h2>
+            <h2>{t("Riwayat proposal formal")}</h2>
             {target === "review" && message && <p className={s.success} role="status">{t(message)}</p>}
             {data.proposals.length ? (
               data.proposals.map((p) => {
                 const current = canAttachProposal(p, checklistRevision);
                 return (
                 <details className={s.details} key={p.id} id={"proposal-" + p.id} tabIndex={-1}>
-                  <summary>{t("Revisi {0}", [p.revision])} · {t(p.status === "sent" ? "Terkirim" : current ? "Draf siap ditinjau" : "Draf · Perlu revisi")} · {consultantMoney(p.snapshot.total)}</summary>
-                  {!current && <p className={s.attentionText}>{t(refreshingChecklist ? "Memuat versi checklist terbaru…" : "Revisi ini memakai checklist sebelumnya dan tidak dapat dijadikan lampiran baru.")}</p>}
+                  <summary>{t("Revisi {0}", [p.revision])} · {t(p.status === "sent" ? "Terkirim" : current ? "Draf siap ditinjau" : "Draf · Perlu revisi")} · {p.snapshot.total === null ? t("Investasi perlu konfirmasi") : consultantMoney(p.snapshot.total)}</summary>
+                  {!current && <p className={s.attentionText}>{t(refreshingChecklist ? "Memuat versi checklist terbaru…"
+                    : p.priceRefresh ? "Buat draf baru agar estimasi mengikuti tarif katalog."
+                    : "Revisi ini memakai checklist sebelumnya dan tidak dapat dijadikan lampiran baru.")}</p>}
                   <p>
                     {consultantDate(p.created_at)} · {p.snapshot.days} {t("hari ·")}{" "}
                     {p.snapshot.participants} {t("peserta ·")} {p.snapshot.venue}
@@ -639,10 +730,12 @@ export function ConsultantWork({ id }: { id: string }) {
                   <ul className={s.list}>
                     {p.snapshot.programs.map((program) => (
                       <li key={program.code}>
-                        {program.name} · {consultantMoney(program.total)}
+                        {program.name} · {program.total === null ? t("Investasi perlu konfirmasi") : consultantMoney(program.total)}
+                        {program.priceBasis && <div className={s.muted}>{program.priceBasis}</div>}
                       </li>
                     ))}
                   </ul>
+                  {p.snapshot.total === null && p.snapshot.pricedSubtotal != null && <p>{t("Subtotal yang sudah terhitung: {0}", [consultantMoney(p.snapshot.pricedSubtotal)])}</p>}
                   <p>{p.snapshot.priceNote}</p>
                   <div className={s.actions}>
                     <button className={s.button} disabled={busy} onClick={() => download(p)}>
@@ -671,8 +764,9 @@ export function ConsultantWork({ id }: { id: string }) {
           </section>
           {canOperate && checklistComplete && (
             <section className={s.panel} id="work-draft" tabIndex={-1}>
-              <h2>{t("Susun proposal")}</h2>
-              <p className={s.muted}>{t("Pilih program, durasi, jumlah peserta, dan lokasi. Ringkasan kebutuhan diambil dari checklist konsultasi.")}</p>
+              <h2>{t("Susun proposal formal")}</h2>
+              <p className={s.muted}>{t("Sistem memakai checklist untuk mengisi draf. Tinjau program, rencana pelaksanaan, dan langkah untuk mencapai kesepakatan.")}</p>
+              {initial?.sentAt && <p className={s.notice}>{t("Gunakan proposal formal saat klien membutuhkan ruang lingkup dan estimasi untuk mengambil keputusan. Untuk membahas rekomendasi awal, siapkan email tindak lanjut.")}</p>}
               <Link className={s.inlineHelp} href="/konsultan/materials/tutorial?episode=S05">{t("Lihat panduan menyusun proposal")}</Link>
               {refreshingChecklist ? <ConsultantPending message="Memuat versi checklist terbaru…" />
               : directory.error ? (
@@ -683,101 +777,28 @@ export function ConsultantWork({ id }: { id: string }) {
               ) : !directory.data ? <ConsultantPending message="Memuat katalog program…" />
               : programs.length === 0 ? <p className={s.notice}>{t("Belum ada program yang tersedia untuk kebutuhan ini.")}</p>
               : (
-                <form
-                  className={s.form}
-                  onSubmit={(e) =>
-                    submit(
-                      e,
-                      async (f) => {
-                        const created = await consultantRequest<Proposal>(`${endpoint}/proposals`, {
-                          version,
-                          programCodes: f.getAll("programs"),
-                          days: Number(f.get("days")),
-                          participants: Number(f.get("participants")),
-                          venue: value(f, "venue"),
-                          location: value(f, "location"),
-                          scopeNote: value(f, "scope"),
-                        });
-                        window.history.replaceState(null, "", workUrl(id, { section: "proposal", target: "review", proposalId: created.id }, returnTo));
-                      },
-                      "Draf proposal tersimpan. Tinjau PDF sebelum mengirim.",
-                    )
-                  }
-                >
-                  <fieldset>
-                    <legend className="mb-2 font-semibold">{t("Program yang dipilih")}</legend>
-                    <div className={s.catalog}>
-                      {programs.map((p) => (
-                        <label key={p.code}>
-                          <input
-                            type="checkbox"
-                            name="programs"
-                            value={p.code}
-                          />
-                          <span>
-                            <strong>{p.name}</strong>
-                            <br />
-                            <span className={s.muted}>
-                              {p.code} ·{" "}
-                              {p.dailyRateIdr
-                                ? t("{0} / hari", [consultantMoney(p.dailyRateIdr)])
-                                : t("Tarif dikonfirmasi")}
-                            </span>
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <div className={s.two}>
-                    <label className={s.field}>{t("Durasi (hari)")}<input
-                        name="days"
-                        type="number"
-                        min={1}
-                        max={365}
-                        defaultValue={data.proposalDefaults?.days}
-                        required
-                      />
-                    </label>
-                    <label className={s.field}>{t("Jumlah peserta")}<input
-                        name="participants"
-                        type="number"
-                        min={1}
-                        max={100000}
-                        defaultValue={data.proposalDefaults?.participants}
-                        required
-                      />
-                    </label>
-                  </div>
-                  <div className={s.two}>
-                    <label className={s.field}>
-                      Format
-                      <select
-                        name="venue"
-                        defaultValue={data.proposalDefaults?.venue || ""}
-                        required
-                      >
-                        <option value="" disabled>{t("Pilih format")}</option>
-                        <option value="indoor">Indoor</option>
-                        <option value="outdoor">Outdoor</option>
-                        <option value="hybrid">Indoor & outdoor</option>
-                        <option value="online">Online</option>
-                      </select>
-                    </label>
-                    <label className={s.field}>{t("Lokasi")}<input
-                        name="location"
-                        maxLength={300}
-                        defaultValue={data.proposalDefaults?.location}
-                        placeholder={t("Kota atau tempat pelaksanaan")}
-                      />
-                    </label>
-                  </div>
-                  <label className={s.field}>{t("Ruang lingkup untuk klien")}<textarea name="scope" rows={3} maxLength={4000} />
-                  </label>
-                  <button
-                    className={s.primary}
-                    disabled={busy || !programs.length}
-                  >{t("Buat draf proposal")}</button>
-                </form>
+                <ConsultantProposalComposer
+                  key={`${checklistRevision}:${prior?.id ?? ""}`}
+                  programs={programs}
+                  defaults={data.proposalDefaults}
+                  prior={prior?.snapshot}
+                  autoStart={target === "draft" || !initial?.sentAt}
+                  suggest={suggest}
+                  busy={busy}
+                  onSubmit={(e) => submit(e, async (f) => {
+                    const created = await consultantRequest<Proposal>(`${endpoint}/proposals`, {
+                      version,
+                      programCodes: f.getAll("programs"),
+                      days: Number(f.get("days")),
+                      participants: Number(f.get("participants")),
+                      venue: value(f, "venue"),
+                      location: value(f, "location"),
+                      scopeNote: value(f, "scope"),
+                      nextStep: value(f, "nextStep"),
+                    });
+                    window.history.replaceState(null, "", workUrl(id, { section: "proposal", target: "review", proposalId: created.id }, returnTo));
+                  }, "Draf proposal tersimpan. Tinjau PDF sebelum mengirim.")}
+                />
               )}
             </section>
           )}
@@ -857,7 +878,7 @@ export function ConsultantWork({ id }: { id: string }) {
               <h2>{t("Siapkan email")}</h2>
               <p className={s.muted}>{t("Kepada")} {r.email} {t("· Atas nama")} {r.assigneeName}
               </p>
-              {!readyProposals.length && <div className={s.flowNotice}>
+              {!readyProposals.length && !initial?.sentAt && <div className={s.flowNotice}>
                 <p>{t("Pengiriman proposal memerlukan draf dari checklist terbaru.")}</p>
                 <button type="button" className={s.button} disabled={busy}
                   onClick={() => move(checklistComplete ? { section: "proposal", target: "draft" } : { section: "meeting", target: "checklist" })}>
@@ -866,13 +887,17 @@ export function ConsultantWork({ id }: { id: string }) {
               <form className={s.form} key={destination.proposalId || "email"} onSubmit={reviewEmail}>
                 <div className={s.two}>
                   <label className={s.field}>{t("Jenis email")}<select name="kind" value={emailKind}
-                    onChange={(e) => setChosenEmail({ proposalId: destination.proposalId, kind: e.target.value })}>
+                    onChange={(e) => setChosenEmail({
+                      proposalId: destination.proposalId, kind: e.target.value,
+                      attachmentId: e.target.value === "follow_up" ? "" : presetProposal?.id ?? "",
+                    })}>
                       <option value="follow_up">{t("Tindak lanjut")}</option>
                       <option value="proposal" disabled={!readyProposals.length}>{t("Pengiriman proposal")}</option>
                     </select>
                   </label>
                   <label className={s.field}>{t("Lampiran proposal")}<select name="proposalId" required={emailKind === "proposal"}
-                      disabled={!readyProposals.length} defaultValue={presetProposal?.id || ""}>
+                      disabled={!readyProposals.length} value={presetProposal?.id || ""}
+                      onChange={(e) => setChosenEmail({ proposalId: destination.proposalId, kind: emailKind, attachmentId: e.target.value })}>
                       <option value="">{t(emailKind === "proposal" ? "Pilih revisi proposal" : "Tanpa lampiran")}</option>
                       {readyProposals.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -882,12 +907,16 @@ export function ConsultantWork({ id }: { id: string }) {
                     </select>
                   </label>
                 </div>
-                <label className={s.field}>
-                  {t("Subjek")}
-                  <input name="subject" maxLength={180} required />
-                </label>
-                <label className={s.field}>{t("Isi pesan")}<textarea name="body" rows={6} maxLength={10000} required />
-                </label>
+                <Fragment key={`${locale}:${emailKind}:${presetProposal?.id ?? "none"}`}>
+                  <label className={s.field}>
+                    {t("Subjek")}
+                    <input name="subject" maxLength={180} defaultValue={emailDraft.subject} required />
+                  </label>
+                  <label className={s.field}>{t("Isi pesan")}
+                    <textarea name="body" rows={7} maxLength={10000} defaultValue={emailDraft.body} required />
+                    <span className={s.muted}>{t("Sapaan dan nama konsultan disertakan saat email dikirim.")}</span>
+                  </label>
+                </Fragment>
                 <label className={s.field}>{t("Jadwal kirim (waktu perangkat)")}<input name="when" type="datetime-local" />
                   <span className={s.muted}>{t("Kosongkan jika email boleh diproses pada antrean berikutnya.")}</span>
                 </label>

@@ -18,7 +18,8 @@ const defaults: PEContext = { role: '', goal: '', relevance: { 'PE-02': 'normal'
 export function PEGuestAssessment() {
   const [definition, setDefinition] = useState<PEDefinition | null>(null), [draft, setDraft] = useState<PEGuestDraft | null>(null);
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState('');
-  const [name, setName] = useState(''), [email, setEmail] = useState(''), [context, setContext] = useState(defaults), [consent, setConsent] = useState(false);
+  const [name, setName] = useState(''), [email, setEmail] = useState(''), [whatsapp, setWhatsapp] = useState('');
+  const [context, setContext] = useState(defaults), [consent, setConsent] = useState(false);
   const [index, setIndex] = useState(0), [status, setStatus] = useState(''), [accepted, setAccepted] = useState(false);
   const [receiptId, setReceiptId] = useState(''), [localAvailable, setLocalAvailable] = useState(true);
   const [cleanupWarning,setCleanupWarning]=useState(false);
@@ -45,6 +46,7 @@ export function PEGuestAssessment() {
       .map(([key,target])=>[target,params.get(key)?.trim().slice(0,500)]).filter(([,entry])=>Boolean(entry)));
     const journey=params.get('bh_journey');
     return { id: value.id, draftKey: value.draftKey, name: value.name, email: value.email, context: value.context,
+      ...(source.whatsappAvailable && value.whatsapp ? { whatsapp: value.whatsapp } : {}),
       consentVersion: source.consentVersion, privacyVersion: source.privacyVersion, sharingConsentVersion: source.sharingConsentVersion,
       attribution,...(journey&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(journey)?{journeyId:journey}:{}),
       channel: peChannel(window.location.search) };
@@ -73,7 +75,7 @@ export function PEGuestAssessment() {
         let saved: PEGuestDraft | null = null;
         try { saved = await readPEGuestDraft(); } catch { storageReady.current = false; setLocalAvailable(false); }
         if (!saved || !alive) return;
-        setName(saved.name); setEmail(saved.email); setContext(saved.context); setConsent(true);
+        setName(saved.name); setEmail(saved.email); setWhatsapp(saved.whatsapp || ''); setContext(saved.context); setConsent(true);
         update(saved);
         try {
           const reply = await guestRequest<Reply>(`/${saved.id}`, 'GET', undefined, saved.draftKey);
@@ -119,7 +121,13 @@ export function PEGuestAssessment() {
   async function start() { await run(async () => {
     if (!definition || !consent) return;
     if(!name.trim() || !email.trim() || !context.role.trim() || !context.goal.trim()) throw new Error('Lengkapi nama, email, peran, dan tujuan Anda.');
-    const value = current.current || { id: crypto.randomUUID(), draftKey: makeGuestKey(), name: name.trim(), email: email.trim().toLowerCase(), context,
+    const phone = definition.whatsappAvailable ? whatsapp.trim() : '';
+    const compact = phone.replace(/[ ()-]/g, '');
+    if (phone && (!/^\+?[0-9 ()-]*$/.test(phone) || !/^(?:0\d{7,13}|\+?[1-9]\d{7,14})$/.test(compact))) {
+      document.getElementById('pe-guest-whatsapp')?.focus();
+      throw new Error('Periksa nomor WhatsApp. Gunakan format 08… atau kode negara, seperti +62.');
+    }
+    const value = current.current || { id: crypto.randomUUID(), draftKey: makeGuestKey(), name: name.trim(), email: email.trim().toLowerCase(), whatsapp: phone, context,
       responses: {}, baseResponses: {}, revision: 0, expiresAt: Date.now() + 7 * 86_400_000 };
     await persist(value);
     const reply = await guestRequest<Reply>('', 'POST', payload(value, definition));
@@ -200,6 +208,13 @@ export function PEGuestAssessment() {
         <div className={styles.fields}>
           <label className={styles.field}>Nama Anda<input required maxLength={100} autoComplete="name" placeholder="Masukkan nama Anda" value={name} disabled={busy} onChange={event => setName(event.target.value)} /></label>
           <div className={styles.field}><label htmlFor="pe-guest-email">Alamat email</label><input id="pe-guest-email" required type="email" maxLength={254} autoComplete="email" placeholder="nama@perusahaan.com" aria-describedby="pe-email-help" value={email} disabled={busy} onChange={event => setEmail(event.target.value)} /><p id="pe-email-help" className={styles.help}>Pastikan alamat email benar agar tautan hasil sampai kepada Anda.</p></div>
+          {definition?.whatsappAvailable && <div className={styles.field}>
+            <label htmlFor="pe-guest-whatsapp">Nomor WhatsApp (opsional)</label>
+            <input id="pe-guest-whatsapp" type="tel" autoComplete="tel" maxLength={30}
+              placeholder="0812 3456 7890" value={whatsapp} disabled={busy}
+              aria-describedby="pe-whatsapp-hint" onChange={event => setWhatsapp(event.target.value)} />
+            <p id="pe-whatsapp-hint" className={styles.help}>Untuk tindak lanjut dari BinaHub. Tautan hasil dikirim melalui email.</p>
+          </div>}
           <label className={styles.field}>Peran atau pekerjaan Anda<input required maxLength={100} autoComplete="organization-title" placeholder="Contoh: Staf pemasaran, HR, pemilik usaha" value={context.role} disabled={busy} onChange={event => setContext({ ...context, role: event.target.value })} /></label>
           <label className={styles.field}>Apa yang ingin Anda kembangkan?<textarea required maxLength={600} rows={3} placeholder="Ceritakan tujuan pengembangan Anda secara singkat" value={context.goal} disabled={busy} onChange={event => setContext({ ...context, goal: event.target.value })} /></label>
           <fieldset aria-describedby="pe-relevance-help"><legend className={styles.legend}>Kaitannya dengan pekerjaan Anda</legend><p id="pe-relevance-help" className={styles.help}>Seberapa relevan setiap area berikut dengan pekerjaan Anda saat ini?</p><div className={styles.relevance}>{definition.competencies.map(value => <label key={value.code}>{value.name}<select aria-label={`Relevansi ${value.name}`} value={context.relevance[value.code]} disabled={busy} onChange={event => setContext({ ...context, relevance: { ...context.relevance, [value.code]: event.target.value as 'low' | 'normal' | 'high' } })}><option value="low">Kurang relevan</option><option value="normal">Relevan</option><option value="high">Sangat relevan</option></select></label>)}</div></fieldset>

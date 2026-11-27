@@ -3,7 +3,7 @@ export type PEContext={role:string;goal:string;relevance:Record<string,'low'|'no
 export type PEQuestion={id:string;competencyCode:string;type:string;prompt?:string;scenario?:string;question?:string;
   options?:{id:string;text:string}[]};
 export type PEDefinition={policyId:string;consentVersion:string;privacyVersion:string;notice:string;privacyNotice:string;
-  features?:{pilot:boolean;history:boolean};freeResultHours?:number|null;acceptingNew?:boolean;sharingConsentVersion?:string;sharingNotice?:string;
+  features?:{pilot:boolean;history:boolean};freeResultHours?:number|null;acceptingNew?:boolean;sharingConsentVersion?:string;sharingNotice?:string;whatsappAvailable?:boolean;
   competencies:{code:string;name:string;definition:string}[];selfReportItems:PEQuestion[];sjtItems:PEQuestion[];
   selfReportScale:{value:number|'NA';label:string}[]};
 export type PEAttempt={id:string;status:'draft'|'submitted';revision:number;responses:Record<string,PEAnswer>;

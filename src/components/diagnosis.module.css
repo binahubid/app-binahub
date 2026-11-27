@@ -71,6 +71,14 @@
 .iconTile { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 50px; height: 50px; border-radius: 13px; background: #eaf2ff; color: #16469b; }
 .iconGold { color: #b77811; background: #fff5df; }
 .choiceCard h2 { margin-top: 12px; font-size: 22px; line-height: 1.4; font-weight: 700; letter-spacing: -.03em; }
+.otherPaths { margin-top: 30px; }
+.otherPaths h2 { font-size: clamp(20px, 2.4vw, 24px); font-weight: 650; line-height: 1.3; }
+.editorial .otherPaths .choiceGrid { margin-top: 16px; }
+.otherPaths h3 { margin-top: 12px; font-size: 20px; font-weight: 600; line-height: 1.4; }
+.pathLink { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border: 1px solid var(--diagnosis-border); border-radius: 10px; color: #0b2c6b; font-size: 13px; font-weight: 600; }
+.pathLink:hover { background: #edf4ff; }
+.pathLink:focus-visible { outline: 2px solid #16469b; outline-offset: 3px; }
+.pathLink svg { flex-shrink: 0; }
 .cardDescription { margin-top: 4px; font-size: 13px; line-height: 1.8; color: var(--diagnosis-muted); }
 .features { display: grid; gap: 9px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eaf0f8; }
 .features li { display: flex; align-items: start; gap: 10px; font-size: 13px; line-height: 1.6; color: var(--diagnosis-muted); }

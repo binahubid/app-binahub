@@ -211,6 +211,17 @@
   border-bottom: 1px solid #dbe3ed;
 }
 .readerBar .button { min-height: 44px; padding-inline: 10px; }
+.readerOutline {
+  min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 190px;
+  padding: 8px 10px;
+  color: var(--navy);
+  background: #fff;
+  border: 1px solid #cdd9e8;
+  border-radius: 8px;
+}
 .readerPage { min-width: 98px; text-align: center; font-variant-numeric: tabular-nums; }
 .readerViewport {
   max-height: 72dvh;

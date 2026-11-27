@@ -35,8 +35,6 @@
 .freePlan h2, .completePlan h2 { font-size: 21px; font-weight: 600; line-height: 1.4; letter-spacing: -.025em; }
 .available { display: inline-flex; align-items: center; min-height: 25px; padding: 3px 10px; border-radius: 999px; background: var(--pricing-ice); color: var(--pricing-ink); font-size: 11px; font-weight: 500; }
 .description { margin-top: 9px; font-size: 13px; line-height: 1.8; color: var(--pricing-text); }
-.price { display: flex; align-items: baseline; gap: 7px; margin-top: 22px; font-size: 42px; font-weight: 500; letter-spacing: -.035em; line-height: 1.15; font-variant-numeric: tabular-nums; }
-.currency { font-size: 24px; letter-spacing: -.02em; }
 .scopeLabel { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--pricing-line); font-size: 11px; font-weight: 600; line-height: 1.6; }
 .freeAreas, .completeAreas { list-style: none; display: grid; gap: 10px; margin-top: 13px; }
 .freeAreas li, .completeAreas li { display: flex; align-items: start; gap: 10px; font-size: 13px; line-height: 1.6; }
@@ -62,7 +60,6 @@
 .categoryGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; list-style: none; margin-top: 24px; }
 .categoryPlan { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--pricing-line); border-radius: 14px; background: #fff; padding: 24px 22px; }
 .categoryPlan h3 { max-width: 18ch; min-height: 50px; font-size: 16px; font-weight: 600; line-height: 1.5; letter-spacing: -.02em; overflow-wrap: break-word; }
-.categoryPrice { margin-top: 24px; color: var(--pricing-ink); font-size: 27px; font-weight: 500; line-height: 1.3; letter-spacing: -.025em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .categoryPlan .locked { margin-top: 24px; width: 100%; }
 .footer { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 24px; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--pricing-line); }
 .footer p { font-size: 11px; line-height: 1.8; color: var(--pricing-text); }
@@ -87,14 +84,12 @@
   .featuredPlans { margin-top: 28px; gap: 18px; }
   .freePlan, .completePlan { padding: 26px 24px; }
   .freePlan h2, .completePlan h2 { font-size: 20px; }
-  .price { font-size: 38px; }
   .categoryIntro { display: block; }
   .categoryIntro h2 { font-size: 23px; }
   .categoryIntro p { margin-top: 10px; }
   .categoryGrid { grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px }
   .categoryPlan { padding:18px 14px }
   .categoryPlan h3 { min-height:72px;max-width:none;font-size:14px }
-  .categoryPrice {margin-top:14px;font-size:23px}
   .categoryPlan .locked { margin-top: 18px; }
   .categories { margin-top: 36px; }
   .footer { margin-top: 32px; }

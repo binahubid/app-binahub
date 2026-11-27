@@ -894,5 +894,9 @@
   "Catat revisi yang disetujui, ruang lingkup, jadwal, PIC klien, dan hal yang masih perlu dikonfirmasi admin.": "Record the approved revision, scope, schedule, client contact and any items for admin to confirm.",
   "Jika klien meminta perubahan, siapkan revisi proposal. Jika klien setuju, lanjutkan ke Serah terima. Jika masih menunggu kabar, jadwalkan tindak lanjut.": "Prepare a revision if the client requests changes. When they approve, start the handover. While waiting for a reply, schedule a follow-up.",
   "Contoh: Ibu Rina meminta revisi menjadi 32 peserta. Kirim revisi pada Selasa. Keputusan menunggu persetujuan HR.": "Example: Rina requested a revision for 32 participants. Send it on Tuesday. The decision is pending HR approval.",
-  "Ringkas keputusan, perubahan yang diminta, dan langkah berikutnya. Tindak lanjut email yang masih terjadwal akan dibatalkan.": "Summarize the decision, requested changes and next step. Any scheduled follow-up emails will be cancelled."
+  "Ringkas keputusan, perubahan yang diminta, dan langkah berikutnya. Tindak lanjut email yang masih terjadwal akan dibatalkan.": "Summarize the decision, requested changes and next step. Any scheduled follow-up emails will be cancelled.",
+  "Ke isian wajib berikutnya": "Go to the next required answer",
+  "Daftar isi": "Contents",
+  "Kemajuan checklist": "Checklist progress",
+  "Semua bagian yang ditampilkan sudah terisi. Tinjau jawaban atau lanjut ke catatan konsultasi.": "All displayed sections are complete. Review the answers or continue to the consultation notes."
 }

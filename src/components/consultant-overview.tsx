@@ -444,6 +444,7 @@ export function ConsultantMaterials() {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState("");
   async function download(material: ConsultantMaterial) {
+    if (!material.downloadable) return;
     setBusy(material.slug);
     setError("");
     try {
@@ -506,7 +507,7 @@ export function ConsultantMaterials() {
               <Link className={s.primary} href={`/konsultan/materials/${m.slug}`}
                 aria-label={t("Baca {0} di web", [m.title])}>
                 <BookOpen size={16} aria-hidden="true" /> {t("Baca di web")}</Link>
-              <button
+              {m.downloadable && <button
                 type="button"
                 className={s.button}
                 aria-label={t("Unduh PDF {0}", [m.title])}
@@ -515,7 +516,7 @@ export function ConsultantMaterials() {
               >
                 <Download size={16} aria-hidden="true" />
                 {busy === m.slug ? t("Memuat…") : t("Unduh PDF")}
-              </button>
+              </button>}
             </div>
           </article>
         ))}

@@ -27,8 +27,11 @@ describe('diagnosis choice', () => {
     expect(screen.queryByRole('heading',{name:'Sudah pernah melakukan diagnosis?'})).not.toBeInTheDocument();
     expect(screen.getByRole('link',{name:'Buka hasil atau draf individu'}).closest('article')).toHaveAttribute('aria-labelledby','individual-diagnosis-title');
     expect(screen.getByRole('link', { name: 'Dapatkan rekomendasi program' })).toHaveAttribute('href', '/discovery');
-    expect(screen.getByRole('link', { name: 'Jelajahi katalog program' })).toHaveAttribute('href', '/catalog');
-    expect(screen.getByRole('link', { name: 'Inquiry / konsultasi' })).toHaveAttribute('href', 'https://binahub.id/id/contact');
+    const programs = screen.getByRole('article', { name: 'Jelajahi program' });
+    const inquiry = screen.getByRole('article', { name: 'Inquiry' });
+    expect(programs.querySelector('a')).toHaveAttribute('href', '/catalog');
+    expect(inquiry.querySelector('a')).toHaveAttribute('href', 'https://binahub.id/id/contact');
+    expect(screen.getByRole('region', { name: 'Jelajahi program atau hubungi kami' }).querySelector('form')).toBeNull();
   });
 
   it('preserves organization language/campaign and whitelisted individual attribution', async () => {

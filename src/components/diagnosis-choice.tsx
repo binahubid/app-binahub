@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowRight, Building2, Check, LoaderCircle, RefreshCw, UserRound } from 'lucide-react';
+import { ArrowRight, BookOpen, Building2, Check, LoaderCircle, MessageSquare, RefreshCw, UserRound } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -33,9 +33,26 @@ function DiagnosisChoiceFrame({ children }: { children: ReactNode }) {
           {children}
         </section>
 
-        <section aria-label="Katalog dan inquiry" className="flex flex-wrap items-center gap-x-8 gap-y-2 border-y border-[#dce4ef] py-3 text-sm">
-          <Link href="/catalog" className={styles.textLink}>Jelajahi katalog program<ArrowRight size={16} aria-hidden="true"/></Link>
-          <a href="https://binahub.id/id/contact" className={styles.textLink}>Inquiry / konsultasi<ArrowRight size={16} aria-hidden="true"/></a>
+        <section className={styles.otherPaths} aria-labelledby="other-program-paths">
+          <h2 id="other-program-paths">Jelajahi program atau hubungi kami</h2>
+          <div className={styles.choiceGrid}>
+            <article className={cardClass} aria-labelledby="browse-programs-title">
+              <span className={styles.iconTile}><BookOpen size={24} strokeWidth={1.7} aria-hidden="true" /></span>
+              <h3 id="browse-programs-title">Jelajahi program</h3>
+              <p className={styles.cardDescription}>Bandingkan topik, tujuan, dan format program yang tersedia di katalog BinaHub.</p>
+              <div className={styles.cardAction}>
+                <Link href="/catalog" className={styles.pathLink}>Jelajahi katalog program<ArrowRight size={17} aria-hidden="true" /></Link>
+              </div>
+            </article>
+            <article className={cardClass} aria-labelledby="program-inquiry-title">
+              <span className={styles.iconTile + ' ' + styles.iconGold}><MessageSquare size={24} strokeWidth={1.7} aria-hidden="true" /></span>
+              <h3 id="program-inquiry-title">Inquiry</h3>
+              <p className={styles.cardDescription}>Tanyakan program, pelaksanaan, atau kebutuhan lain langsung kepada tim BinaHub.</p>
+              <div className={styles.cardAction}>
+                <a href="https://binahub.id/id/contact" className={styles.pathLink}>Inquiry / konsultasi<ArrowRight size={17} aria-hidden="true" /></a>
+              </div>
+            </article>
+          </div>
         </section>
 
         <p className={styles.footnote}>Hasil diagnosis untuk refleksi dan pengembangan, bukan diagnosis klinis.</p>

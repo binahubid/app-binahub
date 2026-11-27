@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, CheckCircle2, LoaderCircle, RotateCcw, Save } from 'lucide-react';
+import { ArrowDown, Check, CheckCircle2, LoaderCircle, RotateCcw, Save } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { formatSpinCopy, SpinFieldControl, type SpinCopy } from '@/components/spin-discovery';
 import { spinErrors, spinLabel, type SpinAnswers, type SpinOption } from '@/lib/spin-form';
-import { hasMeetingAnswer, meetingEffective, meetingFields, meetingGroup, meetingProgress, type MeetingContext, type MeetingChecklist } from '../_lib/spin-meeting';
+import { hasMeetingAnswer, meetingEffective, meetingFields, meetingProgress, type MeetingContext, type MeetingChecklist } from '../_lib/spin-meeting';
 
 type Props = { id: string; onSaved: (checklist: MeetingChecklist) => void; onDirty: (dirty: boolean) => void; endpoint?: string; readOnly?: boolean; translate?: SpinCopy; locale?: 'id' | 'en' };
 const button = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B2C6B] disabled:opacity-50';
@@ -61,7 +61,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
   const [status, setStatus] = useState(checklist.status);
   const [saved, setSaved] = useState(serialize(checklist.answers, checklist.notes, checklist.status));
   const [updatedAt, setUpdatedAt] = useState(checklist.updated_at);
-  const [group, setGroup] = useState(0), [missingOnly, setMissingOnly] = useState(false);
+  const [missingOnly, setMissingOnly] = useState(false);
   const [missingKeys, setMissingKeys] = useState<string[]>([]);
   const [editing, setEditing] = useState<string[]>([]);
   const [error, setError] = useState(''), [conflict, setConflict] = useState(false), [saving, setSaving] = useState(false);
@@ -72,13 +72,12 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
   const effective = meetingEffective(context, additions), progress = meetingProgress(definition, effective);
   const current = serialize(additions, notes, status), dirty = current !== saved;
   const errors = spinErrors(definition, effective, showErrors);
-  const fields = meetingFields(definition, effective, group).filter(field => !missingOnly || missingKeys.includes(field.key) || !hasMeetingAnswer(effective[field.key]) || !!errors[field.key]);
 
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
     if (!validationTarget) return;
     const field = document.getElementById('meeting-field-' + id + '-' + validationTarget.key);
-    const focus = field?.querySelector<HTMLElement>('[aria-invalid="true"]') || heading.current;
+    const focus = field?.querySelector<HTMLElement>('[aria-invalid="true"], input:not([disabled]), textarea:not([disabled]), select:not([disabled])') || heading.current;
     focus?.focus({ preventScroll: true });
     focus?.scrollIntoView?.({ block: 'center' });
   }, [id, validationTarget]);
@@ -102,7 +101,6 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
         setMissingKeys(Object.keys(issues));
         setError('Lengkapi jawaban yang wajib sebelum menandai sesi selesai.');
         if (first) {
-          setGroup(meetingGroup(definition, first));
           setValidationTarget({ key: first.key });
         }
         return;
@@ -140,33 +138,83 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
     setError(current => conflict ? current : '');
     setValidationTarget(undefined);
   }
-  function move(next: number) { setGroup(next); heading.current?.focus(); }
-  const controls = <div className="flex flex-wrap items-center gap-2">
-    <button type="button" disabled={saving || conflict || !dirty} onClick={() => void save()} className={button + ' border border-slate-300 bg-white text-[#0B2C6B]'}>{saving ? <LoaderCircle size={16} aria-hidden="true" className="animate-spin motion-reduce:animate-none" /> : <Save size={16} aria-hidden="true" />}{t('Simpan sesi')}</button>
-    <button type="button" disabled={saving || conflict || status === 'completed' && !dirty} onClick={() => void save(true)} className={button + ' bg-[#0B2C6B] text-white hover:bg-[#071B3D]'}><CheckCircle2 size={16} aria-hidden="true" />{t('Tandai selesai')}</button>
-  </div>;
+  function jumpTo(target: string) {
+    const element = document.getElementById(target);
+    element?.focus({ preventScroll: true });
+    element?.scrollIntoView?.({ block: 'start' });
+  }
 
-  return <section aria-label={t('Checklist meeting')} className="mt-5 min-w-0">
-    <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
-      <div><h4 className="text-lg font-semibold text-slate-950">{t('Checklist meeting')}</h4><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{t('Jawaban klien menjadi acuan. Lengkapi bagian yang kosong atau catat klarifikasi tanpa mengubah pengisian aslinya.')}</p></div>{controls}
-    </div>
-    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-      <p className="font-medium tabular-nums text-slate-700">{t('{0} dari {1} bagian terisi', [progress.answered, progress.total])} <span className="ml-2 text-xs text-slate-600">{t(status === 'completed' ? '· Sesi selesai' : '· Sesi berjalan')}</span></p>
-      <label className="flex min-h-11 cursor-pointer items-center gap-2 text-slate-700"><input type="checkbox" checked={missingOnly} onChange={event => { setMissingKeys(meetingFields(definition, effective).filter(field => !hasMeetingAnswer(effective[field.key]) || errors[field.key]).map(field => field.key)); setMissingOnly(event.target.checked); }} className="size-4 accent-[#0B2C6B]" />{t('Hanya yang belum diisi')}</label>
-    </div>
-    <p role="status" aria-live="polite" className="min-h-6 text-xs leading-6 text-slate-600">{saving ? t('Menyimpan perubahan… Anda tetap dapat melanjutkan pengisian.') : dirty ? t('Ada perubahan yang belum tersimpan.') : updatedAt ? t('Tersimpan · {0}', [new Date(updatedAt).toLocaleString(locale === 'en' ? 'en-GB' : 'id-ID')]) : t('Jawaban tambahan akan tersimpan otomatis saat Anda mengisi.')}</p>
-    {error && <div role="alert" className="my-3 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800">{t(error)}{conflict ? <button type="button" onClick={() => { if (window.confirm(t('Muat versi terbaru? Perubahan lokal yang belum tersimpan akan diganti.'))) onReload(); }} className={button + ' underline'}>{t('Muat versi terbaru')}</button> : !validationTarget && <button type="button" onClick={() => { setError(''); void save(); }} className={button + ' underline'}>{t('Coba simpan lagi')}</button>}</div>}
-    <div className="mt-4 grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)]">
-      <nav aria-label={t('Bagian checklist meeting')} className="flex gap-1 overflow-x-auto lg:block lg:space-y-1">{definition.stages.map((label, index) => {
-        const part = meetingProgress(definition, effective, index);
-        return <button key={label} type="button" aria-current={group === index ? 'step' : undefined} onClick={() => move(index)} className={'flex min-h-11 shrink-0 items-center justify-between gap-3 rounded-lg px-3 py-3 text-left text-sm focus-visible:outline-2 focus-visible:outline-[#0B2C6B] lg:w-full ' + (group === index ? 'bg-blue-50 font-semibold text-[#0B2C6B]' : 'text-slate-600 hover:bg-slate-50')}><span>{label}</span><span className="text-xs tabular-nums">{part.answered}/{part.total}</span></button>;
-      })}</nav>
-      <div className="min-w-0">
-        <h5 ref={heading} tabIndex={-1} className="mb-5 text-base font-semibold text-slate-950 focus:outline-none">{definition.stages[group]}</h5>
-        <div className="space-y-6">{fields.map(field => {
+  const groups = definition.stages.map((label, index) => {
+    const all = meetingFields(definition, effective, index);
+    return {
+      label,
+      index,
+      progress: meetingProgress(definition, effective, index),
+      fields: all.filter(field => !missingOnly || missingKeys.includes(field.key)
+        || !hasMeetingAnswer(effective[field.key]) || !!errors[field.key]),
+    };
+  }).filter(part => part.fields.length > 0);
+  const firstIncomplete = meetingFields(definition, effective).find(field =>
+    field.required && (!hasMeetingAnswer(effective[field.key]) || errors[field.key]));
+  const stageId = (index: number) => 'meeting-stage-' + id + '-' + index;
+  const notesId = 'meeting-notes-section-' + id;
+  const toggleMissing = (value: boolean) => {
+    setMissingKeys(value ? meetingFields(definition, effective)
+      .filter(field => !hasMeetingAnswer(effective[field.key]) || errors[field.key]).map(field => field.key) : []);
+    setMissingOnly(value);
+  };
+
+  return (
+    <section aria-label={t('Checklist meeting')} className="mt-5 min-w-0">
+      <header className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h4 tabIndex={-1} ref={heading} className="text-lg font-semibold text-[#0B2C6B]">{t('Checklist meeting')}</h4>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{t('Jawaban klien menjadi acuan. Lengkapi bagian yang kosong atau catat klarifikasi tanpa mengubah pengisian aslinya.')}</p>
+          </div>
+          {firstIncomplete && <button type="button" className={button + ' border border-blue-200 bg-white text-[#0B2C6B]'}
+            onClick={() => setValidationTarget({ key: firstIncomplete.key })}>
+            {t('Ke isian wajib berikutnya')}<ArrowDown size={16} aria-hidden="true" />
+          </button>}
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className="font-semibold tabular-nums text-slate-800">{t('{0} dari {1} bagian terisi', [progress.answered, progress.total])}</span>
+          <label className="flex min-h-10 cursor-pointer items-center gap-2 text-slate-700">
+            <input type="checkbox" checked={missingOnly} onChange={event => toggleMissing(event.target.checked)} className="size-4 accent-[#0B2C6B]" />
+            {t('Hanya yang belum diisi')}
+          </label>
+        </div>
+        <progress max={Math.max(1, progress.total)} value={progress.answered} aria-label={t('Kemajuan checklist')}
+          className="block h-2 w-full accent-[#0B2C6B]" />
+      </header>
+
+      {error && <div role="alert" className="my-3 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800">{t(error)}{conflict ? <button type="button" onClick={() => { if (window.confirm(t('Muat versi terbaru? Perubahan lokal yang belum tersimpan akan diganti.'))) onReload(); }} className={button + ' underline'}>{t('Muat versi terbaru')}</button> : !validationTarget && <button type="button" onClick={() => { setError(''); void save(); }} className={button + ' underline'}>{t('Coba simpan lagi')}</button>}</div>}
+
+      <div className="mt-4 grid items-start gap-4 xl:grid-cols-[180px_minmax(0,1fr)]">
+        <nav aria-label={t('Bagian checklist meeting')}
+          className="sticky top-16 z-[12] flex min-w-0 gap-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 shadow-sm xl:block xl:space-y-1">
+          {groups.map(part => (
+            <a key={part.label} href={'#' + stageId(part.index)} onClick={event => { event.preventDefault(); jumpTo(stageId(part.index)); }}
+              className="flex min-h-11 shrink-0 items-center justify-between gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-[#0B2C6B] hover:bg-blue-50">
+              <span>{part.label}</span><span className="text-xs font-normal tabular-nums text-slate-600">{part.progress.answered}/{part.progress.total}</span>
+            </a>
+          ))}
+          <a href={'#' + notesId} onClick={event => { event.preventDefault(); jumpTo(notesId); }}
+            className="flex min-h-11 shrink-0 items-center rounded-lg px-3 py-2 text-sm font-semibold text-[#0B2C6B] hover:bg-blue-50">{t('Catatan konsultasi')}</a>
+        </nav>
+
+        <div className="min-w-0 space-y-4">
+          {!groups.length && <p className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-[#0B2C6B]">
+            {t('Semua bagian yang ditampilkan sudah terisi. Tinjau jawaban atau lanjut ke catatan konsultasi.')}
+          </p>}
+          {groups.map(part => (
+            <section key={part.label} aria-labelledby={stageId(part.index)}
+              className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+              <h5 id={stageId(part.index)} tabIndex={-1} className="mb-4 scroll-mt-36 text-base font-semibold text-[#0B2C6B] focus:outline-none">{part.label}</h5>
+              <div className="space-y-5">{part.fields.map(field => {
           const clientFilled = hasMeetingAnswer(original[field.key]), changed = additions[field.key] !== undefined && JSON.stringify(additions[field.key]) !== JSON.stringify(original[field.key]);
           const editable = !clientFilled || changed || editing.includes(field.key) || !!errors[field.key];
-          return <div key={field.key} id={'meeting-field-' + id + '-' + field.key} className="border-b border-slate-100 pb-6">
+          return <div key={field.key} id={'meeting-field-' + id + '-' + field.key} className="border-b border-slate-200/70 pb-5 last:border-0 last:pb-0">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><span className={'inline-flex items-center gap-1.5 text-xs font-semibold ' + (changed ? 'text-amber-800' : clientFilled ? 'text-emerald-800' : 'text-slate-600')}>{clientFilled && !changed && <Check size={13} aria-hidden="true" />}{t(changed ? 'Catatan saat meeting' : clientFilled ? 'Diisi klien' : 'Belum diisi')}</span>
               {clientFilled && !editable && <button type="button" aria-label={t('Klarifikasi jawaban: {0}', [field.label])} onClick={() => setEditing(current => [...current, field.key])} className="min-h-9 px-2 text-xs font-semibold text-[#0B2C6B] underline underline-offset-4">{t('Klarifikasi jawaban')}</button>}
               {changed && <button type="button" onClick={() => { edits.current += 1; setAdditions(current => { const next = { ...current }; delete next[field.key]; return next; }); setEditing(current => current.filter(key => key !== field.key)); setStatus('in_progress'); }} className="inline-flex min-h-9 items-center gap-1 px-2 text-xs font-semibold text-[#0B2C6B]"><RotateCcw size={12} aria-hidden="true" />{t(clientFilled ? 'Gunakan jawaban klien' : 'Kosongkan')}</button>}
@@ -174,11 +222,36 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
             {editable ? <SpinFieldControl definition={definition} field={field} answers={effective} error={errors[field.key]} onChange={value => change(field.key, value)} translate={t} /> : <div><h6 className="text-sm font-semibold leading-6 text-slate-800">{field.label}</h6><p className="mt-2 whitespace-pre-line break-words text-sm leading-7 text-slate-700">{spinLabel(definition, original, field.key)}</p></div>}
             {changed && clientFilled && <p className="mt-3 text-xs leading-6 text-slate-600">{t('Jawaban awal klien: {0}', [spinLabel(definition, original, field.key)])}</p>}
           </div>;
-        })}</div>
-        {!fields.length && <p className="rounded-xl bg-slate-50 p-5 text-sm leading-7 text-slate-600">{t(missingOnly ? 'Tidak ada bagian kosong pada kelompok ini. Pilih kelompok lain atau tampilkan semua jawaban.' : 'Bagian ini tidak diperlukan berdasarkan jawaban saat ini.')}</p>}
-        <div className="mt-5 flex justify-between gap-3"><button type="button" disabled={group === 0} onClick={() => move(group - 1)} className={button + ' text-[#0B2C6B]'}>{t('Sebelumnya')}</button><button type="button" disabled={group === 4} onClick={() => move(group + 1)} className={button + ' text-[#0B2C6B]'}>{t('Bagian berikutnya')}</button></div>
+              })}</div>
+            </section>
+          ))}
+          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <h5 id={notesId} tabIndex={-1} className="scroll-mt-36 text-base font-semibold text-[#0B2C6B]">{t('Catatan dan tindak lanjut konsultasi')}</h5>
+            <p id={notesId + '-hint'} className="mt-1 text-xs leading-6 text-slate-600">{t('Untuk tim BinaHub saja. Tidak dikirim ke klien dan tidak mengubah laporan yang sudah tersedia.')}</p>
+            <textarea aria-labelledby={notesId} aria-describedby={notesId + '-hint'} maxLength={4000} value={notes}
+              onChange={event => { edits.current += 1; setNotes(event.target.value); setStatus('in_progress'); }}
+              rows={4} className="mt-3 w-full rounded-xl border border-slate-300 p-3 text-sm leading-6 text-slate-900 placeholder:text-slate-600 focus-visible:outline-2 focus-visible:outline-[#0B2C6B]"
+              placeholder={t('Ringkas hasil diskusi dan langkah berikutnya yang disepakati.')} />
+          </section>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <p role="status" aria-live="polite" className="text-xs leading-6 text-slate-600">
+              {saving ? t('Menyimpan perubahan… Anda tetap dapat melanjutkan pengisian.')
+                : dirty ? t('Ada perubahan yang belum tersimpan.')
+                : updatedAt ? t('Tersimpan · {0}', [new Date(updatedAt).toLocaleString(locale === 'en' ? 'en-GB' : 'id-ID')])
+                : t('Jawaban tambahan akan tersimpan otomatis saat Anda mengisi.')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" disabled={saving || conflict || !dirty} onClick={() => void save()} className={button + ' border border-slate-300 bg-white text-[#0B2C6B]'}>
+                {saving ? <LoaderCircle size={16} aria-hidden="true" className="animate-spin motion-reduce:animate-none" /> : <Save size={16} aria-hidden="true" />}
+                {t('Simpan sesi')}
+              </button>
+              <button type="button" disabled={saving || conflict || status === 'completed' && !dirty} onClick={() => void save(true)} className={button + ' bg-[#0B2C6B] text-white hover:bg-[#071B3D]'}>
+                <CheckCircle2 size={16} aria-hidden="true" />{t('Tandai selesai')}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div className="mt-7 border-t border-slate-200 pt-5"><label htmlFor={'meeting-notes-' + id} className="text-sm font-semibold text-slate-900">{t('Catatan dan tindak lanjut konsultasi')}</label><p className="mt-1 text-xs leading-6 text-slate-600">{t('Untuk tim BinaHub saja. Tidak dikirim ke klien dan tidak mengubah laporan yang sudah tersedia.')}</p><textarea id={'meeting-notes-' + id} maxLength={4000} value={notes} onChange={event => { edits.current += 1; setNotes(event.target.value); setStatus('in_progress'); }} rows={4} className="mt-3 w-full rounded-xl border border-slate-300 p-3 text-sm leading-6 text-slate-900 placeholder:text-slate-600 focus-visible:outline-2 focus-visible:outline-[#0B2C6B]" placeholder={t('Ringkas hasil diskusi dan langkah berikutnya yang disepakati.')} /><div className="mt-3 flex flex-wrap items-center justify-between gap-4"><span className="text-xs tabular-nums text-slate-600">{t('{0}/4000 karakter', [notes.length])}</span>{controls}</div></div>
-  </section>;
+    </section>
+  );
 }

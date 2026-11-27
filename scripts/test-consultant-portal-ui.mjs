@@ -343,6 +343,15 @@ try {
           original: {},
           definition,
         });
+      if (path.endsWith("/materials/product-knowledge")) {
+        assert.equal(url.searchParams.get("view"), "reader", "The original Product Knowledge PDF must not reach this browser");
+        return reply({ pages: [
+          { page: 1, title: "Panduan Product Knowledge", blocks: [{ kind:"paragraph", text: "Contoh halaman pertama — Versi 3" }] },
+          { page: 2, title: "Indeks Program", blocks: [{ kind:"paragraph", text: "Contoh halaman kedua — Versi 3" },
+            { kind:"paragraph", text: "Trust & Psychological Safety" }] },
+          { page: 3, title: "BinaLab / Trust & Psychological Safety", blocks: [{ kind:"heading", text: "Sasaran pembelajaran" }] },
+        ] });
+      }
       if (path.endsWith("/pdf") || path.endsWith("/recommendation") || path.startsWith("/api/konsultan/materials/"))
         return route.fulfill({
           headers: { ...headers, "Content-Type": "application/pdf" },
@@ -682,9 +691,12 @@ try {
       for (const card of await documents.getByRole("article").all()) {
         const title = await card.getByRole("heading").boundingBox();
         const read = await card.getByRole("link").boundingBox();
-        const downloadButton = await card.getByRole("button").boundingBox();
-        assert(title.y < read.y && read.y === downloadButton.y, "Document actions must sit below the title");
-        assert(read.x >= 0 && downloadButton.x + downloadButton.width <= width, "Both actions must fit inside the viewport");
+        assert(title.y < read.y && read.x + read.width <= width, "Each document action must fit below the title");
+        if (await card.getByRole("heading", {name:/Company Profile/}).count()) {
+          const downloadButton = await card.getByRole("button").boundingBox();
+          assert.equal(read.y, downloadButton.y);
+          assert(downloadButton.x + downloadButton.width <= width);
+        } else assert.equal(await card.getByRole("button").count(), 0);
       }
       assert(await page.getByRole("link", { name: "Kembali ke AMS" }).filter({ visible: true }).isVisible());
     }
@@ -706,23 +718,29 @@ try {
     let readerDownloads = 0;
     page.on("download", () => { readerDownloads++; });
     await page.getByRole("link", { name: "Baca Product Knowledge BinaHub di web" }).click();
-    await page.getByText("Halaman 1 dari 2").waitFor();
+    await page.getByText("Halaman 1 dari 3").waitFor();
     await page.getByText("Contoh halaman pertama — Versi 3", { exact: true }).waitFor();
     await page.getByRole("button", { name: "Halaman berikutnya" }).click();
-    await page.getByText("Halaman 2 dari 2").waitFor();
+    await page.getByText("Halaman 2 dari 3").waitFor();
     await page.getByText("Contoh halaman kedua — Versi 3", { exact: true }).waitFor();
-    await page.getByRole("button", { name: "Perbesar" }).click();
-    await page.getByRole("button", { name: "Pas layar" }).waitFor();
-    await page.getByText("Contoh halaman kedua — Versi 3", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Trust & Psychological Safety", exact: true }).click();
+    await page.getByRole("heading", { name: "Sasaran pembelajaran" }).waitFor();
+    await page.getByRole("button", { name: "Indeks program" }).click();
+    await page.getByText("Halaman 2 dari 3").waitFor();
+    assert.equal(await page.getByRole("button", { name: "Unduh PDF", exact: true }).count(), 0);
     assert.equal(readerDownloads, 0);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: `tmp/consultant-material-${width}.png` });
-    const pdfDownload = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Unduh PDF", exact: true }).click();
-    assert.equal((await pdfDownload).suggestedFilename(), "BinaHub-product-knowledge-v3.pdf");
     await page.getByRole("link", { name: "Semua materi" }).click();
     await page.getByRole("link", { name: "Baca Company Profile BinaHub di web" }).click();
     await page.getByText("Contoh halaman pertama — Versi 3", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Halaman berikutnya" }).click();
+    await page.getByText("Contoh halaman kedua — Versi 3", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Perbesar" }).click();
+    await page.getByRole("button", { name: "Pas layar" }).waitFor();
+    const pdfDownload = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Unduh PDF", exact: true }).click();
+    assert.equal((await pdfDownload).suggestedFilename(), "BinaHub-company-profile-v3.pdf");
     checks++;
 
     if (width === 1440) {

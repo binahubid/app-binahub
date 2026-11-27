@@ -151,6 +151,17 @@
   color: var(--muted);
 }
 .noteFields { padding: 6px 0 14px; }
+.componentRow {
+  display: grid;
+  align-items: end;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.componentRow + .componentRow { margin-top: 12px; }
+@media (max-width: 560px) {
+  .componentRow { grid-template-columns: minmax(0, 1fr) auto; }
+  .componentRow > label:first-child { grid-column: 1 / -1; }
+}
 .footer {
   min-width: 0;
   display: flex;

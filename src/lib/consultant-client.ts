@@ -59,6 +59,7 @@ export type Proposal = {
     location: string;
     scopeNote: string;
     nextStep?: string;
+    additionalComponents?: { name: string; amountIdr: number | null }[];
     pricedSubtotal?: number | null;
     documentKind?: "formal";
     total: number | null;
@@ -227,7 +228,8 @@ export async function downloadConsultantFile(path: string, filename: string) {
   const url = URL.createObjectURL(await r.blob()),
     a = document.createElement("a");
   a.href = url;
-  a.download = filename;
+  const fromServer = /filename="([A-Za-z0-9._-]+\.pdf)"/i.exec(r.headers.get("Content-Disposition") ?? "")?.[1];
+  a.download = fromServer || filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }

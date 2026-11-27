@@ -274,7 +274,9 @@ try {
               participants: 20,
               venue: "indoor",
               location: "Jakarta",
-              total: 50000000,
+              additionalComponents: body.additionalComponents ?? [],
+              total: null,
+              pricedSubtotal: 53_500_000,
               priceNote: "Estimasi program",
             },
           });
@@ -361,7 +363,12 @@ try {
       }
       if (path.endsWith("/pdf") || path.endsWith("/recommendation") || path.startsWith("/api/konsultan/materials/"))
         return route.fulfill({
-          headers: { ...headers, "Content-Type": "application/pdf" },
+          headers: { ...headers, "Content-Type": "application/pdf",
+            ...(path.endsWith("/pdf") && !path.startsWith("/api/konsultan/materials/") ? {
+              "Content-Disposition": 'attachment; filename="Proposal-BinaHub-BH-209901-0123456789.pdf"',
+              "Access-Control-Expose-Headers": "Content-Disposition",
+            } : {}),
+          },
           body: path.startsWith("/api/konsultan/materials/")
             ? material
             : "%PDF-1.4\n%%EOF",
@@ -502,10 +509,17 @@ try {
     const jumpMenu = page.getByRole("combobox", { name: "Lompat ke bagian" });
     await jumpMenu.waitFor();
     assert(await jumpMenu.evaluate(element => element.parentElement.scrollWidth <= element.parentElement.clientWidth));
+    const contextSection = page.getByRole("button", { name: /^Konteks / });
     const challengeSection = page.getByRole("button", { name: /^Tantangan / });
     await expect(challengeSection).toHaveAttribute("aria-expanded", "false");
     await jumpMenu.selectOption(await jumpMenu.getByRole("option", { name: /^Tantangan / }).getAttribute("value"));
     await expect(challengeSection).toHaveAttribute("aria-expanded", "true");
+    await expect(contextSection).toHaveAttribute("aria-expanded", "false");
+    await contextSection.click();
+    await expect(contextSection).toHaveAttribute("aria-expanded", "true");
+    await expect(challengeSection).toHaveAttribute("aria-expanded", "false");
+    await challengeSection.click();
+    await expect(contextSection).toHaveAttribute("aria-expanded", "false");
     await challengeSection.click();
     await expect(challengeSection).toHaveAttribute("aria-expanded", "false");
     await page.getByRole("button", { name: "Tandai selesai" }).first().click();
@@ -516,6 +530,8 @@ try {
     assert.equal(writes.length, 0);
     await question.fill("Koordinasi antartim perlu lebih konsisten.");
     await page.getByRole("button", { name: "Tandai selesai" }).first().click();
+    await expect(page.getByText("Checklist meeting berhasil diselesaikan.")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
     await page.locator("#work-checklist").getByRole("button", { name: "Susun Proposal Pelaksanaan" }).click();
     checks++;
     await expect(page.getByRole("checkbox", { name: /Program Kepemimpinan/ })).toBeChecked();
@@ -553,13 +569,26 @@ try {
     await page.getByLabel("Jumlah peserta").fill("20");
     await page.locator('select[name="venue"]').selectOption("indoor");
     await page.getByLabel("Lokasi").fill("Jakarta");
+    const addComponent = page.getByRole("button", { name: "Tambah komponen" });
+    await addComponent.click();
+    await page.getByLabel("Nama komponen 1").fill("Sewa ruang pelatihan");
+    await page.getByLabel("Total komponen 1 (Rp)").fill("3500000");
+    await addComponent.click();
+    await page.getByLabel("Nama komponen 2").fill("Akomodasi");
     await page.getByRole("button", { name: "Buat draf proposal" }).click();
     await page
       .getByText("Draf proposal tersimpan. Tinjau PDF sebelum mengirim.")
       .waitFor();
-    assert.deepEqual(writes.find(write => Array.isArray(write.programCodes))?.programCodes, [catalog[0].code]);
+    const proposalWrite = writes.find(write => Array.isArray(write.programCodes));
+    assert.deepEqual(proposalWrite?.programCodes, [catalog[0].code]);
+    assert.deepEqual(proposalWrite?.additionalComponents, [
+      { name: "Sewa ruang pelatihan", amountIdr: 3500000 },
+      { name: "Akomodasi", amountIdr: null },
+    ]);
     const proposalReview = page.locator(`details#proposal-${proposal}`);
-    await proposalReview.getByText(/Revisi 1 · Draf siap ditinjau/).waitFor();
+    await proposalReview.getByText(/Revisi 1 · Draf siap ditinjau · Investasi perlu konfirmasi/).waitFor();
+    await expect(proposalReview.getByText("Akomodasi · Perlu konfirmasi")).toBeVisible();
+    await expect(proposalReview.getByText(/Subtotal yang sudah terhitung: Rp53\.500\.000/)).toBeVisible();
     await proposalReview.getByRole("button", { name: "Siapkan pengiriman proposal" }).waitFor();
     await expect(proposalTab).toHaveAccessibleDescription("Draf siap ditinjau");
     assert.equal(await proposalReview.evaluate(element => element.open), true);
@@ -567,7 +596,7 @@ try {
     await page.getByRole("button", { name: "Unduh PDF" }).click();
     assert.equal(
       (await download).suggestedFilename(),
-      "BinaHub-Proposal-r1.pdf",
+      "Proposal-BinaHub-BH-209901-0123456789.pdf",
     );
     checks++;
     await proposalReview.getByRole("button", { name: "Siapkan pengiriman proposal" }).click();
@@ -719,7 +748,7 @@ try {
     await page.getByRole("combobox", { name: "Bahasa tampilan" }).selectOption("en");
     await page.getByRole("heading", { name: "Consultant materials" }).waitFor();
     await page.getByRole("link", { name: "Read Company Profile BinaHub online" }).waitFor();
-    await page.reload();
+    await page.reload({ waitUntil: "domcontentloaded" });
     await page.getByRole("heading", { name: "Consultant materials" }).waitFor();
     assert.equal(await page.getByRole("combobox", { name: "Display language" }).inputValue(), "en");
     await page.getByRole("combobox", { name: "Display language" }).selectOption("id");

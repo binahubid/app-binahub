@@ -218,7 +218,7 @@ export function ConsultantWork({ id }: { id: string }) {
       () =>
         downloadConsultantFile(
           `${endpoint}/proposals/${p.id}/pdf`,
-          `BinaHub-Proposal-r${p.revision}.pdf`,
+          "Proposal-BinaHub.pdf",
         ),
       "PDF diunduh.",
       false,
@@ -755,6 +755,14 @@ export function ConsultantWork({ id }: { id: string }) {
                       </li>
                     ))}
                   </ul>
+                  {!!p.snapshot.additionalComponents?.length && <>
+                    <h3>{t("Komponen tambahan")}</h3>
+                    <ul className={s.list}>
+                      {p.snapshot.additionalComponents.map((item, index) => (
+                        <li key={index}>{item.name} · {item.amountIdr === null ? t("Perlu konfirmasi") : consultantMoney(item.amountIdr)}</li>
+                      ))}
+                    </ul>
+                  </>}
                   {p.snapshot.total === null && p.snapshot.pricedSubtotal != null && <p>{t("Subtotal yang sudah terhitung: {0}", [consultantMoney(p.snapshot.pricedSubtotal)])}</p>}
                   <p>{p.snapshot.priceNote}</p>
                   <div className={s.actions}>
@@ -812,6 +820,7 @@ export function ConsultantWork({ id }: { id: string }) {
                   busy={busy}
                   onOpenChecklist={() => move({ section: "meeting", target: "checklist" })}
                   onSubmit={(e) => submit(e, async (f) => {
+                    const amounts = f.getAll("additionalAmount");
                     const created = await consultantRequest<Proposal>(`${endpoint}/proposals`, {
                       version,
                       programCodes: f.getAll("programs"),
@@ -821,6 +830,12 @@ export function ConsultantWork({ id }: { id: string }) {
                       location: value(f, "location"),
                       scopeNote: value(f, "scope"),
                       nextStep: value(f, "nextStep"),
+                      ...(f.has("additionalComponent") ? {
+                        additionalComponents: f.getAll("additionalComponent").map((name, index) => {
+                          const amount = amounts[index];
+                          return { name: String(name).trim(), amountIdr: amount ? Number(amount) : null };
+                        }),
+                      } : {}),
                     });
                     window.history.replaceState(null, "", workUrl(id, { section: "proposal", target: "review", proposalId: created.id }, returnTo));
                   }, "Draf proposal tersimpan. Tinjau PDF sebelum mengirim.")}

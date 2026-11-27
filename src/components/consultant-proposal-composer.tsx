@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, ChevronDown, FileText, RefreshCw, Search } from "lucide-react";
+import { ArrowRight, ChevronDown, FileText, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useConsultantLocale } from "./consultant-language";
 import { ConsultantRequestError, consultantMoney, type ConsultantDetail, type Program, type Proposal, type ProposalSuggestions } from "@/lib/consultant-client";
 import s from "./consultant.module.css";
@@ -26,6 +26,9 @@ export function ConsultantProposalComposer({ programs, defaults, prior, autoStar
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<ConsultantRequestError>();
   const [catalogQuery, setCatalogQuery] = useState("");
+  const [components, setComponents] = useState(() =>
+    (prior?.additionalComponents ?? []).map((component, id) => ({ ...component, id })));
+  const nextComponentId = useRef(components.length);
   const started = useRef(false);
   const manualSelection = useRef(false);
   const matchLock = useRef(false);
@@ -169,6 +172,34 @@ export function ConsultantProposalComposer({ programs, defaults, prior, autoStar
             {t("Estimasi program bertarif harian memakai {0} batch, masing-masing maksimal 30 peserta.", [Math.ceil(participants / 30)])}
           </p>}
         </section>
+      </div>
+      <div className={layout.section} aria-labelledby="proposal-components-title">
+        <div className={layout.sectionHeader}>
+          <h3 id="proposal-components-title">{t("Komponen tambahan")}</h3>
+          <button type="button" className={s.button} disabled={busy || components.length >= 6} onClick={() => {
+            const id = nextComponentId.current++;
+            setComponents(current => [...current, { id, name: "", amountIdr: null }]);
+          }}>
+            <Plus size={15} aria-hidden="true" />{t("Tambah komponen")}
+          </button>
+        </div>
+        <p className={layout.fieldIntro}>{t("Opsional. Masukkan biaya di luar tarif program, seperti akomodasi atau sewa tempat yang diminta klien. Kosongkan nominal jika masih perlu dikonfirmasi.")}</p>
+        {components.map((component, index) => (
+          <div key={component.id} className={layout.componentRow}>
+            <label className={s.field}>{t("Nama komponen {0}", [index + 1])}
+              <input name="additionalComponent" maxLength={140} required defaultValue={component.name}
+                placeholder={t("Contoh: Sewa ruang pelatihan")} />
+            </label>
+            <label className={s.field}>{t("Total komponen {0} (Rp)", [index + 1])}
+              <input name="additionalAmount" type="number" min={0} max={1_000_000_000_000} step={1}
+                defaultValue={component.amountIdr ?? undefined} placeholder={t("Perlu konfirmasi")} />
+            </label>
+            <button type="button" className={s.button} aria-label={t("Hapus komponen {0}", [index + 1])}
+              onClick={() => setComponents(current => current.filter(item => item.id !== component.id))}>
+              <Trash2 size={16} aria-hidden="true" />
+            </button>
+          </div>
+        ))}
       </div>
       <details className={layout.notes} open={Boolean(prior?.scopeNote)}>
         <summary>

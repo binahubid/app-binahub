@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, Check, CheckCircle2, ChevronDown, LoaderCircle, RotateCcw, Save } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { formatSpinCopy, SpinFieldControl, type SpinCopy } from '@/components/spin-discovery';
 import { spinErrors, spinLabel, type SpinAnswers, type SpinOption } from '@/lib/spin-form';
@@ -49,7 +50,7 @@ export function SpinMeetingChecklist(props: Props) {
   if (!context) return <p role="status" className="flex items-center gap-2 py-6 text-sm text-slate-600"><LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />{t('Memuat checklist meeting…')}</p>;
   if (props.readOnly) {
     const effective = meetingEffective(context, context.checklist.answers);
-    return <section aria-label={t('Checklist meeting · hanya baca')} className="mt-5 space-y-4"><p className="text-sm text-slate-600">{t('Kebutuhan dan catatan konsultasi · hanya baca')}</p>{context.definition.stages.map((stage, index) => <details key={stage} open={index === 0} className="rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer font-semibold text-[#0B2C6B]">{stage}</summary><dl className="mt-4 space-y-5">{meetingFields(context.definition, effective, index).map(field => <div key={field.key}><dt className="text-sm font-semibold text-slate-800">{field.label}</dt><dd className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">{hasMeetingAnswer(effective[field.key]) ? spinLabel(context.definition, effective, field.key) : t('Belum ditentukan')}</dd></div>)}</dl></details>)}<h4 className="font-semibold">{t('Catatan konsultasi')}</h4><p className="whitespace-pre-line text-sm leading-7 text-slate-600">{context.checklist.notes || t('Belum ada catatan.')}</p></section>;
+    return <section aria-label={t('Checklist meeting · hanya baca')} className="mt-5 space-y-4"><p className="text-sm text-slate-600">{t('Kebutuhan dan catatan konsultasi · hanya baca')}</p>{context.definition.stages.map((stage, index) => <details key={stage} name={'meeting-readonly-' + props.id} open={index === 0} className="rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer font-semibold text-[#0B2C6B]">{stage}</summary><dl className="mt-4 space-y-5">{meetingFields(context.definition, effective, index).map(field => <div key={field.key}><dt className="text-sm font-semibold text-slate-800">{field.label}</dt><dd className="mt-1 whitespace-pre-line text-sm leading-7 text-slate-600">{hasMeetingAnswer(effective[field.key]) ? spinLabel(context.definition, effective, field.key) : t('Belum ditentukan')}</dd></div>)}</dl></details>)}<h4 className="font-semibold">{t('Catatan konsultasi')}</h4><p className="whitespace-pre-line text-sm leading-7 text-slate-600">{context.checklist.notes || t('Belum ada catatan.')}</p></section>;
   }
   return <MeetingEditor key={props.id + ':' + reload} {...props} context={context} onReload={() => { setContext(null); setReload(value => value + 1); }} />;
 }
@@ -61,8 +62,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
   const [status, setStatus] = useState(checklist.status);
   const [saved, setSaved] = useState(serialize(checklist.answers, checklist.notes, checklist.status));
   const [updatedAt, setUpdatedAt] = useState(checklist.updated_at);
-  const [expanded, setExpanded] = useState<Set<number | 'notes'>>(() =>
-    checklist.status === 'completed' ? new Set() : new Set([0]));
+  const [expanded, setExpanded] = useState<number | 'notes' | null>(checklist.status === 'completed' ? null : 0);
   const [missingOnly, setMissingOnly] = useState(false);
   const [missingKeys, setMissingKeys] = useState<string[]>([]);
   const [editing, setEditing] = useState<string[]>([]);
@@ -93,7 +93,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
   const revealField = useCallback((key: string, answers: SpinAnswers) => {
     const stage = definition.stages.findIndex((_, index) =>
       meetingFields(definition, answers, index).some(field => field.key === key));
-    if (stage >= 0) setExpanded(current => current.has(stage) ? current : new Set(current).add(stage));
+    if (stage >= 0) setExpanded(stage);
     setValidationTarget({ key });
   }, [definition]);
 
@@ -126,11 +126,20 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
       if (alive.current) {
         // A newer local edit is never replaced by an older in-flight response.
         setSaved(serialize(additions, notes, targetStatus)); setUpdatedAt(result.updated_at);
-        if (finish && edits.current === editAtStart) setStatus('completed'); onSaved(result);
+        onSaved(result);
+        if (finish && result.status === 'completed' && edits.current === editAtStart) {
+          setStatus('completed');
+          setExpanded(null);
+          toast.success(t('Checklist meeting berhasil diselesaikan.'));
+          window.requestAnimationFrame(() => {
+            const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            window.scrollTo({ top: 0, behavior: reducedMotion ? 'instant' : 'smooth' });
+          });
+        }
       }
     } catch (reason) { if (alive.current) setError(reason instanceof Error && reason.name === 'AbortError' ? 'Koneksi terlalu lama. Jawaban masih ada di halaman ini; coba simpan lagi.' : reason instanceof Error ? reason.message : 'Perubahan belum tersimpan.'); }
     finally { clearTimeout(timer); lock.current = false; if (alive.current) setSaving(false); }
-  }, [additions, conflict, context, definition, id, notes, onSaved, status, endpoint, revealField]);
+  }, [additions, conflict, context, definition, id, notes, onSaved, status, endpoint, revealField, t]);
 
   useEffect(() => {
     if (!dirty || saving || error || conflict) return;
@@ -166,18 +175,13 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
   const stageId = (index: number) => 'meeting-stage-' + id + '-' + index;
   const notesId = 'meeting-notes-section-' + id;
   function toggleSection(section: number | 'notes') {
-    setExpanded(current => {
-      const next = new Set(current);
-      if (next.has(section)) next.delete(section);
-      else next.add(section);
-      return next;
-    });
+    setExpanded(current => current === section ? null : section);
   }
   function jumpToSection(value: string) {
     if (!value) return;
     const section = value === 'notes' ? value : Number(value);
-    setExpanded(current => current.has(section) ? current : new Set(current).add(section));
-    jumpTo(section === 'notes' ? notesId : stageId(section));
+    setExpanded(section);
+    requestAnimationFrame(() => jumpTo(section === 'notes' ? notesId : stageId(section)));
   }
   const toggleMissing = (value: boolean) => {
     setMissingKeys(value ? meetingFields(definition, effective)
@@ -228,7 +232,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
             {t('Semua bagian yang ditampilkan sudah terisi. Tinjau jawaban atau lanjut ke catatan konsultasi.')}
           </p>}
           {groups.map(part => (
-            <ChecklistSection key={part.index} id={stageId(part.index)} title={part.label} expanded={expanded.has(part.index)}
+            <ChecklistSection key={part.index} id={stageId(part.index)} title={part.label} expanded={expanded === part.index}
               count={part.progress.answered + '/' + part.progress.total} onToggle={() => toggleSection(part.index)}>
               <div className="space-y-5">{part.fields.map(field => {
           const clientFilled = hasMeetingAnswer(original[field.key]), changed = additions[field.key] !== undefined && JSON.stringify(additions[field.key]) !== JSON.stringify(original[field.key]);
@@ -244,7 +248,7 @@ function MeetingEditor({ id, context, onSaved, onDirty, onReload, endpoint, loca
               })}</div>
             </ChecklistSection>
           ))}
-          <ChecklistSection id={notesId} title={t('Catatan konsultasi')} expanded={expanded.has('notes')}
+          <ChecklistSection id={notesId} title={t('Catatan konsultasi')} expanded={expanded === 'notes'}
             onToggle={() => toggleSection('notes')}>
             <p id={notesId + '-hint'} className="text-xs leading-6 text-slate-600">{t('Untuk tim BinaHub saja. Tidak dikirim ke klien dan tidak mengubah laporan yang sudah tersedia.')}</p>
             <textarea aria-label={t('Catatan dan tindak lanjut konsultasi')} aria-describedby={notesId + '-hint'} maxLength={4000} value={notes}

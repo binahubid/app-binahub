@@ -27,7 +27,7 @@ Panduan ini digunakan admin dan konsultan sejak jadwal masuk sampai serah terima
 
 1. Jika rekomendasi awal sudah dikirim dan klien masih menimbang pilihannya, pilih **Tindak lanjuti rekomendasi**. Siapkan proposal formal ketika klien membutuhkan rincian ruang lingkup, pelaksanaan, dan investasi untuk mengambil keputusan.
 2. Pilih **Susun proposal** atau **Siapkan proposal formal**. Portal mengisi detail dari checklist dan mencocokkan program. Periksa pilihan, tambahkan ruang lingkup atau langkah berikutnya bila diperlukan, lalu pilih **Buat draf proposal**. Revisi terbuka di **Riwayat proposal formal** untuk ditinjau melalui **Unduh PDF**.
-3. Team Building memakai paket berdasarkan jumlah peserta. Program bertarif harian memakai tarif per hari dan mengasumsikan maksimal 30 peserta per batch. PDF mencantumkan asumsi dan rincian hitungnya. Konfirmasikan investasi yang masih bergantung pada ruang lingkup sebelum memberikan komitmen biaya.
+3. Team Building memakai paket Essential untuk maksimal 40 peserta. Paket dasarnya Rp25.000.000 mencakup 30 peserta, lalu setiap peserta ke-31 sampai ke-40 menambah Rp450.000 per hari. Paket Signature berlaku untuk 41–80 peserta dan Enterprise untuk 81–150 peserta. Mulai peserta ke-151, tambahkan Rp450.000 per peserta per hari ke paket Enterprise. Program bertarif harian dihitung dengan kapasitas 30 peserta per batch. Periksa rincian dan asumsi di PDF sebelum menyampaikan estimasi.
 4. Jika kebutuhan berubah, perbarui checklist dan tandai selesai kembali. Pilih **Buat revisi** saat portal menampilkan **Proposal perlu revisi**. Gunakan revisi yang sudah ditinjau sebagai lampiran.
 
 ## 5. Kirim dan tindak lanjuti

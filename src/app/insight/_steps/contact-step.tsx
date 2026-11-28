@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Phone, Send } from "lucide-react";
 import { FormData } from "../_types";
 import { useLocale } from "@/i18n/use-locale";
+import { ReferralField } from "@/components/referral-field";
 
 interface ContactStepProps {
   formData: FormData;
@@ -9,6 +10,8 @@ interface ContactStepProps {
   onSubmit: (e: React.FormEvent) => void;
   onPrev: () => void;
   isSubmitting: boolean;
+  referralConsentCode?: string;
+  onReferralConsent: (code: string | undefined) => void;
 }
 
 const COPY = {
@@ -41,7 +44,7 @@ export function ContactStep({
   onChange,
   onSubmit,
   onPrev,
-  isSubmitting,
+  isSubmitting, referralConsentCode, onReferralConsent,
 }: ContactStepProps) {
   const locale = useLocale();
   const copy = COPY[locale];
@@ -97,6 +100,7 @@ export function ContactStep({
               className={inputClass}
             />
           </div>
+          <ReferralField locale={locale} consentCode={referralConsentCode} onConsent={onReferralConsent} disabled={isSubmitting} />
         </div>
 
         <div className="mt-9 flex flex-col gap-4 border-t border-black/[0.05] pt-6 sm:flex-row">

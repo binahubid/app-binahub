@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowRight, Brain, ChartNoAxesCombined, CheckCircle2, Info, 
 import { countAnswered, firstUnanswered, individualTrackingParams, peChannel, type PEAnswer, type PEAttempt, type PEContext, type PEDefinition } from '@/lib/individual-assessment';
 import { clearPEGuestDraft, readPEGuestDraft, savePEGuestDraft, type PEGuestDraft } from '@/lib/pe-guest-storage';
 import { guestRequest, makeGuestKey } from '@/lib/pe-guest';
+import { ReferralField } from '@/components/referral-field';
+import { ensureReferralCapture } from '@/lib/referral-client';
 import { PEGuestSyncQueue, hasPendingPEAnswers } from '@/lib/pe-guest-sync';
 import { DiagnosisShell } from './diagnosis-shell';
 import shared from './diagnosis.module.css';
@@ -24,6 +26,7 @@ export function PEGuestAssessment() {
   const [receiptId, setReceiptId] = useState(''), [localAvailable, setLocalAvailable] = useState(true);
   const [cleanupWarning,setCleanupWarning]=useState(false);
   const [syncError, setSyncError] = useState('');
+  const [referralConsentCode,setReferralConsentCode] = useState<string>();
   const [reviewCount,setReviewCount]=useState(6);
   const lock = useRef(false), current = useRef<PEGuestDraft | null>(null);
   const localWrites = useRef<Promise<void>>(Promise.resolve());
@@ -49,7 +52,7 @@ export function PEGuestAssessment() {
       ...(source.whatsappAvailable && value.whatsapp ? { whatsapp: value.whatsapp } : {}),
       consentVersion: source.consentVersion, privacyVersion: source.privacyVersion, sharingConsentVersion: source.sharingConsentVersion,
       attribution,...(journey&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(journey)?{journeyId:journey}:{}),
-      channel: peChannel(window.location.search) };
+      channel: peChannel(window.location.search), referralConsentCode: value.referralConsentCode };
   }
   useEffect(() => {
     let alive = true;
@@ -129,9 +132,11 @@ export function PEGuestAssessment() {
     }
     const value = current.current || { id: crypto.randomUUID(), draftKey: makeGuestKey(), name: name.trim(), email: email.trim().toLowerCase(), whatsapp: phone, context,
       responses: {}, baseResponses: {}, revision: 0, expiresAt: Date.now() + 7 * 86_400_000 };
-    await persist(value);
-    const reply = await guestRequest<Reply>('', 'POST', payload(value, definition));
-    await persist({ ...value, revision: reply.attempt.revision, responses: reply.attempt.responses, baseResponses: reply.attempt.responses });
+    await ensureReferralCapture();
+    const prepared = { ...value, referralConsentCode };
+    await persist(prepared);
+    const reply = await guestRequest<Reply>('', 'POST', payload(prepared, definition));
+    await persist({ ...prepared, revision: reply.attempt.revision, responses: reply.attempt.responses, baseResponses: reply.attempt.responses });
     setStatus('Draft tersimpan.'); setIndex(0);
   }); }
   async function sync(value: PEGuestDraft, submit = false) {
@@ -219,6 +224,7 @@ export function PEGuestAssessment() {
           <label className={styles.field}>Apa yang ingin Anda kembangkan?<textarea required maxLength={600} rows={3} placeholder="Ceritakan tujuan pengembangan Anda secara singkat" value={context.goal} disabled={busy} onChange={event => setContext({ ...context, goal: event.target.value })} /></label>
           <fieldset aria-describedby="pe-relevance-help"><legend className={styles.legend}>Kaitannya dengan pekerjaan Anda</legend><p id="pe-relevance-help" className={styles.help}>Seberapa relevan setiap area berikut dengan pekerjaan Anda saat ini?</p><div className={styles.relevance}>{definition.competencies.map(value => <label key={value.code}>{value.name}<select aria-label={`Relevansi ${value.name}`} value={context.relevance[value.code]} disabled={busy} onChange={event => setContext({ ...context, relevance: { ...context.relevance, [value.code]: event.target.value as 'low' | 'normal' | 'high' } })}><option value="low">Kurang relevan</option><option value="normal">Relevan</option><option value="high">Sangat relevan</option></select></label>)}</div></fieldset>
         </div>
+        <ReferralField consentCode={referralConsentCode} onConsent={setReferralConsentCode} disabled={busy}/>
         <div className={styles.notice}><Info size={16} aria-hidden="true" /><p>Isi sesuai pengalaman Anda, tanpa batas waktu pengerjaan. Hasilnya bukan diagnosis klinis dan tidak dapat menjadi satu-satunya dasar keputusan seleksi atau promosi.</p></div>
         <details className={styles.privacy}><summary>Privasi dan penggunaan data</summary><div id="pe-data-use"><p>{definition.privacyNotice}</p><p>{definition.sharingNotice}</p><p>Dengan persetujuan Anda, jawaban sementara disimpan secara terenkripsi di perangkat ini agar Anda dapat melanjutkan pengisian saat koneksi terputus. Simpanan ini dihapus setelah jawaban berhasil dikirim, atau saat halaman dibuka kembali setelah tujuh hari.</p></div></details>
         <label className={styles.consent}><input type="checkbox" required checked={consent} disabled={busy} aria-describedby="pe-data-use" onChange={event => setConsent(event.target.checked)} />Saya menyetujui penggunaan data yang dijelaskan di atas dan mengizinkan tim BinaHub meninjau jawaban serta hasil Self Diagnostic untuk memberikan rekomendasi pengembangan.</label>

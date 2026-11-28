@@ -1,6 +1,6 @@
 // Only an encrypted, consented draft is persisted. Never fall back to plaintext localStorage.
 export type PEGuestDraft = {
-  id: string; draftKey: string; name: string; email: string; whatsapp?: string;
+  id: string; draftKey: string; name: string; email: string; whatsapp?: string; referralConsentCode?: string;
   context: { role: string; goal: string; relevance: Record<string, 'low' | 'normal' | 'high'> };
   responses: Record<string, number | 'NA' | 'A' | 'B' | 'C' | 'D'>;
   baseResponses: PEGuestDraft['responses']; revision: number; submissionKey?: string; expiresAt: number;

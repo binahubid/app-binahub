@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { readAssessmentAttribution, readAssessmentJourneyId, storeAssessmentJourneyId } from "@/lib/attribution";
 
 import { submitAssessment } from "@/lib/assessment-submit";
+import { ensureReferralCapture } from "@/lib/referral-client";
 
 const TOTAL_STEPS = 11;
 const SPEED_LINES = [
@@ -59,6 +60,7 @@ export default function InsightPage() {
     timeline: "unknown",
     nextStepIntent: "result_review", businessConsequence: "",
   });
+  const [referralConsentCode, setReferralConsentCode] = useState<string>();
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionAccepted, setSubmissionAccepted] = useState(false);
@@ -174,8 +176,9 @@ export default function InsightPage() {
     submittingRef.current = true;
     setIsSubmitting(true);
     try {
+      await ensureReferralCapture();
       await submitAssessment({
-        ...formData, answers,
+        ...formData, answers, referralConsentCode,
         journeyId: readAssessmentJourneyId(window.location.search),
         attribution: readAssessmentAttribution(window.location.search, window.location.href, document.referrer),
         locale,
@@ -346,7 +349,7 @@ export default function InsightPage() {
           {step === 1  && !isSubmitting && <InstructionStep onNext={nextStep} onPrev={prevStep} />}
           {step >= 2 && step <= 8 && !isSubmitting && <QuestionsStep key={step} step={step} answers={answers} onAnswer={handleAnswer} />}
           {step === 9  && <OpenQuestionsStep formData={formData} onChange={handleFormChange} onNext={handleSubmitLead} onPrev={prevStep} isSubmitting={isSubmitting} />}
-          {step === 10 && <ContactStep formData={formData} onChange={handleFormChange} onSubmit={handleSubmitFinal} onPrev={prevStep} isSubmitting={isSubmitting} />}
+          {step === 10 && <ContactStep formData={formData} onChange={handleFormChange} onSubmit={handleSubmitFinal} onPrev={prevStep} isSubmitting={isSubmitting} referralConsentCode={referralConsentCode} onReferralConsent={setReferralConsentCode} />}
           {step === 11 && !isSubmitting && <SuccessStep name={formData.name} company={formData.company} onHome={exitAssessment} />}
         </AnimatePresence>
 

@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { ReferralTracker } from "@/components/referral-tracker";
 import { AppToaster } from "@/components/app-toaster";
 import { ApiFetchBridge } from "@/components/api-fetch-bridge";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
@@ -51,6 +53,7 @@ export default function RootLayout({
         <GlobalErrorHandler>
           <ServiceWorkerCleanup />
           <ApiFetchBridge />
+          <Suspense fallback={null}><ReferralTracker /></Suspense>
           <AppToaster />
           <div id="content" tabIndex={-1} className="contents">
             {children}
